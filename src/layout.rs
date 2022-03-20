@@ -60,13 +60,13 @@ pub fn shift_qwerty(qwerty_press: u8) -> u8 {
 
 pub fn deshift_qwerty(qwerty_shift_press: u8) -> u8 {
     // Uppercase Letters => Lowercase letters (+ 32)
-    if qwerty_press >= 65 && qwerty_press <= 90 {
-        return qwerty_press;
+    if qwerty_shift_press >= 65 && qwerty_shift_press <= 90 {
+        return qwerty_shift_press + 32;
     }
     // Deshifted:
     // Numbers, backtick, minus, equals, open/close square brackets, semicolon,
     // single quote, comma, period, forward slash, backslash, catch-all
-    match qwerty_press {
+    match qwerty_shift_press {
         126 => 96,
         33 => 49,
         64 => 50,
@@ -88,7 +88,7 @@ pub fn deshift_qwerty(qwerty_shift_press: u8) -> u8 {
         60 => 44,
         62 => 46,
         63 => 47,
-        _ => qwerty_press
+        _ => qwerty_shift_press
     }
 
 }
@@ -145,9 +145,14 @@ impl Layout for Dvorak {
             47 => 122,
             45 => 91,
             61 => 93,
-            _ => {
-                // resume here with shifts
-                qwerty_press
+            other => {
+                // shift + qwerty letter => shift + dvorak equivalent
+                // _, +, {, }, :, ", <, >, ? => shift + dvorak equivalent
+                if (other >= 65 && other <= 90) || "_+{}:\"<>?".contains(other as char) {
+                    shift_qwerty(self.from_qwerty(deshift_qwerty(other)))
+                } else {
+                    other
+                }
             }
         }
     }
