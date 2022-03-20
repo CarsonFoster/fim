@@ -58,6 +58,41 @@ pub fn shift_qwerty(qwerty_press: u8) -> u8 {
     }
 }
 
+pub fn deshift_qwerty(qwerty_shift_press: u8) -> u8 {
+    // Uppercase Letters => Lowercase letters (+ 32)
+    if qwerty_press >= 65 && qwerty_press <= 90 {
+        return qwerty_press;
+    }
+    // Deshifted:
+    // Numbers, backtick, minus, equals, open/close square brackets, semicolon,
+    // single quote, comma, period, forward slash, backslash, catch-all
+    match qwerty_press {
+        126 => 96,
+        33 => 49,
+        64 => 50,
+        35 => 51,
+        36 => 52,
+        37 => 53,
+        94 => 54,
+        38 => 55,
+        42 => 56,
+        40 => 57,
+        41 => 48,
+        95 => 45,
+        43 => 61,
+        123 => 91,
+        125 => 93,
+        124 => 92,
+        58 => 59,
+        34 => 39,
+        60 => 44,
+        62 => 46,
+        63 => 47,
+        _ => qwerty_press
+    }
+
+}
+
 pub struct Qwerty;
 
 impl Layout for Qwerty {
@@ -110,7 +145,10 @@ impl Layout for Dvorak {
             47 => 122,
             45 => 91,
             61 => 93,
-            _ => qwerty_press
+            _ => {
+                // resume here with shifts
+                qwerty_press
+            }
         }
     }
 
