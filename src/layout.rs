@@ -211,10 +211,37 @@ pub struct Colemak;
 
 impl Layout for Colemak {
     fn from_qwerty(&self, qwerty_press: u8) -> u8 {
-        0
+        match qwerty_press {
+            101 => 102,
+            114 => 112,
+            116 => 103,
+            121 => 106,
+            117 => 108,
+            105 => 117,
+            111 => 121,
+            112 => 59,
+            115 => 114,
+            100 => 115,
+            102 => 116,
+            103 => 100,
+            106 => 110,
+            107 => 101,
+            108 => 105,
+            59 => 111,
+            110 => 107,
+            other => {
+                // shift + qwerty letter => shift + colemak equivalent
+                // : => O
+                if (other >= 65 && other <= 90) || other == 58 {
+                    shift_qwerty(self.from_qwerty(deshift_qwerty(other)))
+                } else {
+                    other
+                }
+            }
+        }
     }
 
-    fn to_qwerty(&self, qwerty_press: u8) -> u8 {
+    fn to_qwerty(&self, layout_press: u8) -> u8 {
         0
     }
 }
