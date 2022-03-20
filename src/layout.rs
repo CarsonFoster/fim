@@ -21,6 +21,43 @@ pub trait Layout {
     }
 }
 
+pub fn shift_qwerty(qwerty_press: u8) -> u8 {
+    // Uppercase Letters => Themselves
+    // I'm not sure if this will be needed, but just in case.
+    if qwerty_press >= 65 && qwerty_press <= 90 {
+        return qwerty_press;
+    // Lowercase Letters => Uppercase letters (- 32)
+    } else if qwerty_press >= 97 && qwerty_press <= 122 {
+        return qwerty_press - 32;
+    }
+    // Numbers, backtick, minus, equals, open/close square brackets, semicolon,
+    // single quote, comma, period, forward slash, backslash, catch-all
+    match qwerty_press {
+        96 => 126,
+        49 => 33,
+        50 => 64,
+        51 => 35,
+        52 => 36,
+        53 => 37,
+        54 => 94,
+        55 => 38,
+        56 => 42,
+        57 => 40,
+        48 => 41,
+        45 => 95,
+        61 => 43,
+        91 => 123,
+        93 => 125,
+        92 => 124,
+        59 => 58,
+        39 => 34,
+        44 => 60,
+        46 => 62,
+        47 => 63,
+        _ => qwerty_press
+    }
+}
+
 pub struct Qwerty;
 
 impl Layout for Qwerty {
