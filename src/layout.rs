@@ -158,6 +158,51 @@ impl Layout for Dvorak {
     }
 
     fn to_qwerty(&self, layout_press: u8) -> u8 {
-        0
+        match layout_press {
+            39 => 113,
+            44 => 119,
+            46 => 101,
+            112 => 114,
+            121 => 116,
+            102 => 121,
+            103 => 117,
+            99 => 105,
+            114 => 111,
+            108 => 112,
+            47 => 91,
+            61 => 93,
+            97 => 97,
+            111 => 115,
+            101 => 100,
+            117 => 102,
+            105 => 103,
+            100 => 104,
+            104 => 106,
+            116 => 107,
+            110 => 108,
+            115 => 59,
+            45 => 39,
+            59 => 122,
+            113 => 120,
+            106 => 99,
+            107 => 118,
+            120 => 98,
+            98 => 110,
+            109 => 109,
+            119 => 44,
+            118 => 46,
+            122 => 47,
+            91 => 45,
+            93 => 61,
+            other => {
+                // shift + dvorak letter => shift + qwerty equivalent
+                // _, +, {, }, :, ", <, >, ? => shift + qwerty equivalent
+                if (other >= 65 && other <= 90) || "_+{}:\"<>?".contains(other as char) {
+                    shift_qwerty(self.to_qwerty(deshift_qwerty(other)))
+                } else {
+                    other
+                }
+            }
+        }
     }
 }
