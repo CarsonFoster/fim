@@ -6,7 +6,7 @@ pub trait Layout {
     fn from_qwerty_keycode(&self, qwerty_press: KeyCode) -> KeyCode {
         match qwerty_press {
             KeyCode::Char(c) => {
-                if c.len_utf8() > 1 { qwerty_press } else { KeyCode::Char( self.from_qwerty(c as u8) ) }
+                if c.len_utf8() > 1 { qwerty_press } else { KeyCode::Char( self.from_qwerty(c as u8) as char ) }
             },
             _ => qwerty_press
         }
@@ -14,7 +14,7 @@ pub trait Layout {
     fn to_qwerty_keycode(&self, layout_press: KeyCode) -> KeyCode {
         match layout_press {
             KeyCode::Char(c) => {
-                if c.len_utf8() > 1 { layout_press } else { KeyCode::Char( self.to_qwerty(c as u8) ) }
+                if c.len_utf8() > 1 { layout_press } else { KeyCode::Char( self.to_qwerty(c as u8) as char ) }
             },
             _ => layout_press
         }
@@ -30,5 +30,17 @@ impl Layout for Qwerty {
 
     fn to_qwerty(&self, layout_press: u8) -> u8 {
         layout_press
+    }
+}
+
+pub struct Dvorak;
+
+impl Layout for Dvorak {
+    fn from_qwerty(&self, qwerty_press: u8) -> u8 {
+        0
+    }
+
+    fn to_qwerty(&self, layout_press: u8) -> u8 {
+        0
     }
 }
