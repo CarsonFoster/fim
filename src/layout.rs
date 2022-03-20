@@ -206,3 +206,15 @@ impl Layout for Dvorak {
         }
     }
 }
+
+pub struct Colemak;
+
+impl Layout for Colemak {
+    fn from_qwerty(&self, qwerty_press: u8) -> u8 {
+        0
+    }
+
+    fn to_qwerty(&self, qwerty_press: u8) -> u8 {
+        0
+    }
+}
