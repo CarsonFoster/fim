@@ -1,20 +1,28 @@
-use crossterm::{Result, terminal};
+use std::io::{Write, Stdout, stdout};
+use crossterm::{
+    Result,
+    terminal::{
+        self,
+    },
+};
 
-pub struct Editor;
+pub struct Editor {
+    stdout: Stdout,
+}
 
 impl Editor {
     pub fn new() -> Editor {
-        Editor
+        Editor{ stdout: stdout() }
     }
 
-    pub fn run(&self) -> Result<()> {
+    pub fn run(&mut self) -> Result<()> {
         self.setup()?;
         println!("Hello, world!\r");
         Ok(())
     }
 
-    fn setup(&self) -> Result<()> {
-        terminal::enable_raw_mode() 
+    fn setup(&mut self) -> Result<()> {
+        terminal::enable_raw_mode()
     }
 }
 

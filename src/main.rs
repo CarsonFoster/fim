@@ -4,7 +4,7 @@ mod layout;
 use editor::Editor;
 
 fn main() {
-    let fim = Editor::new();
+    let mut fim = Editor::new();
     if let Err(e) = fim.run() {
         std::mem::drop(fim);
         println!("[-] Application error: {}", e);
