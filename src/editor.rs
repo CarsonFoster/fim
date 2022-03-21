@@ -1,8 +1,11 @@
 use std::io::{Write, Stdout, stdout};
 use crossterm::{
     Result,
+    execute,
     terminal::{
         self,
+        EnterAlternateScreen,
+        LeaveAlternateScreen,
     },
 };
 
@@ -18,10 +21,14 @@ impl Editor {
     pub fn run(&mut self) -> Result<()> {
         self.setup()?;
         println!("Hello, world!\r");
+        loop {
+
+        }
         Ok(())
     }
 
     fn setup(&mut self) -> Result<()> {
+        execute!(self.stdout, EnterAlternateScreen)?;
         terminal::enable_raw_mode()
     }
 }
@@ -29,5 +36,6 @@ impl Editor {
 impl Drop for Editor {
     fn drop(&mut self) {
         terminal::disable_raw_mode().expect("Failed to disable raw mode.");
+        execute!(self.stdout, LeaveAlternateScreen).expect("Failed to leave alternate screen.");
     }
 }
