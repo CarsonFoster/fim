@@ -272,3 +272,13 @@ impl Layout for Colemak {
         }
     }
 }
+
+pub struct FromFile; 
+
+impl FromFile {
+    fn new(filename: &str) -> FromFile { 
+        FromFile        
+    }
+}
+
+
