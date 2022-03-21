@@ -242,6 +242,33 @@ impl Layout for Colemak {
     }
 
     fn to_qwerty(&self, layout_press: u8) -> u8 {
-        0
+        match layout_press {
+            102 => 101,
+            112 => 114,
+            103 => 116,
+            106 => 121,
+            108 => 117,
+            117 => 105,
+            121 => 111,
+            59 => 112,
+            114 => 115,
+            115 => 100,
+            116 => 102,
+            100 => 103,
+            110 => 106,
+            101 => 107,
+            105 => 108,
+            111 => 59,
+            107 => 110,
+            other => {
+                // shift + colemak letter => shift + qwerty equivalent
+                // O => :
+                if (other >= 65 && other <= 90) || other == 58 {
+                    shift_qwerty(self.to_qwerty(deshift_qwerty(other)))
+                } else {
+                    other
+                }
+            }
+        }
     }
 }
