@@ -11,18 +11,22 @@ use crossterm::{
 
 pub struct Editor {
     stdout: Stdout,
+    quit: bool,
 }
 
 impl Editor {
     pub fn new() -> Editor {
-        Editor{ stdout: stdout() }
+        Editor{ stdout: stdout(), quit: false }
     }
 
     pub fn run(&mut self) -> Result<()> {
         self.setup()?;
         println!("Hello, world!\r");
         loop {
-
+            self.process_keypress()?; 
+            if self.quit {
+                break;
+            }
         }
         Ok(())
     }
@@ -30,6 +34,10 @@ impl Editor {
     fn setup(&mut self) -> Result<()> {
         execute!(self.stdout, EnterAlternateScreen)?;
         terminal::enable_raw_mode()
+    }
+
+    fn process_keypress(&mut self) -> Result<()> {
+        Ok(())
     }
 }
 
