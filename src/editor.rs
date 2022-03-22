@@ -1,22 +1,14 @@
-use std::io::{Write, Stdout, stdout};
-use crossterm::{
-    Result,
-    execute,
-    terminal::{
-        self,
-        EnterAlternateScreen,
-        LeaveAlternateScreen,
-    },
-};
+use crate::terminal::Terminal;
+use crossterm::Result;
 
 pub struct Editor {
-    stdout: Stdout,
+    terminal: Terminal,
     quit: bool,
 }
 
 impl Editor {
-    pub fn new() -> Editor {
-        Editor{ stdout: stdout(), quit: false }
+    pub fn new() -> Result<Editor> {
+        Ok( Editor{ terminal: Terminal::new()?, quit: false } )
     }
 
     pub fn run(&mut self) -> Result<()> {
@@ -32,8 +24,7 @@ impl Editor {
     }
 
     fn setup(&mut self) -> Result<()> {
-        execute!(self.stdout, EnterAlternateScreen)?;
-        terminal::enable_raw_mode()
+        self.terminal.enter_alternate_screen()
     }
 
     fn process_keypress(&mut self) -> Result<()> {
@@ -43,7 +34,6 @@ impl Editor {
 
 impl Drop for Editor {
     fn drop(&mut self) {
-        terminal::disable_raw_mode().expect("Failed to disable raw mode.");
-        execute!(self.stdout, LeaveAlternateScreen).expect("Failed to leave alternate screen.");
+        self.terminal.leave_alternate_screen().expect("Failed to leave alternate screen");
     }
 }
