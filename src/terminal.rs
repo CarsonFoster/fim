@@ -1,5 +1,10 @@
 use std::io::{Stdout, stdout};
 use crossterm::{
+    event::{
+        Event,
+        KeyEvent,
+        read,
+    },
     Result,
     execute,
     terminal::{
@@ -37,6 +42,15 @@ impl Terminal {
 
     pub fn leave_alternate_screen(&mut self) -> Result<()> {
         execute!(self.stdout, LeaveAlternateScreen)
+    }
+
+    pub fn read_key(&self) -> Result<KeyEvent> {
+        loop {
+            let event = read()?;
+            if let Event::Key(key_event) = event {
+                return Ok(key_event);
+            }
+        }
     }
 }
 

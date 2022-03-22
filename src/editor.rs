@@ -1,5 +1,11 @@
 use crate::terminal::Terminal;
-use crossterm::Result;
+use crossterm::{
+    event::{
+        KeyCode,
+        KeyEvent,
+    },
+    Result,
+};
 
 pub struct Editor {
     terminal: Terminal,
@@ -28,6 +34,11 @@ impl Editor {
     }
 
     fn process_keypress(&mut self) -> Result<()> {
+        let KeyEvent{ code: c, modifiers: m } = self.terminal.read_key()?;
+        match c {
+            KeyCode::Char('q') => self.quit = true,
+            _ => ()
+        }
         Ok(())
     }
 }
