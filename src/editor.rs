@@ -31,7 +31,7 @@ impl Editor {
     fn setup(&mut self) -> Result<()> {
         self.terminal.enter_alternate_screen()?;
         self.terminal.move_cursor_to(0, 0)?;
-        println!("Hello, world!\r");
+        self.draw_welcome_screen();
         Ok(())
     }
 
@@ -54,6 +54,17 @@ impl Editor {
             _ => ()
         }
         self.terminal.move_cursor()
+    }
+
+    fn draw_welcome_screen(&mut self) -> Result<()> {
+        self.terminal.hide_cursor()?;
+        self.terminal.clear_all()?;
+        for x in 0..(self.terminal.size().height - 1) {
+            println!("~\r"); 
+        }
+        print!("~");
+        self.terminal.move_cursor()?;
+        self.terminal.show_cursor()
     }
 }
 

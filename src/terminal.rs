@@ -2,7 +2,9 @@ use std::io::{Stdout, stdout};
 use crossterm::{
     Result,
     cursor::{
+        Hide,
         MoveTo,
+        Show,
     },
     event::{
         Event,
@@ -13,6 +15,8 @@ use crossterm::{
     terminal::{
         self,
         EnterAlternateScreen,
+        Clear,
+        ClearType,
         LeaveAlternateScreen,
     },
 };
@@ -69,6 +73,14 @@ impl Terminal {
         &self.cursor_pos
     }
 
+    pub fn hide_cursor(&mut self) -> Result<()> {
+        execute!(self.stdout, Hide)
+    }
+
+    pub fn show_cursor(&mut self) -> Result<()> {
+        execute!(self.stdout, Show)
+    }
+
     pub fn move_cursor(&mut self) -> Result<()> { 
         execute!(self.stdout, MoveTo(self.cursor_pos.x, self.cursor_pos.y))
     }
@@ -105,6 +117,10 @@ impl Terminal {
 
     pub fn leave_alternate_screen(&mut self) -> Result<()> {
         execute!(self.stdout, LeaveAlternateScreen)
+    }
+
+    pub fn clear_all(&mut self) -> Result<()> {
+        execute!(self.stdout, Clear(ClearType::All))
     }
 
     pub fn read_key(&self) -> Result<KeyEvent> {
