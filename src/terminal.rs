@@ -80,26 +80,32 @@ impl Terminal {
         self.move_cursor()
     }
 
-    pub fn cursor_to(&mut self, x: u16, y: u16) {
+    pub fn cursor_to(&mut self, x: u16, y: u16) -> &mut Self {
         self.set_x(x);
         self.set_y(y);
+        self
     }
 
-    pub fn cursor_left_by(&mut self, d_x: u16) {
+    pub fn cursor_left_by(&mut self, d_x: u16) -> &mut Self {
         self.cursor_to(Self::saturating_sub(self.cursor_pos.x, d_x), self.cursor_pos.y);
+        self
     }
 
-    pub fn cursor_right_by(&mut self, d_x: u16) {
+    pub fn cursor_right_by(&mut self, d_x: u16) -> &mut Self {
         self.cursor_to(self.cursor_pos.x.saturating_add(d_x), self.cursor_pos.y);
+        self
     }
 
-    pub fn cursor_up_by(&mut self, d_y: u16) {
+    pub fn cursor_up_by(&mut self, d_y: u16) -> &mut Self {
         self.cursor_to(self.cursor_pos.x, Self::saturating_sub(self.cursor_pos.y, d_y));
+        self
     }
 
-    pub fn cursor_down_by(&mut self, d_y: u16) {
+    pub fn cursor_down_by(&mut self, d_y: u16) -> &mut Self {
         self.cursor_to(self.cursor_pos.x, self.cursor_pos.y.saturating_add(d_y));
+        self
     }
+    
 
     pub fn enter_alternate_screen(&mut self) -> Result<()> {
         execute!(self.stdout, EnterAlternateScreen)

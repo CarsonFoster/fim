@@ -56,8 +56,8 @@ impl Editor {
             KeyCode::Char('j') => self.terminal.cursor_down_by(1),
             KeyCode::Char('k') => self.terminal.cursor_up_by(1),
             KeyCode::Char('l') => self.terminal.cursor_right_by(1),
-            _ => ()
-        }
+            _ => &mut self.terminal // the other functions return &mut Terminal so you can chain them
+        };
         self.terminal.move_cursor()
     }
 
