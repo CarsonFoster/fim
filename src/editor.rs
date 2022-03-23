@@ -1,10 +1,16 @@
 use crate::terminal::Terminal;
 use crossterm::{
+    Result,
+    cursor,
     event::{
         KeyCode,
         KeyEvent,
     },
-    Result,
+    terminal::{
+        Clear,
+        ClearType,
+    },
+    style::Print,
 };
 
 pub struct Editor {
@@ -31,8 +37,7 @@ impl Editor {
     fn setup(&mut self) -> Result<()> {
         self.terminal.enter_alternate_screen()?;
         self.terminal.move_cursor_to(0, 0)?;
-        self.draw_welcome_screen();
-        Ok(())
+        self.draw_welcome_screen()
     }
 
     fn process_keypress(&mut self) -> Result<()> {
@@ -57,14 +62,11 @@ impl Editor {
     }
 
     fn draw_welcome_screen(&mut self) -> Result<()> {
-        self.terminal.hide_cursor()?;
-        self.terminal.clear_all()?;
-        for x in 0..(self.terminal.size().height - 1) {
-            println!("~\r"); 
+        self.terminal.q(cursor::SavePosition)?.q(cursor::Hide)?.q(Clear(ClearType::All))?;
+        for _ in 0..(self.terminal.size().height - 1) {
+            self.terminal.q(Print("~\r\n"))?;
         }
-        print!("~");
-        self.terminal.move_cursor()?;
-        self.terminal.show_cursor()
+        self.terminal.q(Print("~"))?.q(cursor::RestorePosition)?.q(cursor::Show)?.flush()
     }
 }
 

@@ -1,10 +1,10 @@
-use std::io::{Stdout, stdout};
+use std::io::{Stdout, Write, stdout};
 use crossterm::{
+    Command,
     Result,
+    QueueableCommand,
     cursor::{
-        Hide,
         MoveTo,
-        Show,
     },
     event::{
         Event,
@@ -15,8 +15,6 @@ use crossterm::{
     terminal::{
         self,
         EnterAlternateScreen,
-        Clear,
-        ClearType,
         LeaveAlternateScreen,
     },
 };
@@ -54,13 +52,13 @@ impl Terminal {
     }
 
     fn set_x(&mut self, x: u16) {
-        if x >= 0 && x < self.size.width {
+        if x < self.size.width {
             self.cursor_pos.x = x;
         }
     }
 
     fn set_y(&mut self, y: u16) {
-        if y >= 0 && y < self.size.height {
+        if y < self.size.height {
             self.cursor_pos.y = y;
         }
     }
@@ -71,14 +69,6 @@ impl Terminal {
 
     pub fn cursor_pos(&self) -> &Position {
         &self.cursor_pos
-    }
-
-    pub fn hide_cursor(&mut self) -> Result<()> {
-        execute!(self.stdout, Hide)
-    }
-
-    pub fn show_cursor(&mut self) -> Result<()> {
-        execute!(self.stdout, Show)
     }
 
     pub fn move_cursor(&mut self) -> Result<()> { 
@@ -119,8 +109,13 @@ impl Terminal {
         execute!(self.stdout, LeaveAlternateScreen)
     }
 
-    pub fn clear_all(&mut self) -> Result<()> {
-        execute!(self.stdout, Clear(ClearType::All))
+    pub fn q(&mut self, cmd: impl Command) -> Result<&mut Self> {
+        self.stdout.queue(cmd)?;
+        Ok(self)
+    }
+
+    pub fn flush(&mut self) -> Result<()> {
+        self.stdout.flush()
     }
 
     pub fn read_key(&self) -> Result<KeyEvent> {
