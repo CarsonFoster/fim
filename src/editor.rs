@@ -10,7 +10,10 @@ use crossterm::{
         Clear,
         ClearType,
     },
-    style::Print,
+    style::{
+        Print,
+        Stylize,
+    },
 };
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -75,10 +78,10 @@ impl Editor {
                 self.terminal.q(Print(self.terminal.centered("~", &self.welcome_message[message_line as usize], "") + "\r\n"));
                 message_line += 1;
             } else {
-                self.terminal.q(Print("~\r\n"))?;
+                self.terminal.q(Print("~\r\n".blue()))?;
             }
         }
-        self.terminal.q(Print("~"))?.q(cursor::RestorePosition)?.q(cursor::Show)?.flush()
+        self.terminal.q(Print("~".blue()))?.q(cursor::RestorePosition)?.q(cursor::Show)?.flush()
     }
 }
 
