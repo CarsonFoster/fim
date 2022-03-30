@@ -67,10 +67,11 @@ impl Editor {
 
     fn draw_welcome_screen(&mut self) -> Result<()> {
         let height = self.terminal.size().height;
-        let mut message_line = 0;
+        let message_len = self.welcome_message.len() as u16;
+        let mut message_line: u16 = 0;
         self.terminal.q(cursor::SavePosition)?.q(cursor::Hide)?.q(Clear(ClearType::All))?;
         for i in 0..(height - 1) {
-            if i == height / 2 + message_line {
+            if message_line < message_len && i == height / 2 - message_len / 2 + message_line {
                 self.terminal.q(Print(self.terminal.centered("~", &self.welcome_message[message_line as usize], "") + "\r\n"));
                 message_line += 1;
             } else {
