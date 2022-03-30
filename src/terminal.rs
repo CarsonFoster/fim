@@ -75,6 +75,11 @@ impl Terminal {
         execute!(self.stdout, MoveTo(self.cursor_pos.x, self.cursor_pos.y))
     }
 
+    pub fn q_move_cursor(&mut self) -> Result<&mut Self> {
+        self.stdout.queue(MoveTo(self.cursor_pos.x, self.cursor_pos.y))?;
+        Ok(self)
+    }
+
     pub fn move_cursor_to(&mut self, x: u16, y: u16) -> Result<()> {
         self.cursor_to(x, y);
         self.move_cursor()
@@ -131,6 +136,65 @@ impl Terminal {
                 return Ok(key_event);
             }
         }
+    }
+
+    pub fn centered(&self, prefix: &str, text: &str, suffix: &str) -> String {
+        // NOTE: does not deal with graphemes/unicode! ASCII only
+        // nothing should overflow; a usize amount of text is an insane amount
+        let length = text.len();
+        let term_length = self.size.width as usize;
+        let prefix_length = prefix.len();
+        let suffix_length = suffix.len();
+
+        let mut result = String::with_capacity(term_length);
+        if length + prefix_length + suffix_length < term_length {
+            // everything fits, add padding; extra padding goes on the end
+            let padding = term_length - length - prefix_length - suffix_length;
+            let left_padding = term_length / 2 - length / 2 - prefix_length;
+            let right_padding = padding - left_padding;
+            result.push_str(prefix);
+            for _ in 0..left_padding {
+                result.push_str(" ");
+            }
+            result.push_str(text);
+            for _ in 0..right_padding {
+                result.push_str(" ");
+            }
+            result.push_str(suffix);
+        } else if length < term_length {
+            // at least the main text fits
+            // adds as many prefix and suffix characters as possible; if prefix/suffix runs out,
+            // padding is used for the remaining characters instead
+            // extra character goes on left
+            let remainder = term_length - length;
+            let right_length = remainder / 2;
+            let left_length = remainder - right_length;
+            if prefix.len() <= left_length {
+                result.push_str(prefix);
+                for _ in 0..(left_length - prefix.len()) {
+                    result.push_str(" ");
+                }
+            } else {
+                result.push_str(&prefix[0..left_length]);
+            }
+            result.push_str(text);
+            if suffix.len() <= right_length {
+                for _ in 0..(right_length - suffix.len()) {
+                    result.push_str(" ");
+                }
+                result.push_str(suffix);
+            } else {
+                result.push_str(&suffix[0..right_length]);
+            }
+        } else {
+            // main text doesn't fit, include term_length characters from the middle
+            // bias toward extra character on the beginning
+            let removed_chars = length - term_length;
+            let skip = removed_chars / 2;
+            let bytes: Vec<u8> = text.bytes().skip(skip).take(term_length).collect(); 
+            result = String::from_utf8(bytes).expect("centered expects only ASCII!");
+        }
+        result
     }
 }
 

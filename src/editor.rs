@@ -13,14 +13,18 @@ use crossterm::{
     style::Print,
 };
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub struct Editor {
     terminal: Terminal,
     quit: bool,
+    welcome_message: [String; 4],
 }
 
 impl Editor {
     pub fn new() -> Result<Editor> {
-        Ok( Editor{ terminal: Terminal::new()?, quit: false } )
+        let welcome_message = ["FIM - Foster's vi IMproved".into(), String::new(), format!("Version {}", VERSION), "by Carson Foster".into()];
+        Ok( Editor{ terminal: Terminal::new()?, quit: false, welcome_message } )
     }
 
     pub fn run(&mut self) -> Result<()> {
@@ -62,9 +66,16 @@ impl Editor {
     }
 
     fn draw_welcome_screen(&mut self) -> Result<()> {
+        let height = self.terminal.size().height;
+        let mut message_line = 0;
         self.terminal.q(cursor::SavePosition)?.q(cursor::Hide)?.q(Clear(ClearType::All))?;
-        for _ in 0..(self.terminal.size().height - 1) {
-            self.terminal.q(Print("~\r\n"))?;
+        for i in 0..(height - 1) {
+            if i == height / 2 + message_line {
+                self.terminal.q(Print(self.terminal.centered("~", &self.welcome_message[message_line as usize], "") + "\r\n"));
+                message_line += 1;
+            } else {
+                self.terminal.q(Print("~\r\n"))?;
+            }
         }
         self.terminal.q(Print("~"))?.q(cursor::RestorePosition)?.q(cursor::Show)?.flush()
     }
