@@ -12,6 +12,10 @@ use crossterm::{
         read,
     },
     execute,
+    style::{
+        ContentStyle,
+        Print,
+    },
     terminal::{
         self,
         EnterAlternateScreen,
@@ -27,6 +31,71 @@ pub struct Size {
 pub struct Position {
     pub x: u16,
     pub y: u16,
+}
+
+pub struct Centered<'a> {
+    stdout: &'a mut Stdout,
+    term_length: usize,
+    prefix: &'a str,
+    text: &'a str,
+    suffix: &'a str,
+    prefix_styles: ContentStyle,
+    text_styles: ContentStyle,
+    suffix_styles: ContentStyle,
+}
+
+impl<'a> Centered<'a> {
+    pub fn new(stdout: &'a mut Stdout, term_length: usize, prefix: &'a str, text: &'a str, suffix: &'a str,
+               prefix_styles: ContentStyle, text_styles: ContentStyle, suffix_styles: ContentStyle) -> Self {
+        Centered{ stdout, term_length, prefix, text, suffix, prefix_styles, text_styles, suffix_styles }
+    }
+
+    pub fn q(&mut self) -> Result<()> {
+        let length = self.text.len();
+        let prefix_length = self.prefix.len();
+        let suffix_length = self.suffix.len();
+
+        if length + prefix_length + suffix_length < self.term_length {
+            // everything fits, add padding; extra padding goes on the end
+            let padding = self.term_length - length - prefix_length - suffix_length;
+            let left_padding = self.term_length / 2 - length / 2 - prefix_length;
+            let right_padding = padding - left_padding;
+            self.stdout.queue(Print(self.prefix_styles.apply(self.prefix)))?;
+            self.stdout.queue(Print(" ".repeat(left_padding)))?;
+            self.stdout.queue(Print(self.text_styles.apply(self.text)))?;
+            self.stdout.queue(Print(" ".repeat(right_padding)))?;
+            self.stdout.queue(Print(self.suffix_styles.apply(self.suffix)))?;
+        } else if length < self.term_length {
+            // at least the main self.text fits
+            // adds as many self.prefix and self.suffix characters as possible; if self.prefix/self.suffix runs out,
+            // padding is used for the remaining characters instead
+            // extra character goes on left
+            let remainder = self.term_length - length;
+            let right_length = remainder / 2;
+            let left_length = remainder - right_length;
+            if self.prefix.len() <= left_length {
+                self.stdout.queue(Print(self.prefix_styles.apply(self.prefix)))?;
+                self.stdout.queue(Print(" ".repeat(left_length - self.prefix.len())))?;
+            } else {
+                self.stdout.queue(Print(self.prefix_styles.apply(&self.prefix[0..left_length])))?;
+            }
+            self.stdout.queue(Print(self.text_styles.apply(self.text)))?;
+            if self.suffix.len() <= right_length {
+                self.stdout.queue(Print(" ".repeat(right_length - self.suffix.len())))?;
+                self.stdout.queue(Print(self.suffix_styles.apply(self.suffix)))?;
+            } else {
+                self.stdout.queue(Print(self.suffix_styles.apply(&self.suffix[0..right_length])))?;
+            }
+        } else {
+            // main text doesn't fit, include self.term_length characters from the middle
+            // bias toward extra character on the beginning
+            let removed_chars = length - self.term_length;
+            let skip = removed_chars / 2;
+            let bytes: Vec<u8> = self.text.bytes().skip(skip).take(self.term_length).collect(); 
+            self.stdout.queue(Print(self.text_styles.apply(String::from_utf8(bytes).expect("centered expects only ASCII!"))))?;
+        }
+        Ok(())
+    }
 }
 
 pub struct Terminal {
@@ -138,6 +207,11 @@ impl Terminal {
         }
     }
 
+    pub fn centered_styles<'a>(&'a mut self, prefix: &'a str, text: &'a str, suffix: &'a str,
+                      prefix_styles: ContentStyle, text_styles: ContentStyle, suffix_styles: ContentStyle) -> Centered<'a> {
+        Centered::new(&mut self.stdout, self.size.width as usize, prefix, text, suffix, prefix_styles, text_styles, suffix_styles)  
+    }
+
     pub fn centered(&self, prefix: &str, text: &str, suffix: &str) -> String {
         // NOTE: does not deal with graphemes/unicode! ASCII only
         // nothing should overflow; a usize amount of text is an insane amount
@@ -203,4 +277,3 @@ impl Drop for Terminal {
         terminal::disable_raw_mode().expect("Failed to disable raw mode.");
     }
 }
-
