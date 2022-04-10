@@ -11,6 +11,7 @@ use crossterm::{
         ClearType,
     },
     style::{
+        ContentStyle,
         Print,
         Stylize,
     },
@@ -75,7 +76,9 @@ impl Editor {
         self.terminal.q(cursor::SavePosition)?.q(cursor::Hide)?.q(Clear(ClearType::All))?;
         for i in 0..(height - 1) {
             if message_line < message_len && i == height / 2 - message_len / 2 + message_line {
-                self.terminal.q(Print(self.terminal.centered("~", &self.welcome_message[message_line as usize], "") + "\r\n"));
+                self.terminal.centered_styles("~", &self.welcome_message[message_line as usize], "",
+                                              Some(ContentStyle::new().blue()), None, None);
+                // self.terminal.q(Print(self.terminal.centered("~", &self.welcome_message[message_line as usize], "") + "\r\n"));
                 message_line += 1;
             } else {
                 self.terminal.q(Print("~\r\n".blue()))?;
