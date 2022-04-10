@@ -77,7 +77,7 @@ impl Editor {
         for i in 0..(height - 1) {
             if message_line < message_len && i == height / 2 - message_len / 2 + message_line {
                 self.terminal.centered_styles("~", &self.welcome_message[message_line as usize], "",
-                                              Some(ContentStyle::new().blue()), None, None);
+                                              Some(ContentStyle::new().blue()), None, None).q()?;
                 // self.terminal.q(Print(self.terminal.centered("~", &self.welcome_message[message_line as usize], "") + "\r\n"));
                 message_line += 1;
             } else {
