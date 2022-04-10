@@ -39,14 +39,14 @@ pub struct Centered<'a> {
     prefix: &'a str,
     text: &'a str,
     suffix: &'a str,
-    prefix_styles: ContentStyle,
-    text_styles: ContentStyle,
-    suffix_styles: ContentStyle,
+    prefix_styles: Option<ContentStyle>,
+    text_styles: Option<ContentStyle>,
+    suffix_styles: Option<ContentStyle>,
 }
 
 impl<'a> Centered<'a> {
     pub fn new(stdout: &'a mut Stdout, term_length: usize, prefix: &'a str, text: &'a str, suffix: &'a str,
-               prefix_styles: ContentStyle, text_styles: ContentStyle, suffix_styles: ContentStyle) -> Self {
+               prefix_styles: Option<ContentStyle>, text_styles: Option<ContentStyle>, suffix_styles: Option<ContentStyle>) -> Self {
         Centered{ stdout, term_length, prefix, text, suffix, prefix_styles, text_styles, suffix_styles }
     }
 
@@ -54,17 +54,18 @@ impl<'a> Centered<'a> {
         let length = self.text.len();
         let prefix_length = self.prefix.len();
         let suffix_length = self.suffix.len();
+        let no_style = ContentStyle::new();
 
         if length + prefix_length + suffix_length < self.term_length {
             // everything fits, add padding; extra padding goes on the end
             let padding = self.term_length - length - prefix_length - suffix_length;
             let left_padding = self.term_length / 2 - length / 2 - prefix_length;
             let right_padding = padding - left_padding;
-            self.stdout.queue(Print(self.prefix_styles.apply(self.prefix)))?;
+            self.stdout.queue(Print(self.prefix_styles.map_or_else(|| no_style.apply(self.prefix), |s| s.apply(self.prefix))))?;
             self.stdout.queue(Print(" ".repeat(left_padding)))?;
-            self.stdout.queue(Print(self.text_styles.apply(self.text)))?;
+            self.stdout.queue(Print(self.text_styles.map_or_else(|| no_style.apply(self.text), |s| s.apply(self.text))))?;
             self.stdout.queue(Print(" ".repeat(right_padding)))?;
-            self.stdout.queue(Print(self.suffix_styles.apply(self.suffix)))?;
+            self.stdout.queue(Print(self.suffix_styles.map_or_else(|| no_style.apply(self.suffix), |s| s.apply(self.suffix))))?;
         } else if length < self.term_length {
             // at least the main self.text fits
             // adds as many self.prefix and self.suffix characters as possible; if self.prefix/self.suffix runs out,
@@ -74,17 +75,19 @@ impl<'a> Centered<'a> {
             let right_length = remainder / 2;
             let left_length = remainder - right_length;
             if self.prefix.len() <= left_length {
-                self.stdout.queue(Print(self.prefix_styles.apply(self.prefix)))?;
+                self.stdout.queue(Print(self.prefix_styles.map_or_else(|| no_style.apply(self.prefix), |s| s.apply(self.prefix))))?;
                 self.stdout.queue(Print(" ".repeat(left_length - self.prefix.len())))?;
             } else {
-                self.stdout.queue(Print(self.prefix_styles.apply(&self.prefix[0..left_length])))?;
+                let string = &self.prefix[0..left_length];
+                self.stdout.queue(Print(self.prefix_styles.map_or_else(|| no_style.apply(string), |s| s.apply(string))))?;
             }
-            self.stdout.queue(Print(self.text_styles.apply(self.text)))?;
+            self.stdout.queue(Print(self.text_styles.map_or_else(|| no_style.apply(self.text), |s| s.apply(self.text))))?;
             if self.suffix.len() <= right_length {
                 self.stdout.queue(Print(" ".repeat(right_length - self.suffix.len())))?;
-                self.stdout.queue(Print(self.suffix_styles.apply(self.suffix)))?;
+                self.stdout.queue(Print(self.suffix_styles.map_or_else(|| no_style.apply(self.suffix), |s| s.apply(self.suffix))))?;
             } else {
-                self.stdout.queue(Print(self.suffix_styles.apply(&self.suffix[0..right_length])))?;
+                let string = &self.suffix[0..right_length];
+                self.stdout.queue(Print(self.suffix_styles.map_or_else(|| no_style.apply(string), |s| s.apply(string))))?;
             }
         } else {
             // main text doesn't fit, include self.term_length characters from the middle
@@ -92,7 +95,9 @@ impl<'a> Centered<'a> {
             let removed_chars = length - self.term_length;
             let skip = removed_chars / 2;
             let bytes: Vec<u8> = self.text.bytes().skip(skip).take(self.term_length).collect(); 
-            self.stdout.queue(Print(self.text_styles.apply(String::from_utf8(bytes).expect("centered expects only ASCII!"))))?;
+            let string = String::from_utf8(bytes).expect("centered expects only ASCII!");
+            let slice: &str = string.as_ref();
+            self.stdout.queue(Print(self.text_styles.map_or_else(|| no_style.apply(slice), |s| s.apply(slice))))?;
         }
         Ok(())
     }
@@ -208,7 +213,7 @@ impl Terminal {
     }
 
     pub fn centered_styles<'a>(&'a mut self, prefix: &'a str, text: &'a str, suffix: &'a str,
-                      prefix_styles: ContentStyle, text_styles: ContentStyle, suffix_styles: ContentStyle) -> Centered<'a> {
+                      prefix_styles: Option<ContentStyle>, text_styles: Option<ContentStyle>, suffix_styles: Option<ContentStyle>) -> Centered<'a> {
         Centered::new(&mut self.stdout, self.size.width as usize, prefix, text, suffix, prefix_styles, text_styles, suffix_styles)  
     }
 
