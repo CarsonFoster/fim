@@ -27,7 +27,7 @@ pub struct Editor {
 
 impl Editor {
     pub fn new() -> Result<Editor> {
-        let welcome_message = ["FIM - Foster's vi IMproved".into(), String::new(), format!("Version {}", VERSION), "by Carson Foster".into()];
+        let welcome_message = ["FIM - Foster's vIM-like editor".into(), String::new(), format!("Version {}", VERSION), "by Carson Foster".into()];
         Ok( Editor{ terminal: Terminal::new()?, quit: false, welcome_message } )
     }
 
