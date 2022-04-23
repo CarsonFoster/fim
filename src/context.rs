@@ -21,3 +21,6 @@ pub trait Context {
         Ok(None)
     }
 }
+
+pub struct NormalMode;
+impl Context for NormalMode { }

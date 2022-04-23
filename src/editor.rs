@@ -1,3 +1,4 @@
+use crate::context::*;
 use crate::terminal::Terminal;
 use crossterm::{
     Result,
@@ -23,12 +24,13 @@ pub struct Editor {
     terminal: Terminal,
     quit: bool,
     welcome_message: [String; 4],
+    context_stack: Vec<Box<dyn Context>>,
 }
 
 impl Editor {
     pub fn new() -> Result<Editor> {
         let welcome_message = ["FIM - Foster's vIM-like editor".into(), String::new(), format!("Version {}", VERSION), "by Carson Foster".into()];
-        Ok( Editor{ terminal: Terminal::new()?, quit: false, welcome_message } )
+        Ok( Editor{ terminal: Terminal::new()?, quit: false, welcome_message, context_stack: vec![Box::new(NormalMode)] } )
     }
 
     pub fn run(&mut self) -> Result<()> {
