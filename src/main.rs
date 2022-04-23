@@ -1,6 +1,7 @@
 mod editor;
 mod layout;
 mod terminal;
+mod context;
 
 use editor::Editor;
 
