@@ -51,12 +51,22 @@ impl Editor {
     }
 
     fn process_keypress(&mut self) -> Result<()> {
-        let KeyEvent{ code: c, modifiers: m } = self.terminal.read_key()?;
-        match c {
-            KeyCode::Char('q') => self.quit = true,
-            KeyCode::Char('h') | KeyCode::Char('j') | KeyCode::Char('k') | KeyCode::Char('l') => self.move_key(c)?,
-            _ => ()
+        let event = self.terminal.read_key()?;
+        if let Some(mut last_box) = self.context_stack.pop() {
+            let mut msg = last_box.forward(self, event)?;
+            while msg.is_some() && self.context_stack.len() > 0 {
+                last_box = self.context_stack.pop().unwrap();
+                msg = last_box.receive(self, msg.unwrap())?;
+            }
+            self.context_stack.push(last_box);
         }
+
+//        let KeyEvent{ code: c, modifiers: m } = self.terminal.read_key()?;
+//        match c {
+//            KeyCode::Char('q') => self.quit = true,
+//            KeyCode::Char('h') | KeyCode::Char('j') | KeyCode::Char('k') | KeyCode::Char('l') => self.move_key(c)?,
+//            _ => ()
+//        }
         Ok(())
     }
 
