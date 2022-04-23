@@ -13,6 +13,11 @@ pub enum ContextMessage {
 }
 
 pub trait Context {
-    fn forward(&mut self, ed: &mut Editor) -> Result<Option<ContextMessage>>;
-    fn receive(&mut self, ed: &mut Editor, arg: ContextMessage) -> Result<Option<ContextMessage>>;
+    fn forward(&mut self, ed: &mut Editor, event: KeyEvent) -> Result<Option<ContextMessage>> {
+        Ok(None)
+    }
+
+    fn receive(&mut self, ed: &mut Editor, arg: ContextMessage) -> Result<Option<ContextMessage>> {
+        Ok(None)
+    }
 }
