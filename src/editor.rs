@@ -24,13 +24,14 @@ pub struct Editor<'a> {
     terminal: Terminal,
     quit: bool,
     context_stack: Vec<Box<dyn Context + 'a>>,
+    push_context_stack: Vec<Box<dyn Context + 'a>>,
     welcome_message: [String; 4],
 }
 
 impl<'a> Editor<'a> {
     pub fn new() -> Result<Editor<'a>> {
         let welcome_message = ["FIM - Foster's vIM-like editor".into(), String::new(), format!("Version {}", VERSION), "by Carson Foster".into()];
-        Ok( Editor{ terminal: Terminal::new()?, quit: false, welcome_message, context_stack: vec![Box::new(NormalMode)] } )
+        Ok( Editor{ terminal: Terminal::new()?, quit: false, welcome_message, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new()  } )
     }
 
     pub fn run(&mut self) -> Result<()> {
@@ -59,6 +60,7 @@ impl<'a> Editor<'a> {
                 msg = last_box.receive(self, msg.unwrap())?;
             }
             self.context_stack.push(last_box);
+            self.context_stack.append(&mut self.push_context_stack);
         }
 
 //        let KeyEvent{ code: c, modifiers: m } = self.terminal.read_key()?;
@@ -75,7 +77,7 @@ impl<'a> Editor<'a> {
     }
 
     pub fn push_context<C: 'a + Context>(&mut self, context: C) {
-        self.context_stack.push(Box::new(context)); 
+        self.push_context_stack.push(Box::new(context)); 
     }
 
     fn move_key(&mut self, key: KeyCode) -> Result<()> {
