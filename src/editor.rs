@@ -20,15 +20,15 @@ use crossterm::{
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub struct Editor {
+pub struct Editor<'a> {
     terminal: Terminal,
     quit: bool,
+    context_stack: Vec<Box<dyn Context + 'a>>,
     welcome_message: [String; 4],
-    context_stack: Vec<Box<dyn Context>>,
 }
 
-impl Editor {
-    pub fn new() -> Result<Editor> {
+impl<'a> Editor<'a> {
+    pub fn new() -> Result<Editor<'a>> {
         let welcome_message = ["FIM - Foster's vIM-like editor".into(), String::new(), format!("Version {}", VERSION), "by Carson Foster".into()];
         Ok( Editor{ terminal: Terminal::new()?, quit: false, welcome_message, context_stack: vec![Box::new(NormalMode)] } )
     }
@@ -70,6 +70,14 @@ impl Editor {
         Ok(())
     }
 
+    pub fn quit(&mut self) {
+        self.quit = true;
+    }
+
+    pub fn push_context<C: 'a + Context>(&mut self, context: C) {
+        self.context_stack.push(Box::new(context)); 
+    }
+
     fn move_key(&mut self, key: KeyCode) -> Result<()> {
         match key {
             KeyCode::Char('h') => self.terminal.cursor_left_by(1),
@@ -100,7 +108,7 @@ impl Editor {
     }
 }
 
-impl Drop for Editor {
+impl<'a> Drop for Editor<'a> {
     fn drop(&mut self) {
         self.terminal.leave_alternate_screen().expect("Failed to leave alternate screen");
     }
