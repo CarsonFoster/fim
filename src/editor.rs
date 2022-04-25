@@ -25,13 +25,14 @@ pub struct Editor<'a> {
     quit: bool,
     context_stack: Vec<Box<dyn Context + 'a>>,
     push_context_stack: Vec<Box<dyn Context + 'a>>,
+    has_been_setup_stack: Vec<bool>,
     welcome_message: [String; 4],
 }
 
 impl<'a> Editor<'a> {
     pub fn new() -> Result<Editor<'a>> {
         let welcome_message = ["FIM - Foster's vIM-like editor".into(), String::new(), format!("Version {}", VERSION), "by Carson Foster".into()];
-        Ok( Editor{ terminal: Terminal::new()?, quit: false, welcome_message, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new()  } )
+        Ok( Editor{ terminal: Terminal::new()?, quit: false, welcome_message, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true]  } )
     }
 
     pub fn run(&mut self) -> Result<()> {
@@ -54,13 +55,28 @@ impl<'a> Editor<'a> {
     fn process_keypress(&mut self) -> Result<()> {
         let event = self.terminal.read_key()?;
         if let Some(mut last_box) = self.context_stack.pop() {
+            let mut setup = self.has_been_setup_stack.pop().unwrap();
             let mut msg = last_box.forward(self, event)?;
             while msg.is_some() && self.context_stack.len() > 0 {
                 last_box = self.context_stack.pop().unwrap();
+                setup = self.has_been_setup_stack.pop().unwrap();
+                if !setup {
+                    last_box.setup(self)?;
+                }
                 msg = last_box.receive(self, msg.unwrap())?;
             }
             self.context_stack.push(last_box);
+            self.has_been_setup_stack.push(true);
+            for _ in 0..self.push_context_stack.len() {
+                self.has_been_setup_stack.push(false);
+            }
             self.context_stack.append(&mut self.push_context_stack);
+            if let Some(false) = self.has_been_setup_stack.last() {
+                last_box = self.context_stack.pop().unwrap();
+                last_box.setup(self)?;
+                self.context_stack.push(last_box);
+                self.has_been_setup_stack.push(true);
+            }
         }
 
 //        let KeyEvent{ code: c, modifiers: m } = self.terminal.read_key()?;

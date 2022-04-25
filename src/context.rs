@@ -14,6 +14,9 @@ pub enum ContextMessage {
 }
 
 pub trait Context {
+    fn setup(&mut self, ed: &mut Editor) -> Result<()> {
+        Ok(())
+    }
     fn forward(&mut self, ed: &mut Editor, event: KeyEvent) -> Result<Option<ContextMessage>> {
         Ok(None)
     }
@@ -45,6 +48,10 @@ impl CommandMode {
 }
 
 impl Context for CommandMode {
+    fn setup(&mut self, ed: &mut Editor) -> Result<()> {
+        ed.draw_cmd_line([":"])
+    }
+
     fn forward(&mut self, ed: &mut Editor, event: KeyEvent) -> Result<Option<ContextMessage>> {
         let KeyEvent{ code: c, modifiers: m } = event;
         match c {
