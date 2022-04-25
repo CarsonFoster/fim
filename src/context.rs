@@ -65,6 +65,7 @@ impl Context for CommandMode {
             KeyCode::Char(character) => {
                 self.str.push(character);
                 // TODO: display command line
+                ed.draw_cmd_line([":", self.str.as_str()])?;
             },
             otherwise => (), // TODO: implement arrow keys and cursor
         }
