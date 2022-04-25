@@ -1,5 +1,5 @@
 use crate::context::*;
-use crate::terminal::Terminal;
+use crate::terminal::{Size, Terminal};
 use crossterm::{
     Result,
     cursor,
@@ -103,6 +103,10 @@ impl<'a> Editor<'a> {
             self.terminal.q(Print(text_bit));
         }
         self.terminal.flush()
+    }
+
+    pub fn terminal_size(&self) -> &Size {
+        self.terminal.size()
     }
 
     fn move_key(&mut self, key: KeyCode) -> Result<()> {

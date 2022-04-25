@@ -39,11 +39,12 @@ impl Context for NormalMode {
 
 pub struct CommandMode {
     str: String,
+    begin: usize,
 }
 
 impl CommandMode {
     pub fn new() -> CommandMode {
-        CommandMode{ str: String::new() }
+        CommandMode{ str: String::new(), begin: 0 }
     }
 }
 
@@ -71,8 +72,11 @@ impl Context for CommandMode {
             },
             KeyCode::Char(character) => {
                 self.str.push(character);
-                // TODO: display command line
-                ed.draw_cmd_line([":", self.str.as_str()])?;
+                // one extra character for colon and one extra for cursor
+                if self.begin != 0 || self.str.len() + 2 > ed.terminal_size().width.into() {
+                    self.begin += 1;
+                }
+                ed.draw_cmd_line([":", &self.str[self.begin..]])?;
             },
             otherwise => (), // TODO: implement arrow keys and cursor
         }
