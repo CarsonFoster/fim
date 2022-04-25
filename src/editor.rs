@@ -80,6 +80,15 @@ impl<'a> Editor<'a> {
         self.push_context_stack.push(Box::new(context)); 
     }
 
+    pub fn draw_cmd_line<const N: usize>(&mut self, text: [&str; N]) -> Result<()> {
+        let height = self.terminal.size().height;
+        self.terminal.cursor_to(0, height - 1).q_move_cursor()?.q(Clear(ClearType::CurrentLine))?;
+        for text_bit in text {
+            self.terminal.q(Print(text_bit));
+        }
+        self.terminal.flush()
+    }
+
     fn move_key(&mut self, key: KeyCode) -> Result<()> {
         match key {
             KeyCode::Char('h') => self.terminal.cursor_left_by(1),
