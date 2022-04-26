@@ -97,16 +97,20 @@ impl<'a> Editor<'a> {
     }
 
     pub fn draw_cmd_line<const N: usize>(&mut self, text: [&str; N]) -> Result<()> {
+        self.q_draw_cmd_line(text, true)
+    }
+
+    pub fn q_draw_cmd_line<const N: usize>(&mut self, text: [&str; N], flush: bool) -> Result<()> {
         let height = self.terminal.size().height;
         self.terminal.cursor_to(0, height - 1).q_move_cursor()?.q(Clear(ClearType::CurrentLine))?;
         for text_bit in text {
-            self.terminal.q(Print(text_bit));
+            self.terminal.q(Print(text_bit))?;
         }
-        self.terminal.flush()
+        if flush { self.terminal.flush() } else { Ok(()) }
     }
 
-    pub fn terminal_size(&self) -> &Size {
-        self.terminal.size()
+    pub fn terminal(&mut self) -> &mut Terminal {
+        &mut self.terminal
     }
 
     fn move_key(&mut self, key: KeyCode) -> Result<()> {
