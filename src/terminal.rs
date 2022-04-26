@@ -23,11 +23,13 @@ use crossterm::{
     },
 };
 
+#[derive(Copy, Clone)]
 pub struct Size {
     pub width: u16,
     pub height: u16,
 }
 
+#[derive(Copy, Clone)]
 pub struct Position {
     pub x: u16,
     pub y: u16,
@@ -107,6 +109,7 @@ pub struct Terminal {
     size: Size,
     stdout: Stdout,
     cursor_pos: Position,
+    cursor_stack: Vec<Position>,
 }
 
 impl Terminal {
@@ -114,7 +117,7 @@ impl Terminal {
         let (width, height) = terminal::size()?;
         let stdout = stdout();
         terminal::enable_raw_mode()?;
-        Ok( Terminal{ stdout, size: Size{ width, height }, cursor_pos: Position{ x: 0, y: 0 } } )
+        Ok( Terminal{ stdout, size: Size{ width, height }, cursor_pos: Position{ x: 0, y: 0 }, cursor_stack: Vec::new() } )
     }
 
     fn saturating_sub(x: u16, d: u16) -> u16 {
@@ -137,12 +140,22 @@ impl Terminal {
         }
     }
 
-    pub fn size(&self) -> &Size {
-        &self.size
+    pub fn size(&self) -> Size {
+        self.size
     }
 
     pub fn cursor_pos(&self) -> &Position {
         &self.cursor_pos
+    }
+
+    pub fn save_cursor(&mut self) {
+        self.cursor_stack.push(self.cursor_pos);
+    }
+
+    pub fn restore_cursor(&mut self) {
+        if let Some(pos) = self.cursor_stack.pop() {
+            self.cursor_pos = pos;
+        }
     }
 
     pub fn move_cursor(&mut self) -> Result<()> { 
