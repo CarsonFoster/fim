@@ -55,13 +55,27 @@ impl CommandMode {
         (1 + self.cursor_pos - self.begin) as u16
     }
 
+    fn q_move(&self, ed: &mut Editor) -> Result<()> {
+        let height = ed.terminal().size().height;
+        ed.terminal().cursor_to(self.terminal_x(), height - 1).q_move_cursor()?;
+        Ok(())
+    }
+
+    fn q_draw(&self, ed: &mut Editor) -> Result<()> {
+        // TODO: draw smaller slice, not begin till end
+        ed.q_draw_cmd_line([":", &self.str[self.begin..]], false)
+    }
+
+    fn draw(&self, ed: &mut Editor) -> Result<()> {
+        self.q_draw(ed)?;
+        ed.terminal().flush()
+    }
+
     fn delete(&mut self, ed: &mut Editor) -> Result<()> {
-        let size = ed.terminal().size();
         self.str.remove(self.cursor_pos.into()); 
         // TODO: adjust begin after delete?
-        ed.q_draw_cmd_line([":", &self.str[self.begin..]], false)?;
-        ed.terminal().cursor_to(self.terminal_x(), size.height - 1);
-        ed.terminal().q_move_cursor()?;
+        self.q_draw(ed)?;
+        self.q_move(ed)?;
         ed.terminal().flush()
     }
 }
@@ -82,6 +96,28 @@ impl Context for CommandMode {
                 }
                 return Ok(Some(ContextMessage::Unit))
             },
+            // TODO: history; cursor goes to end
+            KeyCode::Up => {
+
+            },
+            KeyCode::Down => {
+
+            },
+            KeyCode::Left => {
+                if self.cursor_pos > 0 {
+                    if self.terminal_x() == 1 && self.begin != 0 {
+                        self.begin -= 1;
+                        self.q_draw(ed)?;
+                    } else {
+                        self.cursor_pos -= 1;
+                        self.q_move(ed)?;
+                    }
+                    ed.terminal().flush()?;
+                }
+            },
+            KeyCode::Right => {
+
+            },
             KeyCode::Backspace => {
                 if self.cursor_pos > 0 {
                     self.cursor_pos -= 1;
@@ -94,6 +130,7 @@ impl Context for CommandMode {
                 }
             },
             KeyCode::Char(character) => {
+                // TODO: insert at cursor
                 self.str.push(character);
                 self.cursor_pos += 1;
                 // one extra character for colon and one extra for cursor
@@ -101,9 +138,9 @@ impl Context for CommandMode {
                 if self.begin != 0 || self.str.len() + 2 > ed.terminal().size().width.into() {
                     self.begin += 1;
                 }
-                ed.draw_cmd_line([":", &self.str[self.begin..]])?;
+                self.draw(ed)?;
             },
-            otherwise => (), // TODO: implement arrow keys and cursor
+            otherwise => (),
         }
         Ok(None)
     }
