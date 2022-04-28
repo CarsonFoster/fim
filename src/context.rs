@@ -97,6 +97,7 @@ impl Context for CommandMode {
                     "q" => ed.quit(),
                     otherwise => (),
                 }
+                ed.push_command(String::from(&self.str));
                 return Ok(Some(ContextMessage::Unit))
             },
             // TODO: history; cursor goes to end
