@@ -89,7 +89,9 @@ impl Context for CommandMode {
                 }
             },
             KeyCode::Delete => {
-
+                if self.cursor_pos < self.str.len() {
+                    self.delete(ed)?;
+                }
             },
             KeyCode::Char(character) => {
                 self.str.push(character);
