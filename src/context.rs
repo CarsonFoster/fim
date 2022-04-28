@@ -1,6 +1,7 @@
 use crate::editor::Editor;
 use crate::terminal::Position;
 //use std::io::{Error, ErrorKind};
+use std::cmp::min;
 use crossterm::{
     Result,
     cursor::{SavePosition, RestorePosition},
@@ -62,8 +63,9 @@ impl CommandMode {
     }
 
     fn q_draw(&self, ed: &mut Editor) -> Result<()> {
-        // TODO: draw smaller slice, not begin till end
-        ed.q_draw_cmd_line([":", &self.str[self.begin..]], false)
+        let width: usize = ed.terminal().size().width.into();
+        let end = min(self.begin + width - 1, self.str.len());
+        ed.q_draw_cmd_line([":", &self.str[self.begin..end]], false)
     }
 
     fn draw(&self, ed: &mut Editor) -> Result<()> {
