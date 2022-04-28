@@ -89,6 +89,7 @@ impl Context for CommandMode {
 
     fn forward(&mut self, ed: &mut Editor, event: KeyEvent) -> Result<Option<ContextMessage>> {
         let KeyEvent{ code: c, modifiers: m } = event;
+        let size = ed.terminal().size();
         match c {
             KeyCode::Enter => {
                 // TODO: implement actual logic
@@ -118,7 +119,16 @@ impl Context for CommandMode {
                 }
             },
             KeyCode::Right => {
-
+                if self.cursor_pos < self.str.len() {
+                    if self.terminal_x() + 1 == size.width {
+                        self.begin += 1;
+                        self.q_draw(ed)?;
+                    } else {
+                        self.cursor_pos += 1;
+                        self.q_move(ed)?;
+                    }
+                    ed.terminal().flush()?;
+                }
             },
             KeyCode::Backspace => {
                 if self.cursor_pos > 0 {
@@ -137,7 +147,7 @@ impl Context for CommandMode {
                 self.cursor_pos += 1;
                 // one extra character for colon and one extra for cursor
                 // TODO: don't always need to leave extra space for cursor
-                if self.begin != 0 || self.str.len() + 2 > ed.terminal().size().width.into() {
+                if self.begin != 0 || self.str.len() + 2 > size.width.into() {
                     self.begin += 1;
                 }
                 self.draw(ed)?;
