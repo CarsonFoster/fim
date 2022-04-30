@@ -181,17 +181,15 @@ impl Context for CommandMode {
                 }
             },
             KeyCode::Char(character) => {
+                if (self.begin == 0 && self.cursor_pos + 2 == size.width.into()) || (self.begin != 0 && self.cursor_pos == self.str.len()) {
+                    self.begin += 1;
+                }
                 if self.cursor_pos >= self.str.len() {
                     self.str.push(character);
                 } else {
                     self.str.insert(self.cursor_pos, character);
                 }
                 self.cursor_pos += 1;
-                // one extra character for colon and one extra for cursor
-                // TODO: don't always need to leave extra space for cursor
-                if self.begin != 0 || self.str.len() + 2 > size.width.into() {
-                    self.begin += 1;
-                }
                 self.q_draw(ed)?;
                 self.q_move(ed)?;
                 ed.terminal().flush()?;
