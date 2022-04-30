@@ -59,10 +59,10 @@ impl CommandMode {
 
     fn begin_for_end(&self, width: u16) -> usize {
         let width: usize = width.into();
-        if width > self.str.len() + 1 {
+        if width > self.str.len() + 2 {
             0
         } else {
-            self.str.len() + 1 - width
+            self.str.len() + 2 - width
         }
     }
 
@@ -181,7 +181,6 @@ impl Context for CommandMode {
                 }
             },
             KeyCode::Char(character) => {
-                // TODO: insert at cursor
                 if self.cursor_pos >= self.str.len() {
                     self.str.push(character);
                 } else {
