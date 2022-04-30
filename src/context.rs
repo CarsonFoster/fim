@@ -45,15 +45,25 @@ pub struct CommandMode {
     str: String,
     begin: usize,
     cursor_pos: usize,
+    rev_cmd_idx: Option<usize>,
 }
 
 impl CommandMode {
     pub fn new() -> CommandMode {
-        CommandMode{ str: String::new(), begin: 0, cursor_pos: 0 }
+        CommandMode{ str: String::new(), begin: 0, cursor_pos: 0, rev_cmd_idx: None }
     }
 
     fn terminal_x(&self) -> u16 {
         (1 + self.cursor_pos - self.begin) as u16
+    }
+
+    fn begin_for_end(&self, width: u16) -> usize {
+        let width: usize = width.into();
+        if width > self.str.len() + 1 {
+            0
+        } else {
+            self.str.len() + 1 - width
+        }
     }
 
     fn q_move(&self, ed: &mut Editor) -> Result<()> {
@@ -80,6 +90,14 @@ impl CommandMode {
         self.q_move(ed)?;
         ed.terminal().flush()
     }
+
+    fn get_command<'a>(&self, stack: &'a Vec<String>) -> Option<&'a String> {
+        if let Some(idx) = self.rev_cmd_idx {
+            if stack.len() < idx + 1 { None } else { stack.get(stack.len() - idx - 1) }
+        } else {
+            None
+        }
+    }
 }
 
 impl Context for CommandMode {
@@ -102,7 +120,20 @@ impl Context for CommandMode {
             },
             // TODO: history; cursor goes to end
             KeyCode::Up => {
-
+                // TODO: memorize current command before first up press
+                self.rev_cmd_idx = Some(self.rev_cmd_idx.map_or(0, |i| i + 1));
+                let command_stack = ed.command_stack();
+                let cmd = self.get_command(command_stack);
+                if let Some(cmd) = cmd {
+                    self.cursor_pos = cmd.len();
+                    self.str = String::from(cmd);
+                    self.begin = self.begin_for_end(size.width);
+                    self.q_draw(ed)?;
+                    self.q_move(ed)?;
+                    ed.terminal().flush();
+                } else {
+                    self.rev_cmd_idx = if self.rev_cmd_idx.unwrap() == 0 { None } else { Some(self.rev_cmd_idx.unwrap() - 1) };
+                }
             },
             KeyCode::Down => {
 

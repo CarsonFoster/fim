@@ -118,6 +118,10 @@ impl<'a> Editor<'a> {
         self.command_stack.push(cmd);
     }
 
+    pub fn command_stack(&self) -> &Vec<String> {
+        &self.command_stack
+    }
+
     fn move_key(&mut self, key: KeyCode) -> Result<()> {
         match key {
             KeyCode::Char('h') => self.terminal.cursor_left_by(1),
