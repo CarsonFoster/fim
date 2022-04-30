@@ -78,11 +78,6 @@ impl CommandMode {
         ed.q_draw_cmd_line([":", &self.str[self.begin..end]], false)
     }
 
-    fn draw(&self, ed: &mut Editor) -> Result<()> {
-        self.q_draw(ed)?;
-        ed.terminal().flush()
-    }
-
     fn delete(&mut self, ed: &mut Editor) -> Result<()> {
         self.str.remove(self.cursor_pos.into()); 
         // TODO: adjust begin after delete?
@@ -118,7 +113,6 @@ impl Context for CommandMode {
                 ed.push_command(String::from(&self.str));
                 return Ok(Some(ContextMessage::Unit))
             },
-            // TODO: history; cursor goes to end
             KeyCode::Up => {
                 // TODO: memorize current command before first up press
                 self.rev_cmd_idx = Some(self.rev_cmd_idx.map_or(0, |i| i + 1));
@@ -188,14 +182,20 @@ impl Context for CommandMode {
             },
             KeyCode::Char(character) => {
                 // TODO: insert at cursor
-                self.str.push(character);
+                if self.cursor_pos >= self.str.len() {
+                    self.str.push(character);
+                } else {
+                    self.str.insert(self.cursor_pos, character);
+                }
                 self.cursor_pos += 1;
                 // one extra character for colon and one extra for cursor
                 // TODO: don't always need to leave extra space for cursor
                 if self.begin != 0 || self.str.len() + 2 > size.width.into() {
                     self.begin += 1;
                 }
-                self.draw(ed)?;
+                self.q_draw(ed)?;
+                self.q_move(ed)?;
+                ed.terminal().flush()?;
             },
             otherwise => (),
         }
