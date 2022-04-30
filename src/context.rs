@@ -136,7 +136,20 @@ impl Context for CommandMode {
                 }
             },
             KeyCode::Down => {
-
+                if self.rev_cmd_idx.unwrap_or_default() > 0 {
+                    self.rev_cmd_idx = self.rev_cmd_idx.map(|i| i - 1);
+                    let cmd = self.get_command(ed.command_stack());
+                    if let Some(cmd) = cmd {
+                        self.cursor_pos = cmd.len();
+                        self.str = String::from(cmd);
+                        self.begin = self.begin_for_end(size.width);
+                        self.q_draw(ed)?;
+                        self.q_move(ed)?;
+                        ed.terminal().flush();
+                    } else {
+                        self.rev_cmd_idx = self.rev_cmd_idx.map(|i| i + 1);
+                    }
+                }
             },
             KeyCode::Left => {
                 if self.cursor_pos > 0 {
