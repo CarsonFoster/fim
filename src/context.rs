@@ -1,10 +1,8 @@
 use crate::editor::Editor;
-use crate::terminal::Position;
 //use std::io::{Error, ErrorKind};
 use std::cmp::min;
 use crossterm::{
     Result,
-    cursor::{SavePosition, RestorePosition},
     event::{KeyCode, KeyEvent, KeyModifiers},
 };
 
@@ -18,14 +16,14 @@ pub enum ContextMessage {
 }
 
 pub trait Context {
-    fn setup(&mut self, ed: &mut Editor) -> Result<()> {
+    fn setup(&mut self, _ed: &mut Editor) -> Result<()> {
         Ok(())
     }
-    fn forward(&mut self, ed: &mut Editor, event: KeyEvent) -> Result<Option<ContextMessage>> {
+    fn forward(&mut self, _ed: &mut Editor, _event: KeyEvent) -> Result<Option<ContextMessage>> {
         Ok(None)
     }
 
-    fn receive(&mut self, ed: &mut Editor, arg: ContextMessage) -> Result<Option<ContextMessage>> {
+    fn receive(&mut self, _ed: &mut Editor, _arg: ContextMessage) -> Result<Option<ContextMessage>> {
         Ok(None)
     }
 }
@@ -33,7 +31,7 @@ pub trait Context {
 pub struct NormalMode;
 impl Context for NormalMode {
     fn forward(&mut self, ed: &mut Editor, event: KeyEvent) -> Result<Option<ContextMessage>> {
-        let KeyEvent{ code: c, modifiers: m } = event;
+        let KeyEvent{ code: c, modifiers: _ } = event;
         if c == KeyCode::Char(':') {
             ed.push_context(CommandMode::new()); 
         }
@@ -46,11 +44,12 @@ pub struct CommandMode {
     begin: usize,
     cursor_pos: usize,
     rev_cmd_idx: Option<usize>,
+    saved_str: Option<String>,
 }
 
 impl CommandMode {
     pub fn new() -> CommandMode {
-        CommandMode{ str: String::new(), begin: 0, cursor_pos: 0, rev_cmd_idx: None }
+        CommandMode{ str: String::new(), begin: 0, cursor_pos: 0, rev_cmd_idx: None, saved_str: None }
     }
 
     fn terminal_x(&self) -> u16 {
@@ -101,20 +100,23 @@ impl Context for CommandMode {
     }
 
     fn forward(&mut self, ed: &mut Editor, event: KeyEvent) -> Result<Option<ContextMessage>> {
-        let KeyEvent{ code: c, modifiers: m } = event;
+        let KeyEvent{ code: c, modifiers: _ } = event;
         let size = ed.terminal().size();
         match c {
             KeyCode::Enter => {
                 // TODO: implement actual logic
                 match self.str.as_str() {
                     "q" => ed.quit(),
-                    otherwise => (),
+                    _ => (),
                 }
                 ed.push_command(String::from(&self.str));
                 return Ok(Some(ContextMessage::Unit))
             },
             KeyCode::Up => {
                 // TODO: memorize current command before first up press
+                if self.rev_cmd_idx.is_none() {
+                    self.saved_str = Some(String::from(&self.str));
+                }
                 self.rev_cmd_idx = Some(self.rev_cmd_idx.map_or(0, |i| i + 1));
                 let command_stack = ed.command_stack();
                 let cmd = self.get_command(command_stack);
@@ -124,7 +126,7 @@ impl Context for CommandMode {
                     self.begin = self.begin_for_end(size.width);
                     self.q_draw(ed)?;
                     self.q_move(ed)?;
-                    ed.terminal().flush();
+                    ed.terminal().flush()?;
                 } else {
                     self.rev_cmd_idx = if self.rev_cmd_idx.unwrap() == 0 { None } else { Some(self.rev_cmd_idx.unwrap() - 1) };
                 }
@@ -139,9 +141,19 @@ impl Context for CommandMode {
                         self.begin = self.begin_for_end(size.width);
                         self.q_draw(ed)?;
                         self.q_move(ed)?;
-                        ed.terminal().flush();
+                        ed.terminal().flush()?;
                     } else {
                         self.rev_cmd_idx = self.rev_cmd_idx.map(|i| i + 1);
+                    }
+                } else if let Some(0) = self.rev_cmd_idx {
+                    if let Some(cmd) = self.saved_str.take() {
+                        self.rev_cmd_idx = None;
+                        self.cursor_pos = cmd.len();
+                        self.str = cmd;
+                        self.begin = self.begin_for_end(size.width);
+                        self.q_draw(ed)?;
+                        self.q_move(ed)?;
+                        ed.terminal().flush()?;
                     }
                 }
             },
@@ -194,7 +206,7 @@ impl Context for CommandMode {
                 self.q_move(ed)?;
                 ed.terminal().flush()?;
             },
-            otherwise => (),
+            _ => (),
         }
         Ok(None)
     }
