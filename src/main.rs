@@ -3,13 +3,7 @@
 //! functions, while building off of other features.
 //!
 //! (vimscript or its analogue won't be included for a long time, sorry)
-
-mod editor;
-mod layout;
-mod terminal;
-mod context;
-
-use editor::Editor;
+use libfim::editor::Editor;
 
 #[doc(hidden)]
 fn main() {
