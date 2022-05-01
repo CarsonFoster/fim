@@ -1,6 +1,15 @@
+//! A module for handling keyboard layouts.
 use crossterm::event::KeyCode;
 
+/// An interface for keyboard layouts.
 pub trait Layout {
+    /// Translate a QWERTY key press into a key press from this layout, by keyboard position.
+    /// # Examples:
+    /// ```
+    /// // Dvorak 'o' is at the same place on the keyboard as QWERTY 's'
+    /// let dvorak_s = Dvorak::from_qwerty(('s' as u8));
+    /// assert_eq!(dvorak_s, ('o' as u8));
+    /// ```
     fn from_qwerty(&self, qwerty_press: u8) -> u8;
     fn to_qwerty(&self, layout_press: u8) -> u8;
     fn from_qwerty_keycode(&self, qwerty_press: KeyCode) -> KeyCode {

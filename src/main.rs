@@ -1,3 +1,9 @@
+//! This is a vim-like editor that provides support for multiple keyboard layouts, like Dvorak and
+//! Colemak. It is not intended to be a vim clone, but to provide many similar commands and
+//! functions, while building off of other features.
+//!
+//! (vimscript or its analogue won't be included for a long time, sorry)
+
 mod editor;
 mod layout;
 mod terminal;
@@ -5,6 +11,7 @@ mod context;
 
 use editor::Editor;
 
+#[doc(hidden)]
 fn main() {
     match Editor::new() {
         Ok(mut fim) => {
