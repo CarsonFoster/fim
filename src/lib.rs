@@ -1,6 +1,5 @@
+pub mod context;
+//pub mod config;
 pub mod editor;
-
-mod context;
-//mod config;
-mod layout;
-mod terminal;
+pub mod layout;
+pub mod terminal;

@@ -3,6 +3,8 @@
 //! functions, while building off of other features.
 //!
 //! (vimscript or its analogue won't be included for a long time, sorry)
+
+pub use libfim::{context, editor, layout, terminal};
 use libfim::editor::Editor;
 
 #[doc(hidden)]
