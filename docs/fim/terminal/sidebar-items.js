@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Centered","Struct that represents styled, centered content to display."],["Position","Struct that represents a 2D position on the terminal."],["Size","Struct that represents a 2D terminal size."],["Terminal","Struct to represent the actual terminal the program is displayed in."]]});

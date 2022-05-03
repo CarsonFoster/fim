@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ContextMessage","Enum for return values of [`Context`]s."]],"struct":[["CommandMode","Struct that represents fim’s CommandMode context."],["NormalMode","Struct that represents fim’s NormalMode context."]],"trait":[["Context","Trait to represent contexts."]]});
