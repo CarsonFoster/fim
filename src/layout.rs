@@ -42,7 +42,7 @@ pub trait Layout {
 
 /// Maps an ASCII, QWERTY press into the ASCII character that would be created by pressing Shift
 /// and that press at the same time. See also:
-/// [deshift_qwerty()](libfim::layout::deshift_qwerty()).
+/// [`deshift_qwerty()`].
 /// # Examples
 /// ```
 /// # use libfim::layout::shift_qwerty;
@@ -95,7 +95,7 @@ pub fn shift_qwerty(qwerty_press: u8) -> u8 {
     }
 }
 
-/// Inverse of [shift_qwerty()](libfim::layout::shift_qwerty()).
+/// Inverse of [`shift_qwerty()`].
 ///
 /// When passed an ASCII character,
 /// returns the ASCII character that would create this character when pressed in combination with

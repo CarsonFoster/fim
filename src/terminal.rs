@@ -1,3 +1,4 @@
+//! A module for dealing with the terminal device.
 use std::io::{Stdout, Write, stdout};
 use crossterm::{
     Command,
@@ -23,35 +24,52 @@ use crossterm::{
     },
 };
 
+/// Struct that represents a 2D terminal size.
 #[derive(Copy, Clone)]
 pub struct Size {
     pub width: u16,
     pub height: u16,
 }
 
+/// Struct that represents a 2D position on the terminal.
 #[derive(Copy, Clone)]
 pub struct Position {
     pub x: u16,
     pub y: u16,
 }
 
+/// Struct that represents styled, centered content to display.
 pub struct Centered<'a> {
+    #[doc(hidden)]
     stdout: &'a mut Stdout,
+    #[doc(hidden)]
     term_length: usize,
+    #[doc(hidden)]
     prefix: &'a str,
+    #[doc(hidden)]
     text: &'a str,
+    #[doc(hidden)]
     suffix: &'a str,
+    #[doc(hidden)]
     prefix_styles: Option<ContentStyle>,
+    #[doc(hidden)]
     text_styles: Option<ContentStyle>,
+    #[doc(hidden)]
     suffix_styles: Option<ContentStyle>,
 }
 
 impl<'a> Centered<'a> {
+    /// Create a new Centered struct.
+    ///
+    /// The 'prefix' is printed at the beginning of the line, the 'text' is printed in the center
+    /// of the line, and the 'suffix' is printed at the end of the line.
+    /// Priority is given to the 'text' if not everything fits.
     pub fn new(stdout: &'a mut Stdout, term_length: usize, prefix: &'a str, text: &'a str, suffix: &'a str,
                prefix_styles: Option<ContentStyle>, text_styles: Option<ContentStyle>, suffix_styles: Option<ContentStyle>) -> Self {
         Centered{ stdout, term_length, prefix, text, suffix, prefix_styles, text_styles, suffix_styles }
     }
 
+    /// Queue the relevant [`crossterm::Command`]s to print the styled content.
     pub fn q(&mut self) -> Result<()> {
         let length = self.text.len();
         let prefix_length = self.prefix.len();
@@ -105,14 +123,20 @@ impl<'a> Centered<'a> {
     }
 }
 
+/// Struct to represent the actual terminal the program is displayed in.
 pub struct Terminal {
+    #[doc(hidden)]
     size: Size,
+    #[doc(hidden)]
     stdout: Stdout,
+    #[doc(hidden)]
     cursor_pos: Position,
+    #[doc(hidden)]
     cursor_stack: Vec<Position>,
 }
 
 impl Terminal {
+    /// Create a new Terminal struct.
     pub fn new() -> Result<Self> {
         let (width, height) = terminal::size()?;
         let stdout = stdout();
@@ -140,82 +164,113 @@ impl Terminal {
         }
     }
 
+    /// Return a copy of this terminal's size.
     pub fn size(&self) -> Size {
         self.size
     }
 
+    /// Return a reference to this terminal's current cursor position.
     pub fn cursor_pos(&self) -> &Position {
         &self.cursor_pos
     }
 
+    /// Save the position of the cursor.
     pub fn save_cursor(&mut self) {
         self.cursor_stack.push(self.cursor_pos);
     }
 
+    /// Restore the position of the cursor.
     pub fn restore_cursor(&mut self) {
         if let Some(pos) = self.cursor_stack.pop() {
             self.cursor_pos = pos;
         }
     }
 
+    /// Move the cursor immediately.
+    ///
+    /// This executes, instead of queues, a [`crossterm::Command`]. See
+    /// [here](https://docs.rs/crossterm/latest/crossterm/index.html#command-api).
     pub fn move_cursor(&mut self) -> Result<()> { 
         execute!(self.stdout, MoveTo(self.cursor_pos.x, self.cursor_pos.y))
     }
 
+    /// Queues the cursor move.
     pub fn q_move_cursor(&mut self) -> Result<&mut Self> {
         self.stdout.queue(MoveTo(self.cursor_pos.x, self.cursor_pos.y))?;
         Ok(self)
     }
 
+    /// Move the cursor to a location immediately.
+    ///
+    /// This executes, instead of queues, a [`crossterm::Command`]. See
+    /// [here](https://docs.rs/crossterm/latest/crossterm/index.html#command-api).
     pub fn move_cursor_to(&mut self, x: u16, y: u16) -> Result<()> {
         self.cursor_to(x, y);
         self.move_cursor()
     }
 
+    /// Set the cursor position to a location.
+    ///
+    /// This does not queue or execute any [`crossterm::Command`]s.
     pub fn cursor_to(&mut self, x: u16, y: u16) -> &mut Self {
         self.set_x(x);
         self.set_y(y);
         self
     }
 
+    /// Move the cursor left some amount, if able.
+    ///
+    /// This does not queue or execute any [`crossterm::Command`]s.
     pub fn cursor_left_by(&mut self, d_x: u16) -> &mut Self {
         self.cursor_to(Self::saturating_sub(self.cursor_pos.x, d_x), self.cursor_pos.y);
         self
     }
 
+    /// Move the cursor right some amount, if able.
+    ///
+    /// This does not queue or execute any [`crossterm::Command`]s.
     pub fn cursor_right_by(&mut self, d_x: u16) -> &mut Self {
         self.cursor_to(self.cursor_pos.x.saturating_add(d_x), self.cursor_pos.y);
         self
     }
 
+    /// Move the cursor up some amount, if able.
+    ///
+    /// This does not queue or execute any [`crossterm::Command`]s.
     pub fn cursor_up_by(&mut self, d_y: u16) -> &mut Self {
         self.cursor_to(self.cursor_pos.x, Self::saturating_sub(self.cursor_pos.y, d_y));
         self
     }
 
+    /// Move the cursor down some amount, if able.
+    ///
+    /// This does not queue or execute any [`crossterm::Command`]s.
     pub fn cursor_down_by(&mut self, d_y: u16) -> &mut Self {
         self.cursor_to(self.cursor_pos.x, self.cursor_pos.y.saturating_add(d_y));
         self
     }
-    
 
+    /// Enter the alternate screen.
     pub fn enter_alternate_screen(&mut self) -> Result<()> {
         execute!(self.stdout, EnterAlternateScreen)
     }
 
+    /// Exit the alternate screen.
     pub fn leave_alternate_screen(&mut self) -> Result<()> {
         execute!(self.stdout, LeaveAlternateScreen)
     }
 
+    /// Queue a [`crossterm::Command`].
     pub fn q(&mut self, cmd: impl Command) -> Result<&mut Self> {
         self.stdout.queue(cmd)?;
         Ok(self)
     }
 
+    /// Flush the queued commands to standard output.
     pub fn flush(&mut self) -> Result<()> {
         self.stdout.flush()
     }
-
+    /// Poll a [`crossterm::event::KeyEvent`] (blocking).
     pub fn read_key(&self) -> Result<KeyEvent> {
         loop {
             let event = read()?;
@@ -225,11 +280,15 @@ impl Terminal {
         }
     }
 
+    /// Creates a new [`Centered`] struct with the current terminal's standard output handle.
     pub fn centered_styles<'a>(&'a mut self, prefix: &'a str, text: &'a str, suffix: &'a str,
                       prefix_styles: Option<ContentStyle>, text_styles: Option<ContentStyle>, suffix_styles: Option<ContentStyle>) -> Centered<'a> {
         Centered::new(&mut self.stdout, self.size.width as usize, prefix, text, suffix, prefix_styles, text_styles, suffix_styles)  
     }
 
+    /// Centers text (no styles).
+    ///
+    /// See also: [`Centered`]
     pub fn centered(&self, prefix: &str, text: &str, suffix: &str) -> String {
         // NOTE: does not deal with graphemes/unicode! ASCII only
         // nothing should overflow; a usize amount of text is an insane amount
@@ -290,6 +349,7 @@ impl Terminal {
     }
 }
 
+#[doc(hidden)]
 impl Drop for Terminal {
     fn drop(&mut self) {
         terminal::disable_raw_mode().expect("Failed to disable raw mode.");
