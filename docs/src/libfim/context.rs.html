@@ -259,7 +259,6 @@
 <span id="259">259</span>
 <span id="260">260</span>
 <span id="261">261</span>
-<span id="262">262</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module that contains the logic for &#39;Contexts&#39;.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [`Context`]s essentially represent fim&#39;s different modes and commands. Only one [`Context`] is active</span>
@@ -424,7 +423,6 @@
                 <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">ContextMessage::Unit</span>))
             },
             <span class="ident">KeyCode::Up</span> =&gt; {
-                <span class="comment">// TODO: memorize current command before first up press</span>
                 <span class="kw">if</span> <span class="self">self</span>.<span class="ident">rev_cmd_idx</span>.<span class="ident">is_none</span>() {
                     <span class="self">self</span>.<span class="ident">saved_str</span> <span class="op">=</span> <span class="prelude-val">Some</span>(<span class="ident">String::from</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">str</span>));
                 }

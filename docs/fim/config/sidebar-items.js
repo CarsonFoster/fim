@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["ConfigParseError","Enum for containing errors that might occur in parsing configurations."]],"struct":[["Config","Struct that represents key press to context mapping."]]});
