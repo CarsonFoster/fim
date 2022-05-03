@@ -162,7 +162,6 @@ impl Context for CommandMode {
                 return Ok(Some(ContextMessage::Unit))
             },
             KeyCode::Up => {
-                // TODO: memorize current command before first up press
                 if self.rev_cmd_idx.is_none() {
                     self.saved_str = Some(String::from(&self.str));
                 }

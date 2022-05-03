@@ -1,26 +1,51 @@
-use crate::editor::Editor;
-use crossterm::{Result, event::KeyEvent};
+use std::fmt;
+use std::fs::read_to_string;
 
-pub trait Config {
-    fn action(&self, key: KeyEvent) -> Option<dyn FnOnce(&mut Editor) -> Result<()>>;
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum ConfigParseError {
+    NoMatchingContext{ context: String, line: u16 }, 
+    IOError{ error: std::io::Error },
 }
 
-pub struct ConfigFile {
-
-}
-
-impl ConfigFile {
-    pub fn new(filename: &str) -> Self {
-        ConfigFile
+impl ConfigParseError {
+    pub fn value(&self) -> String {
+        match self {
+            ConfigParseError::NoMatchingContext{ context, line } => format!("line {}: no matching context {} found", line, context),
+            ConfigParseError::IOError{ error } => error.to_string(),
+            _ => "unknown config parse error".to_owned(),
+        }
     }
 }
 
-pub struct DefaultConfig;
-
-impl Config for DefaultConfig {
-    fn action(&self, key: KeyEvent) -> Option<dyn FnOnce(&mut Editor) -> Result<()>> {
-        match key {
-             
+impl fmt::Display for ConfigParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ConfigParseError::IOError{ error } => error.fmt(f),
+            _ => write!(f, "Error in parsing configuration: {}", self.value()),
         }
+    }
+}
+
+impl From<std::io::Error> for ConfigParseError {
+    fn from(e: std::io::Error) -> Self {
+        ConfigParseError::IOError{ error: e }
+    }
+}
+
+impl std::error::Error for ConfigParseError {}
+
+pub struct Config {
+
+}
+
+impl Config {
+    pub fn new(text: &str) -> Result<Config, ConfigParseError> {
+        Ok(Config{ })
+    }
+
+    pub fn from_file(filename: &str) -> Result<Config, ConfigParseError> {
+        let text = read_to_string(filename)?;
+        Self::new(&text)
     }
 }
