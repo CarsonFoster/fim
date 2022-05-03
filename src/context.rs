@@ -1,33 +1,71 @@
+//! A module that contains the logic for 'Contexts'.
+//!
+//! [`Context`]s essentially represent fim's different modes and commands. Only one [`Context`] is active
+//! at a time on the 'context stack'. [`Context`]s can interact with the [`Context`]s one above and
+//! one below them on the context stack, once. See the [`Context`] page for more details on the
+//! interaction between [`Context`]s. 
+//!
+//! [`Context`]s are 'forwarded' all key presses while they are the active [`Context`]. They are
+//! free to do as they choose with the key presses, and can even push new active [`Context`]s. When
+//! a [`Context`] 'returns', that return message is 'received' by the [`Context`] immediately
+//! beneath it on the context stack (the [`Context`] that becomes the active context after this one
+//! is popped). [`Context`]s also have a 'setup' function that is called once, at the time that
+//! [`Context`] becomes the active [`Context`].
 use crate::editor::Editor;
-//use std::io::{Error, ErrorKind};
 use std::cmp::min;
 use crossterm::{
     Result,
     event::{KeyCode, KeyEvent, KeyModifiers},
 };
 
+/// Enum for return values of [`Context`]s.
 pub enum ContextMessage {
+    /// Indicates no return value, analogous to 'void' in C-like languages.
     Unit,
+    /// A String return value.
     Str(String),
+    /// A 32-bit unsigned integer return value, intended to be used as a bit set.
     BitSet(u32),
+    /// A 32-bit signed integer return value.
     Int(i32),
+    /// A 32-bit signed floating point return value.
     Float(f32),
+    /// A boolean return value.
     Bool(bool),
 }
 
+/// Trait to represent contexts.
+///
+/// See [module-level documentation](index.html) for more information.
 pub trait Context {
+    /// Function to setup the Context when it becomes the active context.
+    ///
+    /// Cannot cause the Context to 'return'.
     fn setup(&mut self, _ed: &mut Editor) -> Result<()> {
         Ok(())
     }
+
+    /// Accepts forwarded key presses.
+    ///
+    /// Can cause the Context to 'return', if this function returns `Ok(Some(c))`, where `c` is a
+    /// [`ContextMessage`].
     fn forward(&mut self, _ed: &mut Editor, _event: KeyEvent) -> Result<Option<ContextMessage>> {
         Ok(None)
     }
 
+    /// Receives the return value of the [`Context`] above it on the context stack.
+    ///
+    /// Can cause the Context to 'return', if this function returns `Ok(Some(c))` where `c` is a
+    /// [`ContextMessage`].
     fn receive(&mut self, _ed: &mut Editor, _arg: ContextMessage) -> Result<Option<ContextMessage>> {
         Ok(None)
     }
 }
 
+/// Struct that represents fim's NormalMode context.
+///
+/// Analogous to vim's normal mode. This context always starts as the active context, and there is
+/// always one instance of this struct at the bottom of the context stack.
 pub struct NormalMode;
 impl Context for NormalMode {
     fn forward(&mut self, ed: &mut Editor, event: KeyEvent) -> Result<Option<ContextMessage>> {
@@ -39,15 +77,26 @@ impl Context for NormalMode {
     }
 }
 
+/// Struct that represents fim's CommandMode context.
+///
+/// This is the context that (in vim) would allow you to enter ed commands or ':q'. I am not yet
+/// decided whether fim will use ed commands or something different, but this is still the context
+/// where you enter commands after a ':' at the bottom of the screen.
 pub struct CommandMode {
+    #[doc(hidden)]
     str: String,
+    #[doc(hidden)]
     begin: usize,
+    #[doc(hidden)]
     cursor_pos: usize,
+    #[doc(hidden)]
     rev_cmd_idx: Option<usize>,
+    #[doc(hidden)]
     saved_str: Option<String>,
 }
 
 impl CommandMode {
+    /// Create a new CommandMode instance.
     pub fn new() -> CommandMode {
         CommandMode{ str: String::new(), begin: 0, cursor_pos: 0, rev_cmd_idx: None, saved_str: None }
     }
