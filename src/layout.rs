@@ -4,14 +4,19 @@ use crossterm::event::KeyCode;
 /// An interface for keyboard layouts.
 pub trait Layout {
     /// Translate a QWERTY key press into a key press from this layout, by keyboard position.
-    /// # Examples:
-    /// ```
-    /// // Dvorak 'o' is at the same place on the keyboard as QWERTY 's'
-    /// let dvorak_s = Dvorak::from_qwerty(('s' as u8));
-    /// assert_eq!(dvorak_s, ('o' as u8));
-    /// ```
+    /// For example, a QWERTY 's' translates into a Dvorak 'o' because they are located at the same
+    /// place on the keyboard.
     fn from_qwerty(&self, qwerty_press: u8) -> u8;
+
+    /// Translate a key press from this layout into a QWERTY key press, by keyboard position.
+    /// For example, a Dvorak 'e' translates into a QWERTY 'd' because they are located at the same
+    /// place on the keyboard.
     fn to_qwerty(&self, layout_press: u8) -> u8;
+
+    /// Translate a QWERTY [KeyCode](crossterm::event::KeyCode) into a KeyCode from this
+    /// layout, by keyboard position. The default behavior is to return [`Self::from_qwerty()`]
+    /// wrapped in a KeyCode on the enclosed character if it is an ASCII character, and otherwise
+    /// return the argument.
     fn from_qwerty_keycode(&self, qwerty_press: KeyCode) -> KeyCode {
         match qwerty_press {
             KeyCode::Char(c) => {
@@ -20,6 +25,11 @@ pub trait Layout {
             _ => qwerty_press
         }
     }
+    
+    /// Translate a [KeyCode](crossterm::event::KeyCode) from this layout into a QWERTY KeyCode, 
+    /// by keyboard position. The default behavior is to return [`Self::to_qwerty()`]
+    /// wrapped in a KeyCode on the enclosed character if it is an ASCII character, and otherwise
+    /// return the argument.
     fn to_qwerty_keycode(&self, layout_press: KeyCode) -> KeyCode {
         match layout_press {
             KeyCode::Char(c) => {
@@ -30,6 +40,24 @@ pub trait Layout {
     }
 }
 
+/// Maps an ASCII, QWERTY press into the ASCII character that would be created by pressing Shift
+/// and that press at the same time. See also:
+/// [deshift_qwerty()](libfim::layout::deshift_qwerty()).
+/// # Examples
+/// ```
+/// # use libfim::layout::shift_qwerty;
+/// let a_shifted = shift_qwerty('a' as u8);
+/// assert_eq!(a_shifted, 'A' as u8);
+///
+/// let three_shifted = shift_qwerty('3' as u8);
+/// assert_eq!(three_shifted, '#' as u8);
+///
+/// let capital_a_shifted = shift_qwerty('A' as u8);
+/// assert_eq!(capital_a_shifted, 'A' as u8);
+///
+/// let backtick_shifted = shift_qwerty('`' as u8);
+/// assert_eq!(backtick_shifted, '~' as u8);
+/// ```
 pub fn shift_qwerty(qwerty_press: u8) -> u8 {
     // Uppercase Letters => Themselves
     // I'm not sure if this will be needed, but just in case.
@@ -67,6 +95,26 @@ pub fn shift_qwerty(qwerty_press: u8) -> u8 {
     }
 }
 
+/// Inverse of [shift_qwerty()](libfim::layout::shift_qwerty()).
+///
+/// When passed an ASCII character,
+/// returns the ASCII character that would create this character when pressed in combination with
+/// the Shift key.
+/// # Examples
+/// ```
+/// # use libfim::layout::deshift_qwerty;
+/// let capital_a_deshifted = deshift_qwerty('A' as u8);
+/// assert_eq!(capital_a_deshifted, 'a' as u8);
+///
+/// let pound_deshifted = deshift_qwerty('#' as u8);
+/// assert_eq!(pound_deshifted, '3' as u8);
+///
+/// let a_deshifted = deshift_qwerty('a' as u8);
+/// assert_eq!(a_deshifted, 'a' as u8);
+///
+/// let tilde_deshifted = deshift_qwerty('~' as u8);
+/// assert_eq!(tilde_deshifted, '`' as u8);
+/// ```
 pub fn deshift_qwerty(qwerty_shift_press: u8) -> u8 {
     // Uppercase Letters => Lowercase letters (+ 32)
     if qwerty_shift_press >= 65 && qwerty_shift_press <= 90 {
@@ -102,6 +150,7 @@ pub fn deshift_qwerty(qwerty_shift_press: u8) -> u8 {
 
 }
 
+/// Struct that represents the QWERTY keyboard layout.
 pub struct Qwerty;
 
 impl Layout for Qwerty {
@@ -114,6 +163,10 @@ impl Layout for Qwerty {
     }
 }
 
+/// Struct that represents the [Dvorak keyboard
+/// layout](https://en.wikipedia.org/wiki/Dvorak_keyboard_layout).
+///
+/// Note that this is not 'Programmer Dvorak'.
 pub struct Dvorak;
 
 impl Layout for Dvorak {
@@ -216,6 +269,10 @@ impl Layout for Dvorak {
     }
 }
 
+/// Struct that represents the [Colemak keyboard layout](https://en.wikipedia.org/wiki/Colemak)
+///
+/// Note that the caps lock in not replaced by backspace due to technical limitations (crossterm
+/// can't detect when the caps lock key is pressed).
 pub struct Colemak;
 
 impl Layout for Colemak {
@@ -282,6 +339,7 @@ impl Layout for Colemak {
     }
 }
 
+/// Skeleton struct that represents custom, user-defined keyboard layouts (from a file).....
 pub struct FromFile; 
 
 impl FromFile {
