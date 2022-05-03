@@ -69,7 +69,8 @@ impl<'a> Centered<'a> {
         Centered{ stdout, term_length, prefix, text, suffix, prefix_styles, text_styles, suffix_styles }
     }
 
-    /// Queue the relevant [`crossterm::Command`]s to print the styled content.
+    /// Queue the relevant
+    /// [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html)s to print the styled content.
     pub fn q(&mut self) -> Result<()> {
         let length = self.text.len();
         let prefix_length = self.prefix.len();
@@ -188,7 +189,8 @@ impl Terminal {
 
     /// Move the cursor immediately.
     ///
-    /// This executes, instead of queues, a [`crossterm::Command`]. See
+    /// This executes, instead of queues, a
+    /// [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html). See
     /// [here](https://docs.rs/crossterm/latest/crossterm/index.html#command-api).
     pub fn move_cursor(&mut self) -> Result<()> { 
         execute!(self.stdout, MoveTo(self.cursor_pos.x, self.cursor_pos.y))
@@ -202,7 +204,7 @@ impl Terminal {
 
     /// Move the cursor to a location immediately.
     ///
-    /// This executes, instead of queues, a [`crossterm::Command`]. See
+    /// This executes, instead of queues, a [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html). See
     /// [here](https://docs.rs/crossterm/latest/crossterm/index.html#command-api).
     pub fn move_cursor_to(&mut self, x: u16, y: u16) -> Result<()> {
         self.cursor_to(x, y);
@@ -211,7 +213,7 @@ impl Terminal {
 
     /// Set the cursor position to a location.
     ///
-    /// This does not queue or execute any [`crossterm::Command`]s.
+    /// This does not queue or execute any [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html)s.
     pub fn cursor_to(&mut self, x: u16, y: u16) -> &mut Self {
         self.set_x(x);
         self.set_y(y);
@@ -220,7 +222,7 @@ impl Terminal {
 
     /// Move the cursor left some amount, if able.
     ///
-    /// This does not queue or execute any [`crossterm::Command`]s.
+    /// This does not queue or execute any [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html)s.
     pub fn cursor_left_by(&mut self, d_x: u16) -> &mut Self {
         self.cursor_to(Self::saturating_sub(self.cursor_pos.x, d_x), self.cursor_pos.y);
         self
@@ -228,7 +230,7 @@ impl Terminal {
 
     /// Move the cursor right some amount, if able.
     ///
-    /// This does not queue or execute any [`crossterm::Command`]s.
+    /// This does not queue or execute any [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html)s.
     pub fn cursor_right_by(&mut self, d_x: u16) -> &mut Self {
         self.cursor_to(self.cursor_pos.x.saturating_add(d_x), self.cursor_pos.y);
         self
@@ -236,7 +238,7 @@ impl Terminal {
 
     /// Move the cursor up some amount, if able.
     ///
-    /// This does not queue or execute any [`crossterm::Command`]s.
+    /// This does not queue or execute any [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html)s.
     pub fn cursor_up_by(&mut self, d_y: u16) -> &mut Self {
         self.cursor_to(self.cursor_pos.x, Self::saturating_sub(self.cursor_pos.y, d_y));
         self
@@ -244,7 +246,7 @@ impl Terminal {
 
     /// Move the cursor down some amount, if able.
     ///
-    /// This does not queue or execute any [`crossterm::Command`]s.
+    /// This does not queue or execute any [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html)s.
     pub fn cursor_down_by(&mut self, d_y: u16) -> &mut Self {
         self.cursor_to(self.cursor_pos.x, self.cursor_pos.y.saturating_add(d_y));
         self
@@ -260,7 +262,7 @@ impl Terminal {
         execute!(self.stdout, LeaveAlternateScreen)
     }
 
-    /// Queue a [`crossterm::Command`].
+    /// Queue a [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html).
     pub fn q(&mut self, cmd: impl Command) -> Result<&mut Self> {
         self.stdout.queue(cmd)?;
         Ok(self)
@@ -270,7 +272,8 @@ impl Terminal {
     pub fn flush(&mut self) -> Result<()> {
         self.stdout.flush()
     }
-    /// Poll a [`crossterm::event::KeyEvent`] (blocking).
+
+    /// Poll a [`KeyEvent`](https://docs.rs/crossterm/latest/crossterm/event/struct.KeyEvent.html) (blocking).
     pub fn read_key(&self) -> Result<KeyEvent> {
         loop {
             let event = read()?;

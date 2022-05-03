@@ -121,7 +121,8 @@ impl<'a> Editor<'a> {
         self.q_draw_cmd_line(text, true)
     }
 
-    /// Queue the necessary [`crossterm::Command`]s to draw the command line.
+    /// Queue the necessary
+    /// [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html)s to draw the command line.
     /// 
     /// See also: [`Self::draw_cmd_line()`].
     pub fn q_draw_cmd_line<const N: usize>(&mut self, text: [&str; N], flush: bool) -> Result<()> {

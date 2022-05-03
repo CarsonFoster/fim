@@ -13,7 +13,8 @@ pub trait Layout {
     /// place on the keyboard.
     fn to_qwerty(&self, layout_press: u8) -> u8;
 
-    /// Translate a QWERTY [KeyCode](crossterm::event::KeyCode) into a KeyCode from this
+    /// Translate a QWERTY
+    /// [`KeyCode`](https://docs.rs/crossterm/latest/crossterm/event/enum.KeyCode.html) into a KeyCode from this
     /// layout, by keyboard position. The default behavior is to return [`Self::from_qwerty()`]
     /// wrapped in a KeyCode on the enclosed character if it is an ASCII character, and otherwise
     /// return the argument.
@@ -26,7 +27,7 @@ pub trait Layout {
         }
     }
     
-    /// Translate a [KeyCode](crossterm::event::KeyCode) from this layout into a QWERTY KeyCode, 
+    /// Translate a [`KeyCode`](https://docs.rs/crossterm/latest/crossterm/event/enum.KeyCode.html) from this layout into a QWERTY KeyCode, 
     /// by keyboard position. The default behavior is to return [`Self::to_qwerty()`]
     /// wrapped in a KeyCode on the enclosed character if it is an ASCII character, and otherwise
     /// return the argument.
