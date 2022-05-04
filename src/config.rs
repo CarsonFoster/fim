@@ -1,4 +1,4 @@
-//! Module for handling configuration files that map keyboard presses to contexts.
+//! A module for handling configuration files that map keyboard presses to contexts.
 //!
 //! # Config Format
 //! Undecided, as of yet.

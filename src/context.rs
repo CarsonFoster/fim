@@ -13,6 +13,7 @@
 //! [`Context`] becomes the active [`Context`].
 use crate::editor::Editor;
 use std::cmp::min;
+use std::collections::HashMap;
 use crossterm::{
     Result,
     event::{KeyCode, KeyEvent, KeyModifiers},
@@ -59,6 +60,40 @@ pub trait Context {
     /// [`ContextMessage`].
     fn receive(&mut self, _ed: &mut Editor, _arg: ContextMessage) -> Result<Option<ContextMessage>> {
         Ok(None)
+    }
+}
+
+/// Struct to map between Strings and Contexts.
+///
+/// Used for parsing configs. The inner map has `String` keys and `fn() -> Box<dyn Context>`
+/// values.
+/// # Examples
+/// ```
+/// # use libfim::context::{ContextMap, NormalMode};
+/// let cmap = ContextMap::new();
+/// let has_normalmode = cmap.map().contains_key("NormalMode");
+/// assert_eq!(has_normalmode, true);
+///
+/// let normalmode_instance = cmap.map()["NormalMode"]();
+/// ```
+pub struct ContextMap {
+    map: HashMap<String, fn() -> Box<dyn Context>>,
+}
+
+impl ContextMap {
+    /// Create a new ContextMap.
+    ///
+    /// Should only be called once. The contents of the ContextMap don't change.
+    pub fn new() -> Self {
+        let mut map: HashMap<String, fn() -> Box<dyn Context>> = HashMap::new();
+        map.insert("NormalMode".to_string(), || Box::new(NormalMode));
+        map.insert("CommandMode".to_string(), || Box::new(CommandMode::new()));
+        ContextMap{ map }
+    }
+
+    /// Return the underlying map, immutably.
+    pub fn map(&self) -> &HashMap<String, fn() -> Box<dyn Context>> {
+        &self.map
     }
 }
 
