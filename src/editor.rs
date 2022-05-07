@@ -67,37 +67,33 @@ impl<'a> Editor<'a> {
 
     fn process_keypress(&mut self) -> Result<()> {
         let event = self.terminal.read_key()?;
-        if let Some(mut last_box) = self.context_stack.pop() {
-            let mut setup = self.has_been_setup_stack.pop().unwrap();
-            let mut msg = last_box.forward(self, event)?;
-            while msg.is_some() && self.context_stack.len() > 0 {
-                last_box = self.context_stack.pop().unwrap();
+        if let Some(mut context) = self.context_stack.pop() {
+            self.has_been_setup_stack.pop().unwrap();
+            let mut setup;
+            let mut msg = context.forward(self, event)?;
+            while msg.is_some() {
+                context = self.context_stack.pop().expect("Context stack is empty during message propagation");
                 setup = self.has_been_setup_stack.pop().unwrap();
                 if !setup {
-                    last_box.setup(self)?;
+                    let returned = context.setup(self)?;
+                    if returned { continue; }
                 }
-                msg = last_box.receive(self, msg.unwrap())?;
+                msg = context.receive(self, msg.unwrap())?;
             }
-            self.context_stack.push(last_box);
+            self.context_stack.push(context);
             self.has_been_setup_stack.push(true);
-            for _ in 0..self.push_context_stack.len() {
-                self.has_been_setup_stack.push(false);
-            }
-            self.context_stack.append(&mut self.push_context_stack);
-            if let Some(false) = self.has_been_setup_stack.last() {
-                last_box = self.context_stack.pop().unwrap();
-                last_box.setup(self)?;
-                self.context_stack.push(last_box);
-                self.has_been_setup_stack.push(true);
+            while !self.push_context_stack.is_empty() {
+                self.push_context_stack.iter().for_each(|_| self.has_been_setup_stack.push(false));
+                self.context_stack.append(&mut self.push_context_stack);
+                let mut context = self.context_stack.pop().unwrap();
+                self.has_been_setup_stack.pop().unwrap();
+                let returned = context.setup(self)?;
+                if !returned {
+                    self.context_stack.push(context);
+                    self.has_been_setup_stack.push(true);
+                }
             }
         }
-
-//        let KeyEvent{ code: c, modifiers: m } = self.terminal.read_key()?;
-//        match c {
-//            KeyCode::Char('q') => self.quit = true,
-//            KeyCode::Char('h') | KeyCode::Char('j') | KeyCode::Char('k') | KeyCode::Char('l') => self.move_key(c)?,
-//            _ => ()
-//        }
         Ok(())
     }
 

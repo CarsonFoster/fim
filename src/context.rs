@@ -41,9 +41,10 @@ pub enum ContextMessage {
 pub trait Context {
     /// Function to setup the Context when it becomes the active context.
     ///
-    /// Cannot cause the Context to 'return'.
-    fn setup(&mut self, _ed: &mut Editor) -> Result<()> {
-        Ok(())
+    /// Can cause the Context to 'return' and be popped off the context stack, if this function
+    /// returns Ok(true). If this function returns Ok(false), the Context has not 'returned'.
+    fn setup(&mut self, _ed: &mut Editor) -> Result<bool> {
+        Ok(false)
     }
 
     /// Accepts forwarded key presses.
@@ -179,8 +180,9 @@ impl CommandMode {
 }
 
 impl Context for CommandMode {
-    fn setup(&mut self, ed: &mut Editor) -> Result<()> {
-        ed.draw_cmd_line([":"])
+    fn setup(&mut self, ed: &mut Editor) -> Result<bool> {
+        ed.draw_cmd_line([":"])?;
+        Ok(false)
     }
 
     fn forward(&mut self, ed: &mut Editor, event: KeyEvent) -> Result<Option<ContextMessage>> {
