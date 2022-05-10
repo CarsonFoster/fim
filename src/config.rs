@@ -77,10 +77,8 @@ struct ConfigMap {
 }
 
 impl ConfigMap {
-    pub const MAP: ConfigMap = Self::new();
-
     fn new() -> Self {
-        let unprintable = HashMap::new();
+        let mut unprintable = HashMap::new();
         let pairs = [("BS", KeyCode::Backspace), ("CR", KeyCode::Enter), ("Enter", KeyCode::Enter), ("Left", KeyCode::Left),
                      ("Right", KeyCode::Right), ("Up", KeyCode::Up), ("Down", KeyCode::Down), ("Home", KeyCode::Home),
                      ("End", KeyCode::End), ("PageUp", KeyCode::PageUp), ("PageDown", KeyCode::PageDown), ("Tab", KeyCode::Tab),
@@ -119,7 +117,11 @@ impl ConfigMap {
     }
 }
 
-#[derive(PartialEq)]
+lazy_static! {
+    static ref MAP: ConfigMap = ConfigMap::new();
+}
+
+#[derive(Clone, Copy, PartialEq)]
 enum State {
    Start, C, A, S, C_, A_, S_, Accept, Reject
 }
@@ -166,7 +168,7 @@ impl Config {
             return Err(ConfigParseError::MalformedBindTerm{ line: line_no });
         }
         if let Some(old_context) = bind.get(5..bind.len() - 1) {
-            let single_key = ConfigMap::MAP.query(key_event);
+            let single_key = MAP.query(key_event);
             let key_event = if let Some(key) = single_key { key } else {
                 if key_event.get(0..1) != Some("<") || key_event.get(key_event.len() - 1..) != Some(">") {
                     return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no });
@@ -204,7 +206,7 @@ impl Config {
                             _        => KeyModifiers::NONE
                         });
                     }
-                    let code = match ConfigMap::MAP.query_code(&key) {
+                    let code = match MAP.query_code(&key) {
                         Some(c) => c,
                         None => return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no })
                     };
