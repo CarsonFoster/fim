@@ -55,6 +55,28 @@ impl ConfigParseError {
     }
 }
 
+impl PartialEq for ConfigParseError {
+    fn eq(&self, other: &Self) -> bool {
+       match (self, other) { 
+            (ConfigParseError::NoMatchingContext{ context, line }, ConfigParseError::NoMatchingContext{ context: other_context, line: other_line })
+				=> context == other_context && line == other_line,
+            (ConfigParseError::NotEnoughTerms{ line }, ConfigParseError::NotEnoughTerms{ line: other_line })
+                => line == other_line,
+            (ConfigParseError::MalformedBindTerm{ line }, ConfigParseError::MalformedBindTerm{ line: other_line })
+                => line == other_line,
+            (ConfigParseError::UnicodeBoundaryErrorInBind{ line }, ConfigParseError::UnicodeBoundaryErrorInBind{ line: other_line })
+                => line == other_line,
+            (ConfigParseError::MalformedKeyEventTerm{ line }, ConfigParseError::MalformedKeyEventTerm{ line: other_line })
+                => line == other_line,
+            (ConfigParseError::UnicodeBoundaryErrorInKeyEvent{ line }, ConfigParseError::UnicodeBoundaryErrorInKeyEvent{ line: other_line })
+                => line == other_line,
+            (ConfigParseError::IOError{ error }, ConfigParseError::IOError{ error: other_error })
+                => error.kind() == other_error.kind(),
+            _ => false
+        }
+    }
+}
+
 impl fmt::Display for ConfigParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -218,7 +240,8 @@ impl Config {
         Self::new(&text)
     }
 
-    fn parse_line(line: &str, line_no: u16) -> Result<(String, KeyEvent, Box<dyn Fn() -> Box<dyn Context>>), ConfigParseError> {
+    #[doc(hidden)]
+    pub fn parse_line(line: &str, line_no: u16) -> Result<(String, KeyEvent, Box<dyn Fn() -> Box<dyn Context>>), ConfigParseError> {
         let mut iter = line.split(' ');
         let bind = iter.next();
         let key_event = iter.next();
@@ -233,8 +256,8 @@ impl Config {
             return Err(ConfigParseError::MalformedBindTerm{ line: line_no });
         }
         if let Some(old_context) = bind.get(5..bind.len() - 1) {
-            let single_key = MAP.query(key_event);
-            let key_event = if let Some(key) = single_key { key } else {
+            let no_modifiers = MAP.query(key_event);
+            let key_event = if let Some(key) = no_modifiers { key } else {
                 if key_event.get(0..1) != Some("<") || key_event.get(key_event.len() - 1..) != Some(">") {
                     return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no });
                 }
@@ -280,7 +303,6 @@ impl Config {
                     return Err(ConfigParseError::UnicodeBoundaryErrorInKeyEvent{ line: line_no });
                 }
             };
-            // TODO: get args
             let args = iter.fold(String::new(), |acc, x| acc + " " + x);
            
             if let Some(factory) = context(new_context, args) {
