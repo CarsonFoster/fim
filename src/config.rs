@@ -241,6 +241,58 @@ impl Config {
     }
 
     #[doc(hidden)]
+    pub fn parse_key_event(key_event: &str, line_no: u16) -> Result<KeyEvent, ConfigParseError> {
+        let no_modifiers = MAP.query(key_event);
+        let key_event = if let Some(key) = no_modifiers { key } else {
+            if key_event.get(0..1) != Some("<") || key_event.get(key_event.len() - 1..) != Some(">") {
+                return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no });
+            }
+            let mut modifiers = KeyModifiers::empty();
+            if let Some(key_event) = key_event.get(1..key_event.len() - 1) {
+                let mut state = State::Start;
+                let transitions = [[State::C, State::Reject, State::Reject, State::Reject, State::Accept, State::Accept, State::Accept],
+                                   [State::A, State::Reject, State::Reject, State::Reject, State::A, State::Accept, State::A],
+                                   [State::S, State::Reject, State::Reject, State::Reject, State::S, State::Accept, State::Accept],
+                                   [State::Reject, State::C_, State::A_, State::S_, State::Accept, State::Accept, State::Accept],
+                                   [State::Reject, State::Reject, State::Reject, State::Reject, State::Accept, State::Accept, State::Accept]];
+                let mut key = String::with_capacity(8);
+                for ch in key_event.chars() {
+                    let transition = match ch {
+                        'C' | 'c' => Transition::C,
+                        'A' | 'a' => Transition::A,
+                        'S' | 's' => Transition::S,
+                        '-'       => Transition::Hyphen,
+                        _         => Transition::Else,
+                    };
+                    state = transitions[transition as usize][state as usize];
+                    if state == State::Reject {
+                        return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no });
+                    } else if state == State::Accept {
+                        if key.len() == 8 {
+                            return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no });
+                        }
+                        key.push(ch); 
+                    }
+                    modifiers.insert(match state {
+                        State::C => KeyModifiers::CONTROL,
+                        State::A => KeyModifiers::ALT,
+                        State::S => KeyModifiers::SHIFT,
+                        _        => KeyModifiers::NONE
+                    });
+                }
+                let code = match MAP.query_code(&key) {
+                    Some(c) => c,
+                    None => return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no })
+                };
+                KeyEvent::new(code, modifiers)
+            } else {
+                return Err(ConfigParseError::UnicodeBoundaryErrorInKeyEvent{ line: line_no });
+            }
+        };
+        Ok(key_event)
+    }
+
+    #[doc(hidden)]
     pub fn parse_line(line: &str, line_no: u16) -> Result<(String, KeyEvent, Box<dyn Fn() -> Box<dyn Context>>), ConfigParseError> {
         let mut iter = line.split(' ');
         let bind = iter.next();
@@ -256,53 +308,7 @@ impl Config {
             return Err(ConfigParseError::MalformedBindTerm{ line: line_no });
         }
         if let Some(old_context) = bind.get(5..bind.len() - 1) {
-            let no_modifiers = MAP.query(key_event);
-            let key_event = if let Some(key) = no_modifiers { key } else {
-                if key_event.get(0..1) != Some("<") || key_event.get(key_event.len() - 1..) != Some(">") {
-                    return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no });
-                }
-                let mut modifiers = KeyModifiers::empty();
-                if let Some(key_event) = key_event.get(1..key_event.len() - 1) {
-                    let mut state = State::Start;
-                    let transitions = [[State::C, State::Reject, State::Reject, State::Reject, State::Accept, State::Accept, State::Accept],
-                                       [State::A, State::Reject, State::Reject, State::Reject, State::A, State::Accept, State::A],
-                                       [State::S, State::Reject, State::Reject, State::Reject, State::S, State::Accept, State::Accept],
-                                       [State::Reject, State::C_, State::A_, State::S_, State::Accept, State::Accept, State::Accept],
-                                       [State::Reject, State::Reject, State::Reject, State::Reject, State::Accept, State::Accept, State::Accept]];
-                    let mut key = String::with_capacity(8);
-                    for ch in key_event.chars() {
-                        let transition = match ch {
-                            'C' | 'c' => Transition::C,
-                            'A' | 'a' => Transition::A,
-                            'S' | 's' => Transition::S,
-                            '-'       => Transition::Hyphen,
-                            _         => Transition::Else,
-                        };
-                        state = transitions[transition as usize][state as usize];
-                        if state == State::Reject {
-                            return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no });
-                        } else if state == State::Accept {
-                            if key.len() == 8 {
-                                return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no });
-                            }
-                            key.push(ch); 
-                        }
-                        modifiers.insert(match state {
-                            State::C => KeyModifiers::CONTROL,
-                            State::A => KeyModifiers::ALT,
-                            State::S => KeyModifiers::SHIFT,
-                            _        => KeyModifiers::NONE
-                        });
-                    }
-                    let code = match MAP.query_code(&key) {
-                        Some(c) => c,
-                        None => return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no })
-                    };
-                    KeyEvent::new(code, modifiers)
-                } else {
-                    return Err(ConfigParseError::UnicodeBoundaryErrorInKeyEvent{ line: line_no });
-                }
-            };
+            let key_event = Self::parse_key_event(key_event, line_no)?;
             let args = iter.fold(String::new(), |acc, x| acc + " " + x);
            
             if let Some(factory) = context(new_context, args) {
