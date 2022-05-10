@@ -152,7 +152,7 @@ impl Config {
     }
 
     fn parse_line(line: &str, line_no: u16) -> Result<(String, KeyEvent, Box<dyn Fn() -> Box<dyn Context>>), ConfigParseError> {
-        let mut iter = line.split(' ').take(3);
+        let mut iter = line.split(' ');
         let bind = iter.next();
         let key_event = iter.next();
         let new_context = iter.next();
@@ -166,7 +166,6 @@ impl Config {
             return Err(ConfigParseError::MalformedBindTerm{ line: line_no });
         }
         if let Some(old_context) = bind.get(5..bind.len() - 1) {
-            // TODO: parse key_event into KeyEvent
             let single_key = ConfigMap::MAP.query(key_event);
             let key_event = if let Some(key) = single_key { key } else {
                 if key_event.get(0..1) != Some("<") || key_event.get(key_event.len() - 1..) != Some(">") {
@@ -215,6 +214,7 @@ impl Config {
                 }
             };
             // TODO: get args
+            let args = iter.fold(String::new(), |acc, x| acc + " " + x);
            
             if let Some(factory) = context(new_context, args) {
                 Ok((old_context.to_string(), key_event, factory))
