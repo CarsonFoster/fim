@@ -65,6 +65,7 @@ pub trait Context {
 
 /// Wrapper type for functions that create [`Context`]s.
 pub struct Factory {
+    #[doc(hidden)]
     ptr: Box<dyn Fn() -> Box<dyn Context>>
 }
 

@@ -395,6 +395,7 @@
 <span id="395">395</span>
 <span id="396">396</span>
 <span id="397">397</span>
+<span id="398">398</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module for handling configuration files that map keyboard presses to contexts.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Config Format</span>
@@ -660,6 +661,7 @@
 
 <span class="doccomment">/// Struct that represents key press to context mapping.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Config</span> {
+    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
     <span class="ident">map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">String</span>, <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">KeyEvent</span>, <span class="ident">Factory</span><span class="op">&gt;</span><span class="op">&gt;</span>
 }
 

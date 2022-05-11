@@ -263,6 +263,7 @@ enum Transition {
 
 /// Struct that represents key press to context mapping.
 pub struct Config {
+    #[doc(hidden)]
     map: HashMap<String, HashMap<KeyEvent, Factory>>
 }
 
