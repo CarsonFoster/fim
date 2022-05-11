@@ -225,7 +225,7 @@ enum Transition {
 
 /// Struct that represents key press to context mapping.
 pub struct Config {
-    map: HashMap<String, HashMap<KeyEvent, Box<dyn Fn() -> Box<dyn Context>>>>
+    map: HashMap<String, HashMap<KeyEvent, Factory>>
 }
 
 impl Config {
@@ -313,7 +313,7 @@ impl Config {
     }
 
     #[doc(hidden)]
-    pub fn parse_line(line: &str, line_no: u16) -> Result<(String, KeyEvent, Box<dyn Fn() -> Box<dyn Context>>), ConfigParseError> {
+    pub fn parse_line(line: &str, line_no: u16) -> Result<(String, KeyEvent, Factory), ConfigParseError> {
         let mut iter = line.split(' ');
         let bind = iter.next();
         let key_event = iter.next();

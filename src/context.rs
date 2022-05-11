@@ -63,18 +63,41 @@ pub trait Context {
     }
 }
 
+/// Wrapper type for functions that create [`Context`]s.
+pub struct Factory {
+    ptr: Box<dyn Fn() -> Box<dyn Context>>
+}
+
+impl Factory {
+    /// Create a new [`Factory`] from a function.
+    pub fn new<T>(ptr: impl Fn() -> T + 'static) -> Self
+    where T: Context + Sized + 'static
+    {
+        Factory{ ptr: Box::new(move || Box::new(ptr())) }
+    }
+
+    /// Create a new [`Factory`] from a function that returns a boxed [`Context`].
+    pub fn from(ptr: impl Fn() -> Box<dyn Context> + 'static) -> Self {
+        Factory{ ptr: Box::new(ptr) }
+    }
+
+    /// Create a new [`Context`] using the wrapped function.
+    pub fn create(&self) -> Box<dyn Context> {
+        (self.ptr)()
+    }
+}
+
 /// Maps between Strings and Contexts.
 ///
 /// # Arguments
 /// - `name`: the name of the Context
 /// - `args`: any additional arguments that need to be passed to the Context
 /// # Return
-/// Returns `None` if there is no context with the name `name`. Returns a pointer to a function
-/// that generates an instance of the corresponding Context.
-pub fn context(name: &str, args: String) -> Option<Box<dyn Fn() -> Box<dyn Context>>> {
+/// Returns `None` if there is no context with the name `name`. Returns a [`Factory`] otherwise.
+pub fn context(name: &str, args: String) -> Option<Factory> {
     match name {
-        "NormalMode" => Some(Box::new(|| Box::new(NormalMode))),
-        "CommandMode" => Some(Box::new(|| Box::new(CommandMode::new()))),
+        "NormalMode" => Some(Factory::new(|| NormalMode)),
+        "CommandMode" => Some(Factory::new(|| CommandMode::new())),
         _ => None
     }
 }
