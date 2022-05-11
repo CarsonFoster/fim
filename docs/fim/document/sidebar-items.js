@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Document","Struct that represents a document."],["Line","Struct that represents a line of text."]]});
