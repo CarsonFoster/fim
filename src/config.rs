@@ -12,7 +12,45 @@
 //! - the optional arguments: no required form overall, specific to each context.
 //!
 //! # Key Event Format
-//! Undecided as of yet.
+//! A key event is either a literal key character (e.g. `A`, `6`, or `/`), one of the following
+//! representations of special characters, or a modifier string.
+//!
+//! ## Special Characters
+//! - `<Tab>`: the tab key
+//! - `<CR>` or `<Enter>`: the enter key
+//! - `<F1>` ... `<F12>`: a function key
+//! - `<Ins>`: the insert key
+//! - `<Del>`: the delete key (not the backspace key)
+//! - `<Home>`: the home key
+//! - `<End>`: the end key
+//! - `<PageUp>`: the page up key (may read 'PgUp')
+//! - `<PageDown>`: the page down key (may read 'PgDn')
+//! - `<Left>`, `<Right>`, `<Up>`, `<Down>`: the arrow keys
+//! - `<Space>`: a space character / pressing the spacebar
+//! - `<BS>`: the backspace key
+//! - `<Esc>`: the escape key
+//!
+//! ## Modifier Strings
+//! A modifier string consists of an opening angled bracket, the modifiers (i.e. control, alt,
+//! shift), the key press, and a closing angled bracket. The inner key press can be a literal key
+//! character or a special character (without the surrounding angled brackets).
+//!
+//! ### Allowed Modifiers
+//! - `C-`: Control is pressed
+//! - `A-`: Alt is pressed
+//! - `S-`: Shift is pressed
+//! - `C-A-`: Control and Alt are pressed
+//! - `C-S-`: Control and Shift are pressed
+//! - `S-A-`: Shift and Alt are pressed
+//! - `C-S-A-`: Control, Shift, and Alt are all pressed
+//!
+//! ### Examples
+//! - `<C-S>`: Control + S
+//! - `<C-C>`: Control + C
+//! - `<A-Tab>`: Alt + Tab
+//! - `<S-A-Enter>`: Shift + Alt + Enter
+//! - `<C-S-A-Left>`: Control + Shift + Alt + left arrow key
+//! - `<C-A-Del>`: Control + Alt + Delete (this will probably be intercepted by your OS)
 use crate::context::*;
 use std::fmt;
 use std::fs::read_to_string;
