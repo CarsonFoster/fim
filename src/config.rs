@@ -285,6 +285,7 @@ impl Config {
         Self::new(&text)
     }
 
+    /// Query the configuration for a context [`Factory`].
     pub fn query(&self, context: &str, key: KeyEvent) -> Option<&Factory> {
         self.map.get(context).map_or(None, |m| m.get(&key)) 
     }
