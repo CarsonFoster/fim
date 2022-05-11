@@ -115,6 +115,9 @@ impl ConfigMap {
     }
 
     pub fn query(&self, rep: &str) -> Option<KeyEvent> {
+        if rep.len() == 0 {
+            return None;
+        }
         let head = rep.chars().next();
         let middle = rep.get(1..rep.len() - 1);
         if rep.len() == 1 && head.is_some() && head.unwrap().is_ascii_graphic() {
@@ -128,6 +131,9 @@ impl ConfigMap {
     }
 
     pub fn query_code(&self, rep: &str) -> Option<KeyCode> {
+        if rep.len() == 0 {
+            return None;
+        }
         let head = rep.chars().next();
         if rep.len() == 1 && head.is_some() && head.unwrap().is_ascii_graphic() {
             Some(KeyCode::Char(head.unwrap().to_ascii_uppercase()))
@@ -250,11 +256,11 @@ impl Config {
             let mut modifiers = KeyModifiers::empty();
             if let Some(key_event) = key_event.get(1..key_event.len() - 1) {
                 let mut state = State::Start;
-                let transitions = [[State::C, State::Reject, State::Reject, State::Reject, State::Accept, State::Accept, State::Accept],
-                                   [State::A, State::Reject, State::Reject, State::Reject, State::A, State::Accept, State::A],
-                                   [State::S, State::Reject, State::Reject, State::Reject, State::S, State::Accept, State::Accept],
-                                   [State::Reject, State::C_, State::A_, State::S_, State::Accept, State::Accept, State::Accept],
-                                   [State::Reject, State::Reject, State::Reject, State::Reject, State::Accept, State::Accept, State::Accept]];
+                let transitions = [[State::C, State::Reject, State::Reject, State::Reject, State::Accept, State::Accept, State::Accept, State::Accept, State::Reject],
+                                   [State::A, State::Reject, State::Reject, State::Reject, State::A, State::Accept, State::A, State::Accept, State::Reject],
+                                   [State::S, State::Reject, State::Reject, State::Reject, State::S, State::Accept, State::Accept, State::Accept, State::Reject],
+                                   [State::Reject, State::C_, State::A_, State::S_, State::Accept, State::Accept, State::Accept, State::Accept, State::Reject],
+                                   [State::Reject, State::Reject, State::Reject, State::Reject, State::Accept, State::Accept, State::Accept, State::Accept, State::Reject]];
                 let mut key = String::with_capacity(8);
                 for ch in key_event.chars() {
                     let transition = match ch {
@@ -265,9 +271,7 @@ impl Config {
                         _         => Transition::Else,
                     };
                     state = transitions[transition as usize][state as usize];
-                    if state == State::Reject {
-                        return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no });
-                    } else if state == State::Accept {
+                    if state == State::Accept || state == State::Reject {
                         if key.len() == 8 {
                             return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no });
                         }
@@ -279,6 +283,22 @@ impl Config {
                         State::S => KeyModifiers::SHIFT,
                         _        => KeyModifiers::NONE
                     });
+                }
+                match state {
+                    State::Start | State::C_ | State::A_ | State::S_ => return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no }),
+                    State::C => {
+                        key.push('C');
+                        modifiers.remove(KeyModifiers::CONTROL);
+                    },
+                    State::A => {
+                        key.push('A');
+                        modifiers.remove(KeyModifiers::ALT);
+                    },
+                    State::S => {
+                        key.push('S');
+                        modifiers.remove(KeyModifiers::SHIFT);
+                    },
+                    _ => (),
                 }
                 let code = match MAP.query_code(&key) {
                     Some(c) => c,
@@ -320,4 +340,20 @@ impl Config {
             Err(ConfigParseError::UnicodeBoundaryErrorInBind{ line: line_no })
         }
     }
+}
+
+#[test]
+fn test_parse_line_key_event() {
+    assert_eq!(Config::parse_key_event("", 1).err(), Some(ConfigParseError::MalformedKeyEventTerm{ line: 1 }));
+    assert_eq!(Config::parse_key_event("a", 1).unwrap(), KeyEvent::new(KeyCode::Char('A'), KeyModifiers::NONE));
+    assert_eq!(Config::parse_key_event("B", 1).unwrap(), KeyEvent::new(KeyCode::Char('B'), KeyModifiers::NONE));
+    assert_eq!(Config::parse_key_event("<Tab>", 1).unwrap(), KeyEvent::new(KeyCode::Tab, KeyModifiers::NONE));
+    assert_eq!(Config::parse_key_event("<tab>", 1).err(), Some(ConfigParseError::MalformedKeyEventTerm{ line: 1 }));
+    assert_eq!(Config::parse_key_event("<C-C>", 1).unwrap(), KeyEvent::new(KeyCode::Char('C'), KeyModifiers::CONTROL));
+    assert_eq!(Config::parse_key_event("<C-S-A>", 1).unwrap(), KeyEvent::new(KeyCode::Char('A'), KeyModifiers::CONTROL.union(KeyModifiers::SHIFT)));
+    assert_eq!(Config::parse_key_event("<C-A-->", 1).unwrap(), KeyEvent::new(KeyCode::Char('-'), KeyModifiers::CONTROL.union(KeyModifiers::ALT)));
+    assert_eq!(Config::parse_key_event("<A-Enter>", 1).unwrap(), KeyEvent::new(KeyCode::Enter, KeyModifiers::ALT));
+    assert_eq!(Config::parse_key_event("<S-V>", 1).unwrap(), KeyEvent::new(KeyCode::Char('V'), KeyModifiers::SHIFT));
+    assert_eq!(Config::parse_key_event("<S-A-C>", 1).unwrap(), KeyEvent::new(KeyCode::Char('C'), KeyModifiers::SHIFT.union(KeyModifiers::ALT)));
+    assert_eq!(Config::parse_key_event("<C-S-A-Del>", 1).unwrap(), KeyEvent::new(KeyCode::Delete, KeyModifiers::CONTROL.union(KeyModifiers::SHIFT.union(KeyModifiers::ALT))));
 }
