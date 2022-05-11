@@ -1,6 +1,7 @@
 //! A module for handling the content of files ('documents').
 
-use std::io::{Error};
+use std::io::Error;
+use std::slice::SliceIndex;
 
 /// Struct that represents a line of text.
 #[derive(Default)]
@@ -32,6 +33,19 @@ impl Document {
     /// Get a line at the given (zero-based) index.
     pub fn line(&self, idx: usize) -> Option<&Line> {
         self.lines.get(idx)
+    }
+
+    /// Get a unicode character with the given (zero-based) range from the given line.
+    pub fn unicode_char<I>(&self, line_idx: usize, char_range: I) -> Option<&<I as SliceIndex<str>>::Output>
+    where I: SliceIndex<str>
+    {
+        self.lines.get(line_idx).map(|l| l.text.get(char_range)).flatten()
+    }
+
+    /// Get a ASCII character with the given (zero-based) range from the given line.
+    pub fn ascii_char(&self, line_idx: usize, char_idx: usize) -> Option<char> {
+        self.lines.get(line_idx).map(|l| l.text.get(char_idx .. char_idx + 1)
+            .map(|s| s.chars().next()).flatten()).flatten()
     }
 
     fn vec_from_str(text: &str) -> Vec<Line> {
