@@ -285,6 +285,10 @@ impl Config {
         Self::new(&text)
     }
 
+    pub fn query(&self, context: &str, key: KeyEvent) -> Option<&Factory> {
+        self.map.get(context).map_or(None, |m| m.get(&key)) 
+    }
+
     #[doc(hidden)]
     pub fn parse_key_event(key_event: &str, line_no: u16) -> Result<KeyEvent, ConfigParseError> {
         let no_modifiers = MAP.query(key_event);
