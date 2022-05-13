@@ -4,24 +4,13 @@ use crate::terminal::Terminal;
 use crate::window::Window;
 use crossterm::{
     Result,
-    cursor,
     event::KeyCode,
     terminal::{
         Clear,
         ClearType,
     },
-    style::{
-        ContentStyle,
-        Print,
-        Stylize,
-    },
+    style::Print,
 };
-
-const VERSION: &str = env!("CARGO_PKG_VERSION");
-const WELCOME_SIZE: usize = 4;
-lazy_static! {
-    static ref WELCOME_MSG: [String; WELCOME_SIZE] = ["FIM - Foster's vIM-like editor".into(), String::new(), format!("Version {}", VERSION), "by Carson Foster".into()];
-}
 
 /// Struct that represents the fim editor.
 pub struct Editor<'a> {
@@ -166,24 +155,6 @@ impl<'a> Editor<'a> {
             _ => &mut self.terminal // the other functions return &mut Terminal so you can chain them
         };
         self.terminal.move_cursor()
-    }
-
-    fn draw_welcome_screen(&mut self) -> Result<()> {
-        let height = self.terminal.size().height;
-        let message_len = WELCOME_SIZE as u16;
-        let mut message_line: u16 = 0;
-        self.terminal.q(cursor::SavePosition)?.q(cursor::Hide)?.q(Clear(ClearType::All))?;
-        for i in 0..(height - 1) {
-            if message_line < message_len && i == height / 2 - message_len / 2 + message_line {
-                self.terminal.centered_styles("~", &WELCOME_MSG[message_line as usize], "",
-                                              Some(ContentStyle::new().blue()), None, None).q()?;
-                // self.terminal.q(Print(self.terminal.centered("~", &self.welcome_message[message_line as usize], "") + "\r\n"));
-                message_line += 1;
-            } else {
-                self.terminal.q(Print("~\r\n".blue()))?;
-            }
-        }
-        self.terminal.q(Print("~".blue()))?.q(cursor::RestorePosition)?.q(cursor::Show)?.flush()
     }
 }
 
