@@ -15,7 +15,7 @@ use crate::editor::Editor;
 use std::cmp::min;
 use crossterm::{
     Result,
-    event::{KeyCode, KeyEvent, KeyModifiers},
+    event::{KeyCode, KeyEvent},
 };
 
 /// Enum for return values of [`Context`]s.

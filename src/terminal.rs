@@ -32,7 +32,7 @@ pub struct Size {
 }
 
 /// Struct that represents a 2D position on the terminal.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct Position {
     pub x: u16,
     pub y: u16,

@@ -1,14 +1,11 @@
 //! A module that contains the main editor logic.
 use crate::context::*;
-use crate::document::Document;
-use crate::terminal::{Size, Terminal};
+use crate::terminal::Terminal;
+use crate::window::Window;
 use crossterm::{
     Result,
     cursor,
-    event::{
-        KeyCode,
-        KeyEvent,
-    },
+    event::KeyCode,
     terminal::{
         Clear,
         ClearType,
@@ -26,16 +23,6 @@ lazy_static! {
     static ref WELCOME_MSG: [String; WELCOME_SIZE] = ["FIM - Foster's vIM-like editor".into(), String::new(), format!("Version {}", VERSION), "by Carson Foster".into()];
 }
 
-/// Struct that represents a position in a document.
-///
-/// Because it is possible for documents to have more than 2^16 - 1 lines, this needs to have usize
-/// fields instead of u16 fields, so we can't reuse [`crate::terminal::Position`].
-#[derive(Copy, Clone, Default)]
-pub struct DocPosition {
-    pub x: usize,
-    pub y: usize
-}
-
 /// Struct that represents the fim editor.
 pub struct Editor<'a> {
     #[doc(hidden)]
@@ -51,20 +38,22 @@ pub struct Editor<'a> {
     #[doc(hidden)]
     command_stack: Vec<String>,
     #[doc(hidden)]
-    doc: Option<Document>,
-    #[doc(hidden)]
-    pos: DocPosition,
+    windows: Vec<Window>,
 }
 
 impl<'a> Editor<'a> {
     /// Create a new Editor struct from a file.
     pub fn new(filename: &str) -> Result<Editor<'a>> {
-        Ok( Editor{ terminal: Terminal::new()?, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), doc: Some(Document::new(filename)?), pos: DocPosition::default() } )
+        let term = Terminal::new()?;
+        let window = Window::new(filename, &term)?;
+        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window] } )
     }
 
     /// Create a new Editor struct with the default welcome screen.
     pub fn default() -> Result<Editor<'a>> {
-        Ok( Editor{ terminal: Terminal::new()?, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), doc: None, pos: DocPosition::default() } )
+        let term = Terminal::new()?;
+        let window = Window::default(&term);
+        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window] } )
     }
 
     /// Run the editor logic.
@@ -81,18 +70,11 @@ impl<'a> Editor<'a> {
         Ok(())
     }
 
-    fn render_doc(&mut self) -> Result<()> {
-        if let Some(doc) = (&self.doc).as_ref() {
-            Ok(()) 
-        } else {
-            self.draw_welcome_screen()
-        }
-    }
-
     fn setup(&mut self) -> Result<()> {
         self.terminal.enter_alternate_screen()?;
         self.terminal.move_cursor_to(0, 0)?;
-        self.render_doc()
+        self.windows.iter().try_for_each(|w| w.render(&mut self.terminal))?;
+        Ok(())
     }
 
     fn process_keypress(&mut self) -> Result<()> {
