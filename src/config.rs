@@ -88,7 +88,6 @@ impl ConfigParseError {
             ConfigParseError::MalformedKeyEventTerm{ line } => format!("line {}: incorrect syntax in key event term", line),
             ConfigParseError::UnicodeBoundaryErrorInKeyEvent{ line } => format!("line {}: unexpected unicode character in key event term", line),
             ConfigParseError::IOError{ error } => error.to_string(),
-            _ => "unknown config parse error".to_owned(),
         }
     }
 }
