@@ -26,6 +26,17 @@ lazy_static! {
     static ref WELCOME_MSG: [String; WELCOME_SIZE] = ["FIM - Foster's vIM-like editor".into(), String::new(), format!("Version {}", VERSION), "by Carson Foster".into()];
 }
 
+/// Struct that represents a position in a document.
+///
+/// Because it is possible for documents to have more than 2^16 - 1 lines, this needs to have usize
+/// fields instead of u16 fields, so we can't reuse [`crate::terminal::Position`].
+#[derive(Copy, Clone, Default)]
+pub struct DocPosition {
+    pub x: usize,
+    pub y: usize
+}
+
+/// Struct that represents the fim editor.
 pub struct Editor<'a> {
     #[doc(hidden)]
     terminal: Terminal,
@@ -41,22 +52,24 @@ pub struct Editor<'a> {
     command_stack: Vec<String>,
     #[doc(hidden)]
     doc: Option<Document>,
+    #[doc(hidden)]
+    pos: DocPosition,
 }
 
 impl<'a> Editor<'a> {
     /// Create a new Editor struct from a file.
-    //pub fn new(filename: &str) -> Result<Editor<'a>> {
-
-    //}
+    pub fn new(filename: &str) -> Result<Editor<'a>> {
+        Ok( Editor{ terminal: Terminal::new()?, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), doc: Some(Document::new(filename)?), pos: DocPosition::default() } )
+    }
 
     /// Create a new Editor struct with the default welcome screen.
     pub fn default() -> Result<Editor<'a>> {
-        Ok( Editor{ terminal: Terminal::new()?, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), doc: None } )
+        Ok( Editor{ terminal: Terminal::new()?, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), doc: None, pos: DocPosition::default() } )
     }
 
     /// Run the editor logic.
     ///
-    /// Returns only the user has signalled they want to quit.
+    /// Returns only when the user has signalled they want to quit.
     pub fn run(&mut self) -> Result<()> {
         self.setup()?;
         loop {
@@ -68,14 +81,18 @@ impl<'a> Editor<'a> {
         Ok(())
     }
 
-    fn setup(&mut self) -> Result<()> {
-        self.terminal.enter_alternate_screen()?;
-        self.terminal.move_cursor_to(0, 0)?;
-        if let Some(doc) = (&mut self.doc).as_mut() {
-            Ok(())
+    fn render_doc(&mut self) -> Result<()> {
+        if let Some(doc) = (&self.doc).as_ref() {
+            Ok(()) 
         } else {
             self.draw_welcome_screen()
         }
+    }
+
+    fn setup(&mut self) -> Result<()> {
+        self.terminal.enter_alternate_screen()?;
+        self.terminal.move_cursor_to(0, 0)?;
+        self.render_doc()
     }
 
     fn process_keypress(&mut self) -> Result<()> {

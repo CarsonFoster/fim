@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Editor",""]]});
+initSidebarItems({"struct":[["DocPosition","Struct that represents a position in a document."],["Editor","Struct that represents the fim editor."]]});
