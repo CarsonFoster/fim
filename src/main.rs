@@ -9,7 +9,7 @@ use libfim::editor::Editor;
 
 #[doc(hidden)]
 fn main() {
-    match Editor::new() {
+    match Editor::default() {
         Ok(mut fim) => {
             if let Err(e) = fim.run() {
                 std::mem::drop(fim);

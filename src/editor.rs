@@ -1,5 +1,6 @@
 //! A module that contains the main editor logic.
 use crate::context::*;
+use crate::document::Document;
 use crate::terminal::{Size, Terminal};
 use crossterm::{
     Result,
@@ -20,6 +21,10 @@ use crossterm::{
 };
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
+const WELCOME_SIZE: usize = 4;
+lazy_static! {
+    static ref WELCOME_MSG: [String; WELCOME_SIZE] = ["FIM - Foster's vIM-like editor".into(), String::new(), format!("Version {}", VERSION), "by Carson Foster".into()];
+}
 
 pub struct Editor<'a> {
     #[doc(hidden)]
@@ -35,14 +40,18 @@ pub struct Editor<'a> {
     #[doc(hidden)]
     command_stack: Vec<String>,
     #[doc(hidden)]
-    welcome_message: [String; 4],
+    doc: Option<Document>,
 }
 
 impl<'a> Editor<'a> {
-    /// Create a new Editor struct.
-    pub fn new() -> Result<Editor<'a>> {
-        let welcome_message = ["FIM - Foster's vIM-like editor".into(), String::new(), format!("Version {}", VERSION), "by Carson Foster".into()];
-        Ok( Editor{ terminal: Terminal::new()?, quit: false, welcome_message, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new() } )
+    /// Create a new Editor struct from a file.
+    //pub fn new(filename: &str) -> Result<Editor<'a>> {
+
+    //}
+
+    /// Create a new Editor struct with the default welcome screen.
+    pub fn default() -> Result<Editor<'a>> {
+        Ok( Editor{ terminal: Terminal::new()?, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), doc: None } )
     }
 
     /// Run the editor logic.
@@ -62,7 +71,11 @@ impl<'a> Editor<'a> {
     fn setup(&mut self) -> Result<()> {
         self.terminal.enter_alternate_screen()?;
         self.terminal.move_cursor_to(0, 0)?;
-        self.draw_welcome_screen()
+        if let Some(doc) = (&mut self.doc).as_mut() {
+            Ok(())
+        } else {
+            self.draw_welcome_screen()
+        }
     }
 
     fn process_keypress(&mut self) -> Result<()> {
@@ -158,12 +171,12 @@ impl<'a> Editor<'a> {
 
     fn draw_welcome_screen(&mut self) -> Result<()> {
         let height = self.terminal.size().height;
-        let message_len = self.welcome_message.len() as u16;
+        let message_len = WELCOME_SIZE as u16;
         let mut message_line: u16 = 0;
         self.terminal.q(cursor::SavePosition)?.q(cursor::Hide)?.q(Clear(ClearType::All))?;
         for i in 0..(height - 1) {
             if message_line < message_len && i == height / 2 - message_len / 2 + message_line {
-                self.terminal.centered_styles("~", &self.welcome_message[message_line as usize], "",
+                self.terminal.centered_styles("~", &WELCOME_MSG[message_line as usize], "",
                                               Some(ContentStyle::new().blue()), None, None).q()?;
                 // self.terminal.q(Print(self.terminal.centered("~", &self.welcome_message[message_line as usize], "") + "\r\n"));
                 message_line += 1;
