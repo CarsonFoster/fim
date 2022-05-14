@@ -49,12 +49,18 @@ pub struct Window {
 impl Window {
     /// Create a new, full-terminal Window with the default welcome message.
     pub fn default(term: &Terminal) -> Self {
-        Window{ doc: None, pos_in_doc: DocPosition::default(), window_pos: Position::default(), window_size: term.size() }
+        let size = term.size();
+        assert!(size.height > 1);
+        let size = Size{ width: size.width, height: size.height - 1 };
+        Window{ doc: None, pos_in_doc: DocPosition::default(), window_pos: Position::default(), window_size: size }
     }
 
     /// Create a new, full-terminal Window with the contents of the given file.
     pub fn new(filename: PathBuf, term: &Terminal) -> Result<Self> {
-        Ok(Window{ doc: Some(Document::new(filename)?), pos_in_doc: DocPosition::default(), window_pos: Position::default(), window_size: term.size() })
+        let size = term.size();
+        assert!(size.height > 1);
+        let size = Size{ width: size.width, height: size.height - 1 };
+        Ok(Window{ doc: Some(Document::new(filename)?), pos_in_doc: DocPosition::default(), window_pos: Position::default(), window_size: size })
     }
 
     /// Render this window's contents to the terminal screen.
@@ -134,7 +140,7 @@ impl Window {
         let mut message_line: u16 = 0;
         term.q(Hide)?.save_cursor();
         self.q_clear(ClearType::All, 0, term)?;
-        for i in 0..(self.window_size.height - 1) {
+        for i in 0..self.window_size.height {
             let Position{ x, y } = self.to_term(0, i);
             term.cursor_to(x, y).q_move_cursor()?;
             if message_line < message_len && i == message_begin_line + message_line {
