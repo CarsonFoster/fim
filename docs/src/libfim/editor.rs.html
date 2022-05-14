@@ -165,58 +165,20 @@
 <span id="165">165</span>
 <span id="166">166</span>
 <span id="167">167</span>
-<span id="168">168</span>
-<span id="169">169</span>
-<span id="170">170</span>
-<span id="171">171</span>
-<span id="172">172</span>
-<span id="173">173</span>
-<span id="174">174</span>
-<span id="175">175</span>
-<span id="176">176</span>
-<span id="177">177</span>
-<span id="178">178</span>
-<span id="179">179</span>
-<span id="180">180</span>
-<span id="181">181</span>
-<span id="182">182</span>
-<span id="183">183</span>
-<span id="184">184</span>
-<span id="185">185</span>
-<span id="186">186</span>
-<span id="187">187</span>
-<span id="188">188</span>
-<span id="189">189</span>
-<span id="190">190</span>
-<span id="191">191</span>
-<span id="192">192</span>
-<span id="193">193</span>
-<span id="194">194</span>
-<span id="195">195</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module that contains the main editor logic.</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::context</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::terminal::Terminal</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::window::Window</span>;
 <span class="kw">use</span> <span class="ident">crossterm</span>::{
     <span class="prelude-ty">Result</span>,
-    <span class="ident">cursor</span>,
     <span class="ident">event::KeyCode</span>,
     <span class="ident">terminal</span>::{
         <span class="ident">Clear</span>,
         <span class="ident">ClearType</span>,
     },
-    <span class="ident">style</span>::{
-        <span class="ident">ContentStyle</span>,
-        <span class="ident">Print</span>,
-        <span class="ident">Stylize</span>,
-    },
+    <span class="ident">style::Print</span>,
 };
-
-<span class="kw">const</span> <span class="ident">VERSION</span>: <span class="kw-2">&amp;</span><span class="ident">str</span> <span class="op">=</span> <span class="macro">env!</span>(<span class="string">&quot;CARGO_PKG_VERSION&quot;</span>);
-<span class="kw">const</span> <span class="ident">WELCOME_SIZE</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="number">4</span>;
-<span class="macro">lazy_static!</span> {
-    <span class="kw">static</span> <span class="kw-2">ref</span> <span class="ident">WELCOME_MSG</span>: [<span class="ident">String</span>; <span class="ident">WELCOME_SIZE</span>] <span class="op">=</span> [<span class="string">&quot;FIM - Foster&#39;s vIM-like editor&quot;</span>.<span class="ident">into</span>(), <span class="ident">String::new</span>(), <span class="macro">format!</span>(<span class="string">&quot;Version {}&quot;</span>, <span class="ident">VERSION</span>), <span class="string">&quot;by Carson Foster&quot;</span>.<span class="ident">into</span>()];
-}
+<span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
 
 <span class="doccomment">/// Struct that represents the fim editor.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Editor</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
@@ -238,7 +200,7 @@
 
 <span class="kw">impl</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> <span class="ident">Editor</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span> {
     <span class="doccomment">/// Create a new Editor struct from a file.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">filename</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Editor</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">filename</span>: <span class="ident">PathBuf</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Editor</span><span class="op">&lt;</span><span class="lifetime">&#39;a</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">term</span> <span class="op">=</span> <span class="ident">Terminal::new</span>()<span class="question-mark">?</span>;
         <span class="kw">let</span> <span class="ident">window</span> <span class="op">=</span> <span class="ident">Window::new</span>(<span class="ident">filename</span>, <span class="kw-2">&amp;</span><span class="ident">term</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>( <span class="ident">Editor</span>{ <span class="ident">terminal</span>: <span class="ident">term</span>, <span class="ident">quit</span>: <span class="bool-val">false</span>, <span class="ident">context_stack</span>: <span class="macro">vec!</span>[<span class="ident">Box::new</span>(<span class="ident">NormalMode</span>)], <span class="ident">push_context_stack</span>: <span class="ident">Vec::new</span>(), <span class="ident">has_been_setup_stack</span>: <span class="macro">vec!</span>[<span class="bool-val">true</span>], <span class="ident">command_stack</span>: <span class="ident">Vec::new</span>(), <span class="ident">windows</span>: <span class="macro">vec!</span>[<span class="ident">window</span>] } )
@@ -361,24 +323,6 @@
             <span class="kw">_</span> =&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>.<span class="ident">terminal</span> <span class="comment">// the other functions return &amp;mut Terminal so you can chain them</span>
         };
         <span class="self">self</span>.<span class="ident">terminal</span>.<span class="ident">move_cursor</span>()
-    }
-
-    <span class="kw">fn</span> <span class="ident">draw_welcome_screen</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">terminal</span>.<span class="ident">size</span>().<span class="ident">height</span>;
-        <span class="kw">let</span> <span class="ident">message_len</span> <span class="op">=</span> <span class="ident">WELCOME_SIZE</span> <span class="kw">as</span> <span class="ident">u16</span>;
-        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">message_line</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">0</span>;
-        <span class="self">self</span>.<span class="ident">terminal</span>.<span class="ident">q</span>(<span class="ident">cursor::SavePosition</span>)<span class="question-mark">?</span>.<span class="ident">q</span>(<span class="ident">cursor::Hide</span>)<span class="question-mark">?</span>.<span class="ident">q</span>(<span class="ident">Clear</span>(<span class="ident">ClearType::All</span>))<span class="question-mark">?</span>;
-        <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..(<span class="ident">height</span> <span class="op">-</span> <span class="number">1</span>) {
-            <span class="kw">if</span> <span class="ident">message_line</span> <span class="op">&lt;</span> <span class="ident">message_len</span> <span class="op">&amp;&amp;</span> <span class="ident">i</span> <span class="op">==</span> <span class="ident">height</span> <span class="op">/</span> <span class="number">2</span> <span class="op">-</span> <span class="ident">message_len</span> <span class="op">/</span> <span class="number">2</span> <span class="op">+</span> <span class="ident">message_line</span> {
-                <span class="self">self</span>.<span class="ident">terminal</span>.<span class="ident">centered_styles</span>(<span class="string">&quot;~&quot;</span>, <span class="kw-2">&amp;</span><span class="ident">WELCOME_MSG</span>[<span class="ident">message_line</span> <span class="kw">as</span> <span class="ident">usize</span>], <span class="string">&quot;&quot;</span>,
-                                              <span class="prelude-val">Some</span>(<span class="ident">ContentStyle::new</span>().<span class="ident">blue</span>()), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>).<span class="ident">q</span>()<span class="question-mark">?</span>;
-                <span class="comment">// self.terminal.q(Print(self.terminal.centered(&quot;~&quot;, &amp;self.welcome_message[message_line as usize], &quot;&quot;) + &quot;\r\n&quot;));</span>
-                <span class="ident">message_line</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
-            } <span class="kw">else</span> {
-                <span class="self">self</span>.<span class="ident">terminal</span>.<span class="ident">q</span>(<span class="ident">Print</span>(<span class="string">&quot;~\r\n&quot;</span>.<span class="ident">blue</span>()))<span class="question-mark">?</span>;
-            }
-        }
-        <span class="self">self</span>.<span class="ident">terminal</span>.<span class="ident">q</span>(<span class="ident">Print</span>(<span class="string">&quot;~&quot;</span>.<span class="ident">blue</span>()))<span class="question-mark">?</span>.<span class="ident">q</span>(<span class="ident">cursor::RestorePosition</span>)<span class="question-mark">?</span>.<span class="ident">q</span>(<span class="ident">cursor::Show</span>)<span class="question-mark">?</span>.<span class="ident">flush</span>()
     }
 }
 

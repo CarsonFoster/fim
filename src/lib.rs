@@ -6,5 +6,6 @@ pub mod config;
 pub mod document;
 pub mod editor;
 pub mod layout;
+pub mod options;
 pub mod terminal;
 pub mod window;

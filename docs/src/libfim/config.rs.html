@@ -400,7 +400,6 @@
 <span id="400">400</span>
 <span id="401">401</span>
 <span id="402">402</span>
-<span id="403">403</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module for handling configuration files that map keyboard presses to contexts.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Config Format</span>
@@ -491,7 +490,6 @@
             <span class="ident">ConfigParseError::MalformedKeyEventTerm</span>{ <span class="ident">line</span> } =&gt; <span class="macro">format!</span>(<span class="string">&quot;line {}: incorrect syntax in key event term&quot;</span>, <span class="ident">line</span>),
             <span class="ident">ConfigParseError::UnicodeBoundaryErrorInKeyEvent</span>{ <span class="ident">line</span> } =&gt; <span class="macro">format!</span>(<span class="string">&quot;line {}: unexpected unicode character in key event term&quot;</span>, <span class="ident">line</span>),
             <span class="ident">ConfigParseError::IOError</span>{ <span class="ident">error</span> } =&gt; <span class="ident">error</span>.<span class="ident">to_string</span>(),
-            <span class="kw">_</span> =&gt; <span class="string">&quot;unknown config parse error&quot;</span>.<span class="ident">to_owned</span>(),
         }
     }
 }

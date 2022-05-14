@@ -4,7 +4,7 @@
 //!
 //! (vimscript or its analogue won't be included for a long time, sorry)
 
-pub use libfim::{config, context, document, editor, layout, terminal, window};
+pub use libfim::{config, context, document, editor, layout, options, terminal, window};
 use libfim::editor::Editor;
 use clap::Parser;
 use std::path::PathBuf;
