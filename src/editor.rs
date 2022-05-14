@@ -1,5 +1,6 @@
 //! A module that contains the main editor logic.
 use crate::context::*;
+use crate::options::Options;
 use crate::terminal::Terminal;
 use crate::window::Window;
 use crossterm::{
@@ -29,21 +30,23 @@ pub struct Editor<'a> {
     command_stack: Vec<String>,
     #[doc(hidden)]
     windows: Vec<Window>,
+    #[doc(hidden)]
+    opt: Options,
 }
 
 impl<'a> Editor<'a> {
     /// Create a new Editor struct from a file.
-    pub fn new(filename: PathBuf) -> Result<Editor<'a>> {
+    pub fn new(filename: PathBuf, opt: Options) -> Result<Editor<'a>> {
         let term = Terminal::new()?;
         let window = Window::new(filename, &term)?;
-        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window] } )
+        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], opt } )
     }
 
     /// Create a new Editor struct with the default welcome screen.
-    pub fn default() -> Result<Editor<'a>> {
+    pub fn default(opt: Options) -> Result<Editor<'a>> {
         let term = Terminal::new()?;
         let window = Window::default(&term);
-        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window] } )
+        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], opt } )
     }
 
     /// Run the editor logic.
@@ -63,7 +66,7 @@ impl<'a> Editor<'a> {
     fn setup(&mut self) -> Result<()> {
         self.terminal.enter_alternate_screen()?;
         self.terminal.move_cursor_to(0, 0)?;
-        self.windows.iter().try_for_each(|w| w.render(&mut self.terminal))?;
+        self.windows.iter().try_for_each(|w| w.render(&self.opt, &mut self.terminal))?;
         Ok(())
     }
 

@@ -6,6 +6,7 @@
 
 pub use libfim::{config, context, document, editor, layout, options, terminal, window};
 use libfim::editor::Editor;
+use libfim::options::Options;
 use clap::Parser;
 use std::path::PathBuf;
 
@@ -22,10 +23,11 @@ struct Args {
 #[doc(hidden)]
 fn main() {
     let mut args = Args::parse();
+    let opt = Options::default();
     let fim = if let Some(filename) = args.file.take() {
-        Editor::new(filename)
+        Editor::new(filename, opt)
     } else {
-        Editor::default()
+        Editor::default(opt)
     };
     match fim {
         Ok(mut fim) => {

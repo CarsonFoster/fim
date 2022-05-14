@@ -2,6 +2,7 @@
 //!
 //! A window has a single active [`Document`] and can be split vertically or horizontally.
 use crate::document::Document;
+use crate::options::{LineNumbers, Options};
 use crate::terminal::{Position, Size, Terminal};
 use crossterm::{
     Result,
@@ -57,9 +58,9 @@ impl Window {
     }
 
     /// Render this window's contents to the terminal screen.
-    pub fn render(&self, term: &mut Terminal) -> Result<()> {
+    pub fn render(&self, opt: &Options, term: &mut Terminal) -> Result<()> {
         if let Some(doc) = self.doc.as_ref() {
-            Ok(())
+            self.draw_document(opt, term)
         } else {
             self.draw_welcome_screen(term)
         }
@@ -96,6 +97,10 @@ impl Window {
             }
         }
         Ok(())
+    }
+
+    fn draw_document(&self, opt: &Options, term: &mut Terminal) -> Result<()> {
+        Ok(()) 
     }
 
     fn center_welcome(&self, idx: usize, term: &mut Terminal) -> Result<()> {
