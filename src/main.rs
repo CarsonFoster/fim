@@ -6,9 +6,22 @@
 
 pub use libfim::{config, context, document, editor, layout, terminal, window};
 use libfim::editor::Editor;
+use clap::Parser;
+use std::path::PathBuf;
+
+#[derive(Parser)]
+#[clap(version)]
+#[clap(author = "Carson Foster")]
+#[clap(about = "vim-like text editor with support for multiple keyboard layouts.", long_about = None)]
+struct Args {
+    /// File to edit
+    #[clap(parse(from_os_str), value_name = "FILE")]
+    file: Option<PathBuf>,
+}
 
 #[doc(hidden)]
 fn main() {
+    let args = Args::parse();
     match Editor::default() {
         Ok(mut fim) => {
             if let Err(e) = fim.run() {
