@@ -11,6 +11,7 @@ use crossterm::{
     },
     style::Print,
 };
+use std::path::PathBuf;
 
 /// Struct that represents the fim editor.
 pub struct Editor<'a> {
@@ -32,7 +33,7 @@ pub struct Editor<'a> {
 
 impl<'a> Editor<'a> {
     /// Create a new Editor struct from a file.
-    pub fn new(filename: &str) -> Result<Editor<'a>> {
+    pub fn new(filename: PathBuf) -> Result<Editor<'a>> {
         let term = Terminal::new()?;
         let window = Window::new(filename, &term)?;
         Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window] } )

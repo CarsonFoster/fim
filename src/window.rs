@@ -8,6 +8,7 @@ use crossterm::{
     cursor::{Hide, Show},
     style::{Print, Stylize},
 };
+use std::path::PathBuf;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const WELCOME_SIZE: usize = 4;
@@ -51,7 +52,7 @@ impl Window {
     }
 
     /// Create a new, full-terminal Window with the contents of the given file.
-    pub fn new(filename: &str, term: &Terminal) -> Result<Self> {
+    pub fn new(filename: PathBuf, term: &Terminal) -> Result<Self> {
         Ok(Window{ doc: Some(Document::new(filename)?), pos_in_doc: DocPosition::default(), window_pos: Position::default(), window_size: term.size() })
     }
 

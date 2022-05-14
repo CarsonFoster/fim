@@ -21,8 +21,13 @@ struct Args {
 
 #[doc(hidden)]
 fn main() {
-    let args = Args::parse();
-    match Editor::default() {
+    let mut args = Args::parse();
+    let fim = if let Some(filename) = args.file.take() {
+        Editor::new(filename)
+    } else {
+        Editor::default()
+    };
+    match fim {
         Ok(mut fim) => {
             if let Err(e) = fim.run() {
                 std::mem::drop(fim);

@@ -1,6 +1,7 @@
 //! A module for handling the content of files ('documents').
 
 use std::io::Error;
+use std::path::PathBuf;
 use std::slice::SliceIndex;
 
 /// Struct that represents a line of text.
@@ -18,16 +19,16 @@ impl From<&str> for Line {
 /// Struct that represents a document.
 pub struct Document {
     #[doc(hidden)]
-    filename: Option<String>,
+    filename: Option<PathBuf>,
     #[doc(hidden)]
     lines: Vec<Line>,
 }
 
 impl Document {
     /// Create a new Document from a file.
-    pub fn new(filename: &str) -> Result<Self, Error> {
-        let text = std::fs::read_to_string(filename)?;
-        Ok(Document{ filename: Some(filename.to_string()), lines: Self::vec_from_str(&text) })
+    pub fn new(filename: PathBuf) -> Result<Self, Error> {
+        let text = std::fs::read_to_string(&filename)?;
+        Ok(Document{ filename: Some(filename), lines: Self::vec_from_str(&text) })
     }
 
     /// Get a line at the given (zero-based) index.
