@@ -3,7 +3,6 @@
 //! A window has a single active [`Document`] and can be split vertically or horizontally.
 use crate::document::Document;
 use crate::terminal::{Position, Size, Terminal};
-use std::iter::once;
 use crossterm::{
     Result,
     cursor::{Hide, Show},
@@ -61,9 +60,14 @@ impl Window {
         if let Some(doc) = self.doc.as_ref() {
             Ok(())
         } else {
-            Ok(())
+            self.draw_welcome_screen(term)
         }
     }
+    
+    // NOTE: when you implement splitting, make sure that all split windows have
+    // documents, and that you change the existing window to have a new blank document
+    // if it doesn't have a document, so that the invariants for draw_welcome_screen are
+    // maintained.
 
     fn to_term(&self, x: u16, y: u16) -> Position {
         assert!(x < self.window_size.width && y < self.window_size.height);
@@ -71,63 +75,70 @@ impl Window {
     }
 
     fn q_clear(&self, clear_type: ClearType, line: u16, term: &mut Terminal) -> Result<()> { // line is in window coords
-        let clear_str: String = once(' ').cycle().take(self.window_size.width as usize).collect();
+        // does not change cursor visibility
+        let clear_str = " ".repeat(self.window_size.width as usize);
         match clear_type {
             ClearType::All => {
-                term.q(Hide)?.save_cursor();
+                term.save_cursor();
                 for line in 0..self.window_size.height {
                     let Position{ x, y } = self.to_term(0, line);
                     term.cursor_to(x, y).q_move_cursor()?.q(Print(&clear_str))?;
                 }
                 term.restore_cursor();
-                term.q_move_cursor()?.q(Show)?;
+                term.q_move_cursor()?;
             },
             ClearType::Line => {
-                term.q(Hide)?.save_cursor();
+                term.save_cursor();
                 let Position{ x, y } = self.to_term(0, line);
                 term.cursor_to(x, y).q_move_cursor()?.q(Print(clear_str))?.restore_cursor();
-                term.q_move_cursor()?.q(Show)?;
+                term.q_move_cursor()?;
             }
         }
         Ok(())
     }
 
+    fn center_welcome(&self, idx: usize, term: &mut Terminal) -> Result<()> {
+        let line = &WELCOME_MSG[idx];
+        let width = self.window_size.width as usize;
+        if width <= line.len() { // can fit less than or equal to main text
+            term.q(Print(&line[..width]))?;
+        } else if width == line.len() + 1 { // can fit exactly line and tilde
+            term.q(Print("~".blue()))?.q(Print(line))?;
+        } else { // can fit line, tilde, and padding
+            // extra padding on right
+            let left = (width - 1 - line.len()) / 2;
+            let right = width - 1 - line.len() - left;
+            let left = " ".repeat(left);
+            let right = " ".repeat(right);
+            term.q(Print("~".blue()))?.q(Print(left))?.q(Print(line))?.q(Print(right))?;
+        }
+        Ok(())
+    }
+
     fn draw_welcome_screen(&self, term: &mut Terminal) -> Result<()> {
-        let height = self.window_size.height;
+        // cannot be called when there is a Document
+        // this means that it also can only be called on a full-terminal window
+        if self.doc.is_some() {
+            return Ok(())
+        }
         let message_len = WELCOME_SIZE as u16;
+        let message_begin_line = if self.window_size.height / 2 < message_len / 2 { 0 } else {
+            self.window_size.height / 2 - message_len / 2
+        };
         let mut message_line: u16 = 0;
         term.q(Hide)?.save_cursor();
         self.q_clear(ClearType::All, 0, term)?;
-        for i in 0..height {
+        for i in 0..(self.window_size.height - 1) {
             let Position{ x, y } = self.to_term(0, i);
             term.cursor_to(x, y).q_move_cursor()?;
-            if message_line < message_len && i == height / 2 - message_len / 2 + message_line {
-                // TODO: centered here
+            if message_line < message_len && i == message_begin_line + message_line {
+                self.center_welcome(message_line as usize, term)?;
                 message_line += 1; 
             } else {
                 term.q(Print("~".blue()))?;
             }
         }
-        term.flush()
+        term.restore_cursor();
+        term.q_move_cursor()?.q(Show)?.flush()
     }
-
-    /*
-    fn draw_welcome_screen(&self, term: &mut Terminal) -> Result<()> {
-        let height = self.terminal.size().height;
-        let message_len = WELCOME_SIZE as u16;
-        let mut message_line: u16 = 0;
-        self.terminal.q(cursor::SavePosition)?.q(cursor::Hide)?.q(Clear(ClearType::All))?;
-        for i in 0..(height - 1) {
-            if message_line < message_len && i == height / 2 - message_len / 2 + message_line {
-                self.terminal.centered_styles("~", &WELCOME_MSG[message_line as usize], "",
-                                              Some(ContentStyle::new().blue()), None, None).q()?;
-                // self.terminal.q(Print(self.terminal.centered("~", &self.welcome_message[message_line as usize], "") + "\r\n"));
-                message_line += 1;
-            } else {
-                self.terminal.q(Print("~\r\n".blue()))?;
-            }
-        }
-        self.terminal.q(Print("~".blue()))?.q(cursor::RestorePosition)?.q(cursor::Show)?.flush()
-    }
-    */
 }
