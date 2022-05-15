@@ -9,6 +9,7 @@ use crossterm::{
     cursor::{Hide, Show},
     style::{Print, Stylize},
 };
+use std::iter::once;
 use std::path::PathBuf;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -39,7 +40,9 @@ pub struct Window {
     #[doc(hidden)]
     doc: Option<Document>,
     #[doc(hidden)]
-    pos_in_doc: DocPosition,
+    first_line: usize, // zero-based index of first line in document on screen
+    #[doc(hidden)]
+    pos_in_doc: DocPosition, // location of cursor in document
     #[doc(hidden)]
     window_pos: Position, // location of (0, 0) in window
     #[doc(hidden)]
@@ -52,7 +55,7 @@ impl Window {
         let size = term.size();
         assert!(size.height > 1);
         let size = Size{ width: size.width, height: size.height - 1 };
-        Window{ doc: None, pos_in_doc: DocPosition::default(), window_pos: Position::default(), window_size: size }
+        Window{ doc: None, first_line: 0, pos_in_doc: DocPosition::default(), window_pos: Position::default(), window_size: size }
     }
 
     /// Create a new, full-terminal Window with the contents of the given file.
@@ -60,7 +63,7 @@ impl Window {
         let size = term.size();
         assert!(size.height > 1);
         let size = Size{ width: size.width, height: size.height - 1 };
-        Ok(Window{ doc: Some(Document::new(filename)?), pos_in_doc: DocPosition::default(), window_pos: Position::default(), window_size: size })
+        Ok(Window{ doc: Some(Document::new(filename)?), first_line: 0, pos_in_doc: DocPosition::default(), window_pos: Position::default(), window_size: size })
     }
 
     /// Render this window's contents to the terminal screen.
@@ -106,7 +109,38 @@ impl Window {
     }
 
     fn draw_document(&self, opt: &Options, term: &mut Terminal) -> Result<()> {
-        Ok(()) 
+        if let Some(doc) = self.doc.as_ref() {
+            #[derive(Copy, Clone)]
+            enum LineType<'a> {
+                Content(&'a String),
+                Tilde
+            }
+            doc.iter_from(self.first_line).unwrap() // we assert that first_line is a valid index
+               .map(|l| LineType::Content(&l.text))
+               .chain(once(LineType::Tilde).cycle()).take(self.window_size.height.into())
+               .try_for_each(|lt| { 
+                    // TODO: cursor moving here
+                    if let LineType::Content(text) = lt {
+                        match opt.line_numbering {
+                            LineNumbers::Off => {
+
+                            },
+                            LineNumbers::On => {
+
+                            },
+                            LineNumbers::Relative => {
+
+                            },
+                        }
+                        Ok(())
+                    } else {
+                        term.q(Print("~".blue()))?;
+                        Ok(())
+                    }
+                })
+        } else {
+            Ok(())
+        }
     }
 
     fn center_welcome(&self, idx: usize, term: &mut Terminal) -> Result<()> {

@@ -13,10 +13,6 @@ use crossterm::{
         read,
     },
     execute,
-    style::{
-        ContentStyle,
-        Print,
-    },
     terminal::{
         self,
         EnterAlternateScreen,

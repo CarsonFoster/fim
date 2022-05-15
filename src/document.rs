@@ -2,12 +2,12 @@
 
 use std::io::Error;
 use std::path::PathBuf;
-use std::slice::SliceIndex;
+use std::slice::{Iter, SliceIndex};
 
 /// Struct that represents a line of text.
 #[derive(Default)]
 pub struct Line {
-    text: String,
+    pub text: String,
 }
 
 impl From<&str> for Line {
@@ -36,6 +36,12 @@ impl Document {
         self.lines.get(idx)
     }
 
+    /// Retrieve an iterator into the lines of this document, starting from the given (zero-based)
+    /// index, inclusive.
+    pub fn iter_from(&self, line_idx: usize) -> Option<Iter<Line>> {
+        self.lines.get(line_idx..).map(|s| s.iter())
+    }
+
     /// Get a unicode character with the given (zero-based) range from the given line.
     pub fn unicode_char<I>(&self, line_idx: usize, char_range: I) -> Option<&<I as SliceIndex<str>>::Output>
     where I: SliceIndex<str>
@@ -62,7 +68,7 @@ impl From<&str> for Document {
 
 impl<'a> IntoIterator for &'a Document {
     type Item = &'a Line;
-    type IntoIter = std::slice::Iter<'a, Line>;
+    type IntoIter = Iter<'a, Line>;
 
     fn into_iter(self) -> Self::IntoIter {
         (&self.lines).iter()
