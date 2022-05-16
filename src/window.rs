@@ -9,6 +9,7 @@ use crossterm::{
     cursor::{Hide, Show},
     style::{Print, Stylize},
 };
+use std::cmp::max;
 use std::iter::once;
 use std::path::PathBuf;
 
@@ -115,11 +116,27 @@ impl Window {
                 Content(&'a String),
                 Tilde
             }
+
+            // number of characters necessary for line numbering
+            // note that there is a space after a line number, accounted for here
+            let line_number_chars = match opt.line_numbering {
+                LineNumbers::Off => 0,
+                LineNumbers::On => log10(self.window_size.height as usize + self.first_line - 1) + 1,
+                LineNumbers::Relative => log10(max(self.pos_in_doc.y, max(
+                                                   self.pos_in_doc.y.abs_diff(self.first_line),
+                                                   self.pos_in_doc.y.abs_diff(self.first_line + self.window_size.height as usize - 1)))) + 1,
+            };
+
+            term.q(Hide)?.save_cursor();
+            self.q_clear(ClearType::All, 0, term)?;
             doc.iter_from(self.first_line).unwrap() // we assert that first_line is a valid index
                .map(|l| LineType::Content(&l.text))
-               .chain(once(LineType::Tilde).cycle()).take(self.window_size.height.into())
-               .try_for_each(|lt| { 
-                    // TODO: cursor moving here
+               .chain(once(LineType::Tilde).cycle())           
+               .enumerate()
+               .take(self.window_size.height.into())
+               .try_for_each(|(line, lt)| { 
+                    // line wrapping affects this, doesn't it?
+                    term.cursor_to(0, line as u16).q_move_cursor()?;
                     if let LineType::Content(text) = lt {
                         match opt.line_numbering {
                             LineNumbers::Off => {
@@ -187,4 +204,13 @@ impl Window {
         term.restore_cursor();
         term.q_move_cursor()?.q(Show)?.flush()
     }
+}
+
+fn log10(mut x: usize) -> u32 {
+    let mut log = 0u32;
+    while x > 0 {
+        x /= 10;
+        log += 1;
+    }
+    log
 }
