@@ -12,6 +12,7 @@ use crossterm::{
 use std::cmp::max;
 use std::iter::once;
 use std::path::PathBuf;
+use unicode_segmentation::UnicodeSegmentation;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const WELCOME_SIZE: usize = 4;
@@ -69,7 +70,7 @@ impl Window {
 
     /// Render this window's contents to the terminal screen.
     pub fn render(&self, opt: &Options, term: &mut Terminal) -> Result<()> {
-        if let Some(doc) = self.doc.as_ref() {
+        if self.doc.is_some() {
             self.draw_document(opt, term)
         } else {
             self.draw_welcome_screen(term)
@@ -113,48 +114,78 @@ impl Window {
         if let Some(doc) = self.doc.as_ref() {
             #[derive(Copy, Clone)]
             enum LineType<'a> {
-                Content(&'a String),
+                Content(&'a str),
+                Continued(&'a str),
                 Tilde
             }
 
             // number of characters necessary for line numbering
             // note that there is a space after a line number, accounted for here
-            let line_number_chars = match opt.line_numbering {
+            // also note that this is an approximation (good be slightly off due to line wrapping,
+            // but idc, it's too much effort to get an exact number for like one character of
+            // difference)
+            let line_number_chars: usize = match opt.line_numbering {
                 LineNumbers::Off => 0,
                 LineNumbers::On => log10(self.window_size.height as usize + self.first_line - 1) + 1,
                 LineNumbers::Relative => log10(max(self.pos_in_doc.y, max(
-                                                   self.pos_in_doc.y.abs_diff(self.first_line),
-                                                   self.pos_in_doc.y.abs_diff(self.first_line + self.window_size.height as usize - 1)))) + 1,
+                                                   abs_diff(self.pos_in_doc.y, self.first_line),
+                                                   abs_diff(self.pos_in_doc.y, self.first_line + self.window_size.height as usize - 1)))) + 1,
             };
+            let text_width = saturating_sub(self.window_size.width, line_number_chars);
 
             term.q(Hide)?.save_cursor();
             self.q_clear(ClearType::All, 0, term)?;
             doc.iter_from(self.first_line).unwrap() // we assert that first_line is a valid index
-               .map(|l| LineType::Content(&l.text))
+               .flat_map(|l| {
+                    let mut graphemes = l.text.as_str().grapheme_indices(true);
+                    let output: Box<dyn Iterator<Item = LineType>> = if let Some((idx, _)) = graphemes.nth(text_width + 1) {
+                        let mut indices = vec![idx]; 
+                        // note that we've already consumed the first character of the next chunk
+                        // we need to get the (width + 1)th character from the start of the chunk,
+                        // width + 1 - 1 = width
+                        while let Some((idx, _)) = graphemes.nth(self.window_size.width.into()) {
+                            indices.push(idx);
+                        }
+                        let mut pieces: Vec<&str> = Vec::new();
+                        let first = if indices.len() >= 1 { &l.text[0..indices[1]] } else { l.text.as_str() };
+                        for i in 1..indices.len() {
+                            pieces.push(&l.text[indices[i - 1]..indices[i]]);
+                        }
+                        Box::new(once(LineType::Content(first)).chain(pieces.into_iter().map(|p| LineType::Continued(p))))
+                    } else {
+                        Box::new(once(LineType::Content(l.text.as_str())))
+                    };
+                    output
+                })
                .chain(once(LineType::Tilde).cycle())           
                .enumerate()
                .take(self.window_size.height.into())
-               .try_for_each(|(line, lt)| { 
-                    // line wrapping affects this, doesn't it?
-                    term.cursor_to(0, line as u16).q_move_cursor()?;
+               .try_for_each(|(terminal_line, lt)| { 
+                    term.cursor_to(0, terminal_line as u16).q_move_cursor()?;
                     if let LineType::Content(text) = lt {
                         match opt.line_numbering {
                             LineNumbers::Off => {
-
+                                term.q(Print(text))
                             },
                             LineNumbers::On => {
-
+                                term.q(Print((terminal_line + self.first_line).to_string().dark_yellow()))?
+                                    .q(Print(text))
                             },
                             LineNumbers::Relative => {
-
-                            },
+                                if self.pos_in_doc.y == self.first_line + terminal_line {
+                                    term.q(Print(self.pos_in_doc.y.to_string().dark_yellow()))
+                                } else {
+                                    term.q(Print(abs_diff(self.pos_in_doc.y, terminal_line + self.first_line).to_string().dark_yellow()))
+                                }?.q(Print(text))
+                            }
                         }
-                        Ok(())
+                    } else if let LineType::Continued(text) = lt {
+                        term.q(Print(text))
                     } else {
-                        term.q(Print("~".blue()))?;
-                        Ok(())
-                    }
-                })
+                        term.q(Print("~".blue()))
+                    }.map(|_| ())
+                })?;
+            term.flush()
         } else {
             Ok(())
         }
@@ -206,8 +237,21 @@ impl Window {
     }
 }
 
-fn log10(mut x: usize) -> u32 {
-    let mut log = 0u32;
+fn abs_diff(x: usize, y: usize) -> usize {
+    if x > y { x - y } else { y - x }
+}
+
+fn saturating_sub(x: u16, y: usize) -> usize {
+    let xu = x as usize;
+    if y >= xu {
+        0
+    } else {
+        xu - y
+    }
+}
+
+fn log10(mut x: usize) -> usize {
+    let mut log = 0usize;
     while x > 0 {
         x /= 10;
         log += 1;
