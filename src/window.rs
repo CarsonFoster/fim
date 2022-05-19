@@ -168,16 +168,16 @@ impl Window {
                                 term.q(Print(text))
                             },
                             LineNumbers::On => {
-                                let line_number: String = (terminal_line + self.first_line).to_string().chars().rev()
+                                let line_number: String = once(' ').chain((terminal_line + self.first_line + 1).to_string().chars().rev())
                                     .chain(repeat(' ')).take(line_number_chars).collect::<String>().chars().rev().collect();
                                 term.q(Print(line_number.dark_yellow()))?
                                     .q(Print(text))
                             },
                             LineNumbers::Relative => {
                                 let line_number: String = if self.pos_in_doc.y == self.first_line + terminal_line {
-                                    self.pos_in_doc.y.to_string().chars().chain(repeat(' ')).take(line_number_chars).collect()
+                                    (self.pos_in_doc.y + 1).to_string().chars().chain(repeat(' ')).take(line_number_chars).collect()
                                 } else {
-                                    abs_diff(self.pos_in_doc.y, terminal_line + self.first_line).to_string().chars().rev()
+                                    once(' ').chain(abs_diff(self.pos_in_doc.y, terminal_line + self.first_line).to_string().chars().rev())
                                         .chain(repeat(' ')).take(line_number_chars).collect::<String>().chars().rev().collect()
                                 };
                                 term.q(Print(line_number.dark_yellow()))?
