@@ -1,4 +1,5 @@
 //! A module that contains the main editor logic.
+use crate::config::Config;
 use crate::context::*;
 use crate::options::Options;
 use crate::terminal::Terminal;
@@ -32,21 +33,24 @@ pub struct Editor<'a> {
     windows: Vec<Window>,
     #[doc(hidden)]
     opt: Options,
+    #[doc(hidden)]
+    config: Config,
 }
 
 impl<'a> Editor<'a> {
     /// Create a new Editor struct from a file.
-    pub fn new(filename: PathBuf, opt: Options) -> Result<Editor<'a>> {
+    pub fn new(filename: PathBuf, opt: Options, config: Option<Config>) -> Result<Editor<'a>> {
         let term = Terminal::new()?;
         let window = Window::new(filename, &term)?;
-        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], opt } )
+        // TODO: add real default config handling
+        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], opt, config: config.unwrap_or_else(|| Config::empty()) } )
     }
 
     /// Create a new Editor struct with the default welcome screen.
-    pub fn default(opt: Options) -> Result<Editor<'a>> {
+    pub fn default(opt: Options, config: Option<Config>) -> Result<Editor<'a>> {
         let term = Terminal::new()?;
         let window = Window::default(&term);
-        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], opt } )
+        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], opt, config: config.unwrap_or_else(|| Config::empty()) } )
     }
 
     /// Run the editor logic.
@@ -112,6 +116,11 @@ impl<'a> Editor<'a> {
         self.push_context_stack.push(Box::new(context)); 
     }
 
+    /// Push a boxed `Context` to the stack of contexts.
+    pub fn push_boxed_context(&mut self, context: Box<dyn Context>) {
+        self.push_context_stack.push(context);
+    }
+
     /// Draw the command line.
     ///
     /// (This refers to the last line in the terminal that you type ed commands or ":q" into in
@@ -138,6 +147,11 @@ impl<'a> Editor<'a> {
     /// Return a reference to the terminal.
     pub fn terminal(&mut self) -> &mut Terminal {
         &mut self.terminal
+    }
+
+    /// Return a reference to the `Config` object.
+    pub fn config(&self) -> &Config {
+        &self.config
     }
 
     /// Push a command to the command history stack.

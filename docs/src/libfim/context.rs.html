@@ -301,6 +301,8 @@
 <span id="301">301</span>
 <span id="302">302</span>
 <span id="303">303</span>
+<span id="304">304</span>
+<span id="305">305</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module that contains the logic for &#39;Contexts&#39;.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [`Context`]s essentially represent fim&#39;s different modes and commands. Only one [`Context`] is active</span>
@@ -416,6 +418,8 @@
         <span class="kw">let</span> <span class="ident">KeyEvent</span>{ <span class="ident">code</span>: <span class="ident">c</span>, <span class="ident">modifiers</span>: <span class="kw">_</span> } <span class="op">=</span> <span class="ident">event</span>;
         <span class="kw">if</span> <span class="ident">c</span> <span class="op">==</span> <span class="ident">KeyCode::Char</span>(<span class="string">&#39;:&#39;</span>) {
             <span class="ident">ed</span>.<span class="ident">push_context</span>(<span class="ident">CommandMode::new</span>()); 
+        } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">factory</span>) <span class="op">=</span> <span class="ident">ed</span>.<span class="ident">config</span>().<span class="ident">query</span>(<span class="string">&quot;NormalMode&quot;</span>, <span class="ident">event</span>) {
+            <span class="ident">ed</span>.<span class="ident">push_boxed_context</span>(<span class="ident">factory</span>.<span class="ident">create</span>());
         }
         <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
     }

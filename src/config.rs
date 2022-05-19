@@ -278,6 +278,11 @@ impl Config {
         Ok(Config{ map })
     }
 
+    /// Create an empty Config.
+    pub fn empty() -> Config {
+        Config{ map: HashMap::new() }
+    }
+
     /// Create a Config from a file.
     pub fn from_file(filename: &str) -> Result<Config, ConfigParseError> {
         let text = read_to_string(filename)?;

@@ -41,6 +41,9 @@
 <span id="41">41</span>
 <span id="42">42</span>
 <span id="43">43</span>
+<span id="44">44</span>
+<span id="45">45</span>
+<span id="46">46</span>
 </pre><pre class="rust"><code><span class="doccomment">//! This is a vim-like editor that provides support for multiple keyboard layouts, like Dvorak and</span>
 <span class="doccomment">//! Colemak. It is not intended to be a vim clone, but to provide many similar commands and</span>
 <span class="doccomment">//! functions, while building off of other features.</span>
@@ -49,6 +52,7 @@
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident">libfim</span>::{<span class="ident">config</span>, <span class="ident">context</span>, <span class="ident">document</span>, <span class="ident">editor</span>, <span class="ident">layout</span>, <span class="ident">options</span>, <span class="ident">terminal</span>, <span class="ident">window</span>};
 <span class="kw">use</span> <span class="ident">libfim::editor::Editor</span>;
+<span class="kw">use</span> <span class="ident">libfim::options::Options</span>;
 <span class="kw">use</span> <span class="ident">clap::Parser</span>;
 <span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
 
@@ -65,10 +69,12 @@
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
 <span class="kw">fn</span> <span class="ident">main</span>() {
     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">args</span> <span class="op">=</span> <span class="ident">Args::parse</span>();
+    <span class="kw">let</span> <span class="ident">opt</span> <span class="op">=</span> <span class="ident">Options::default</span>();
+    <span class="comment">// TODO: config file handling</span>
     <span class="kw">let</span> <span class="ident">fim</span> <span class="op">=</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">filename</span>) <span class="op">=</span> <span class="ident">args</span>.<span class="ident">file</span>.<span class="ident">take</span>() {
-        <span class="ident">Editor::new</span>(<span class="ident">filename</span>)
+        <span class="ident">Editor::new</span>(<span class="ident">filename</span>, <span class="ident">opt</span>, <span class="prelude-val">None</span>)
     } <span class="kw">else</span> {
-        <span class="ident">Editor::default</span>()
+        <span class="ident">Editor::default</span>(<span class="ident">opt</span>, <span class="prelude-val">None</span>)
     };
     <span class="kw">match</span> <span class="ident">fim</span> {
         <span class="prelude-val">Ok</span>(<span class="kw-2">mut</span> <span class="ident">fim</span>) =&gt; {

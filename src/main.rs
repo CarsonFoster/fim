@@ -24,10 +24,11 @@ struct Args {
 fn main() {
     let mut args = Args::parse();
     let opt = Options::default();
+    // TODO: config file handling
     let fim = if let Some(filename) = args.file.take() {
-        Editor::new(filename, opt)
+        Editor::new(filename, opt, None)
     } else {
-        Editor::default(opt)
+        Editor::default(opt, None)
     };
     match fim {
         Ok(mut fim) => {

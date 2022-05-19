@@ -400,6 +400,11 @@
 <span id="400">400</span>
 <span id="401">401</span>
 <span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module for handling configuration files that map keyboard presses to contexts.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Config Format</span>
@@ -678,6 +683,11 @@
                .<span class="ident">entry</span>(<span class="ident">keypress</span>).<span class="ident">or_insert</span>(<span class="ident">factory</span>);
         }
         <span class="prelude-val">Ok</span>(<span class="ident">Config</span>{ <span class="ident">map</span> })
+    }
+
+    <span class="doccomment">/// Create an empty Config.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">empty</span>() -&gt; <span class="ident">Config</span> {
+        <span class="ident">Config</span>{ <span class="ident">map</span>: <span class="ident">HashMap::new</span>() }
     }
 
     <span class="doccomment">/// Create a Config from a file.</span>

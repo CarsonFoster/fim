@@ -80,7 +80,7 @@ impl Window {
     // NOTE: when you implement splitting, make sure that all split windows have
     // documents, and that you change the existing window to have a new blank document
     // if it doesn't have a document, so that the invariants for draw_welcome_screen are
-    // maintained.
+    // maintained. (TODO)
 
     fn to_term(&self, x: u16, y: u16) -> Position {
         assert!(x < self.window_size.width && y < self.window_size.height);
