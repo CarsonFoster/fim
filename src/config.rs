@@ -53,6 +53,7 @@
 //! - `<C-A-Del>`: Control + Alt + Delete (this will probably be intercepted by your OS)
 use crate::context::*;
 use std::fmt;
+use std::path::PathBuf;
 use std::fs::read_to_string;
 use std::collections::HashMap;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -284,7 +285,7 @@ impl Config {
     }
 
     /// Create a Config from a file.
-    pub fn from_file(filename: &str) -> Result<Config, ConfigParseError> {
+    pub fn from_file(filename: PathBuf) -> Result<Config, ConfigParseError> {
         let text = read_to_string(filename)?;
         Self::new(&text)
     }

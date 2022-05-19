@@ -5,11 +5,13 @@
 //! (vimscript or its analogue won't be included for a long time, sorry)
 
 pub use libfim::{config, context, document, editor, layout, options, terminal, window};
+use libfim::config::Config;
 use libfim::editor::Editor;
 use libfim::options::Options;
 use clap::Parser;
 use std::path::PathBuf;
 
+#[doc(hidden)]
 #[derive(Parser)]
 #[clap(version)]
 #[clap(author = "Carson Foster")]
@@ -18,17 +20,28 @@ struct Args {
     /// File to edit
     #[clap(parse(from_os_str), value_name = "FILE")]
     file: Option<PathBuf>,
+    /// Path to configuration file for fim
+    #[clap(short = 'u', parse(from_os_str), value_name = "CONFIG_FILE")]
+    config_file: Option<PathBuf>,
 }
 
 #[doc(hidden)]
 fn main() {
     let mut args = Args::parse();
-    let opt = Options::default();
-    // TODO: config file handling
+    let opt = Options::default(); // TODO: options
+    let config = if let Some(config) = args.config_file {
+        let filename = config.as_os_str().to_string_lossy().to_string();
+        let result = Config::from_file(config);
+        if let Err(e) = result {
+            println!("[-] Failed to parse configuration file {}: {}", filename, e);
+            std::process::exit(1);
+        }
+        Some(result.unwrap())
+    } else { None };
     let fim = if let Some(filename) = args.file.take() {
-        Editor::new(filename, opt, None)
+        Editor::new(filename, opt, config)
     } else {
-        Editor::default(opt, None)
+        Editor::default(opt, config)
     };
     match fim {
         Ok(mut fim) => {

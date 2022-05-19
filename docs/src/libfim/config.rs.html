@@ -405,6 +405,7 @@
 <span id="405">405</span>
 <span id="406">406</span>
 <span id="407">407</span>
+<span id="408">408</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module for handling configuration files that map keyboard presses to contexts.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Config Format</span>
@@ -460,6 +461,7 @@
 <span class="doccomment">//! - `&lt;C-A-Del&gt;`: Control + Alt + Delete (this will probably be intercepted by your OS)</span>
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::context</span>::<span class="kw-2">*</span>;
 <span class="kw">use</span> <span class="ident">std::fmt</span>;
+<span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
 <span class="kw">use</span> <span class="ident">std::fs::read_to_string</span>;
 <span class="kw">use</span> <span class="ident">std::collections::HashMap</span>;
 <span class="kw">use</span> <span class="ident">crossterm::event</span>::{<span class="ident">KeyCode</span>, <span class="ident">KeyEvent</span>, <span class="ident">KeyModifiers</span>};
@@ -691,7 +693,7 @@
     }
 
     <span class="doccomment">/// Create a Config from a file.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_file</span>(<span class="ident">filename</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Config</span>, <span class="ident">ConfigParseError</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">from_file</span>(<span class="ident">filename</span>: <span class="ident">PathBuf</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">Config</span>, <span class="ident">ConfigParseError</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">text</span> <span class="op">=</span> <span class="ident">read_to_string</span>(<span class="ident">filename</span>)<span class="question-mark">?</span>;
         <span class="ident"><span class="self">Self</span>::new</span>(<span class="kw-2">&amp;</span><span class="ident">text</span>)
     }
