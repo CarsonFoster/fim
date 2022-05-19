@@ -185,7 +185,8 @@ impl Window {
                         term.q(Print("~".blue()))
                     }.map(|_| ())
                 })?;
-            term.flush()
+            term.q(Show)?.restore_cursor();
+            term.q_move_cursor()?.flush()
         } else {
             Ok(())
         }
