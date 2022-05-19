@@ -10,7 +10,7 @@ use crossterm::{
     style::{Print, Stylize},
 };
 use std::cmp::max;
-use std::iter::once;
+use std::iter::{once, repeat};
 use std::path::PathBuf;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -168,15 +168,20 @@ impl Window {
                                 term.q(Print(text))
                             },
                             LineNumbers::On => {
-                                term.q(Print((terminal_line + self.first_line).to_string().dark_yellow()))?
+                                let line_number: String = (terminal_line + self.first_line).to_string().chars().rev()
+                                    .chain(repeat(' ')).take(line_number_chars).collect::<String>().chars().rev().collect();
+                                term.q(Print(line_number.dark_yellow()))?
                                     .q(Print(text))
                             },
                             LineNumbers::Relative => {
-                                if self.pos_in_doc.y == self.first_line + terminal_line {
-                                    term.q(Print(self.pos_in_doc.y.to_string().dark_yellow()))
+                                let line_number: String = if self.pos_in_doc.y == self.first_line + terminal_line {
+                                    self.pos_in_doc.y.to_string().chars().chain(repeat(' ')).take(line_number_chars).collect()
                                 } else {
-                                    term.q(Print(abs_diff(self.pos_in_doc.y, terminal_line + self.first_line).to_string().dark_yellow()))
-                                }?.q(Print(text))
+                                    abs_diff(self.pos_in_doc.y, terminal_line + self.first_line).to_string().chars().rev()
+                                        .chain(repeat(' ')).take(line_number_chars).collect::<String>().chars().rev().collect()
+                                };
+                                term.q(Print(line_number.dark_yellow()))?
+                                    .q(Print(text))
                             }
                         }
                     } else if let LineType::Continued(text) = lt {
