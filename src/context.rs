@@ -99,7 +99,36 @@ pub fn context(name: &str, args: String) -> Option<Factory> {
     match name {
         "NormalMode" => Some(Factory::new(|| NormalMode)),
         "CommandMode" => Some(Factory::new(|| CommandMode::new())),
+        "Action" => Some(Factory::new(move || Action::new(String::from(&args)))),
         _ => None
+    }
+}
+
+/// Struct that represents a "one-and-done" action context.
+///
+/// This is the context that does one action in its `setup` method, and then returns. This is not
+/// for state-like contexts (e.g. `NormalMode` or `CommandMode`).
+///
+///
+pub struct Action {
+    #[doc(hidden)]
+    action: String
+}
+
+impl Action {
+    /// Create a new `Action` corresponding to the passed string.
+    pub fn new(action: String) -> Self {
+        Action{ action }
+    }
+}
+
+impl Context for Action {
+    fn setup(&mut self, ed: &mut Editor) -> Result<bool> {
+        match self.action.as_str() {
+            "move_left" => (), 
+            _ => (),
+        }
+        Ok(true)
     }
 }
 
@@ -114,7 +143,8 @@ impl Context for NormalMode {
         if c == KeyCode::Char(':') {
             ed.push_context(CommandMode::new()); 
         } else if let Some(factory) = ed.config().query("NormalMode", event) {
-            ed.push_boxed_context(factory.create());
+            let context = factory.create();
+            ed.push_boxed_context(context);
         }
         Ok(None)
     }

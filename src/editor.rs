@@ -6,7 +6,6 @@ use crate::terminal::Terminal;
 use crate::window::Window;
 use crossterm::{
     Result,
-    event::KeyCode,
     terminal::{
         Clear,
         ClearType,
@@ -162,17 +161,6 @@ impl<'a> Editor<'a> {
     /// Return a reference to the command history stack.
     pub fn command_stack(&self) -> &Vec<String> {
         &self.command_stack
-    }
-
-    fn move_key(&mut self, key: KeyCode) -> Result<()> {
-        match key {
-            KeyCode::Char('h') => self.terminal.cursor_left_by(1),
-            KeyCode::Char('j') => self.terminal.cursor_down_by(1),
-            KeyCode::Char('k') => self.terminal.cursor_up_by(1),
-            KeyCode::Char('l') => self.terminal.cursor_right_by(1),
-            _ => &mut self.terminal // the other functions return &mut Terminal so you can chain them
-        };
-        self.terminal.move_cursor()
     }
 }
 
