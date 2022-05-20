@@ -46,26 +46,39 @@ pub struct Window {
     #[doc(hidden)]
     pos_in_doc: DocPosition, // location of cursor in document
     #[doc(hidden)]
-    window_pos: Position, // location of (0, 0) in window
+    raw_window_pos: Position, // terminal location of (0, 0) in raw window (i.e. including line numbers as part of window)
     #[doc(hidden)]
-    window_size: Size,
+    raw_window_size: Size,
+    #[doc(hidden)]
+    text_start: u16, // window location of first character
+    #[doc(hidden)]
+    text_width: u16, // length of space allocated for content
 }
 
 impl Window {
     /// Create a new, full-terminal Window with the default welcome message.
     pub fn default(term: &Terminal) -> Self {
         let size = term.size();
-        assert!(size.height > 1);
+        assert!(size.height > 1 && size.width > 1);
         let size = Size{ width: size.width, height: size.height - 1 };
-        Window{ doc: None, first_line: 0, pos_in_doc: DocPosition::default(), window_pos: Position::default(), window_size: size }
+        Window{ doc: None, first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: size.width - 1 }
     }
 
     /// Create a new, full-terminal Window with the contents of the given file.
     pub fn new(filename: PathBuf, term: &Terminal) -> Result<Self> {
         let size = term.size();
-        assert!(size.height > 1);
+        assert!(size.height > 1 && size.width > 1);
         let size = Size{ width: size.width, height: size.height - 1 };
-        Ok(Window{ doc: Some(Document::new(filename)?), first_line: 0, pos_in_doc: DocPosition::default(), window_pos: Position::default(), window_size: size })
+        // Don't have options, and so can't calculate text_start and text_width yet
+        // However, setup() is called before anything else happens, so they'll be calculated
+        // there
+        Ok(Window{ doc: Some(Document::new(filename)?), first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: 0 })
+    }
+
+    pub fn setup(&mut self, opt: &Options) {
+        let (x, y) = self.compute_text_attrs(opt);
+        self.text_start = x;
+        self.text_width = y;
     }
 
     /// Render this window's contents to the terminal screen.
@@ -109,17 +122,17 @@ impl Window {
     /// For example, (0, 0) in a window is the top left corner, but may be located at the top
     /// middle of the terminal, if this window is on the right half of the terminal.
     pub fn to_term(&self, x: u16, y: u16) -> Position {
-        assert!(x < self.window_size.width && y < self.window_size.height);
-        Position{ x: x + self.window_pos.x, y: y + self.window_pos.y }
+        assert!(x < self.raw_window_size.width && y < self.raw_window_size.height);
+        Position{ x: x + self.raw_window_pos.x, y: y + self.raw_window_pos.y }
     }
 
     fn q_clear(&self, clear_type: ClearType, line: u16, term: &mut Terminal) -> Result<()> { // line is in window coords
         // does not change cursor visibility
-        let clear_str = " ".repeat(self.window_size.width as usize);
+        let clear_str = " ".repeat(self.raw_window_size.width as usize);
         match clear_type {
             ClearType::All => {
                 term.save_cursor();
-                for line in 0..self.window_size.height {
+                for line in 0..self.raw_window_size.height {
                     let Position{ x, y } = self.to_term(0, line);
                     term.cursor_to(x, y).q_move_cursor()?.q(Print(&clear_str))?;
                 }
@@ -136,6 +149,23 @@ impl Window {
         Ok(())
     }
 
+    fn compute_text_attrs(&self, opt: &Options) -> (u16, u16) {
+        // number of characters necessary for line numbering
+        // note that there is a space after a line number, accounted for here
+        // also note that this is an approximation (good be slightly off due to line wrapping,
+        // but idc, it's too much effort to get an exact number for like one character of
+        // difference)
+        let line_number_chars: u16 = match opt.line_numbering {
+            LineNumbers::Off => 0,
+            LineNumbers::On => log10(self.raw_window_size.height as usize + self.first_line - 1) + 1,
+            LineNumbers::Relative => log10(max(self.pos_in_doc.y, max(
+                                               abs_diff(self.pos_in_doc.y, self.first_line),
+                                               abs_diff(self.pos_in_doc.y, self.first_line + self.raw_window_size.height as usize - 1)))) + 1,
+        };
+        let text_width = saturating_sub(self.raw_window_size.height, line_number_chars);
+        (line_number_chars, text_width)
+    }
+
     fn draw_document(&self, opt: &Options, term: &mut Terminal) -> Result<()> {
         if let Some(doc) = self.doc.as_ref() {
             #[derive(Copy, Clone)]
@@ -145,19 +175,8 @@ impl Window {
                 Tilde
             }
 
-            // number of characters necessary for line numbering
-            // note that there is a space after a line number, accounted for here
-            // also note that this is an approximation (good be slightly off due to line wrapping,
-            // but idc, it's too much effort to get an exact number for like one character of
-            // difference)
-            let line_number_chars: usize = match opt.line_numbering {
-                LineNumbers::Off => 0,
-                LineNumbers::On => log10(self.window_size.height as usize + self.first_line - 1) + 1,
-                LineNumbers::Relative => log10(max(self.pos_in_doc.y, max(
-                                                   abs_diff(self.pos_in_doc.y, self.first_line),
-                                                   abs_diff(self.pos_in_doc.y, self.first_line + self.window_size.height as usize - 1)))) + 1,
-            };
-            let text_width = saturating_sub(self.window_size.width, line_number_chars);
+            let line_number_chars = self.text_start as usize;
+            let text_width = self.text_width as usize;
 
             term.q(Hide)?.save_cursor();
             self.q_clear(ClearType::All, 0, term)?;
@@ -169,7 +188,7 @@ impl Window {
                         // note that we've already consumed the first character of the next chunk
                         // we need to get the (width + 1)th character from the start of the chunk,
                         // width + 1 - 1 = width
-                        while let Some((idx, _)) = graphemes.nth(self.window_size.width.into()) {
+                        while let Some((idx, _)) = graphemes.nth(self.raw_window_size.width.into()) {
                             indices.push(idx);
                         }
                         let mut pieces: Vec<&str> = Vec::new();
@@ -185,7 +204,7 @@ impl Window {
                 })
                .chain(once(LineType::Tilde).cycle())           
                .enumerate()
-               .take(self.window_size.height.into())
+               .take(self.raw_window_size.height.into())
                .try_for_each(|(terminal_line, lt)| { 
                     term.cursor_to(0, terminal_line as u16).q_move_cursor()?;
                     if let LineType::Content(text) = lt {
@@ -225,7 +244,7 @@ impl Window {
 
     fn center_welcome(&self, idx: usize, term: &mut Terminal) -> Result<()> {
         let line = &WELCOME_MSG[idx];
-        let width = self.window_size.width as usize;
+        let width = self.raw_window_size.width as usize;
         if width <= line.len() { // can fit less than or equal to main text
             term.q(Print(&line[..width]))?;
         } else if width == line.len() + 1 { // can fit exactly line and tilde
@@ -248,13 +267,13 @@ impl Window {
             return Ok(())
         }
         let message_len = WELCOME_SIZE as u16;
-        let message_begin_line = if self.window_size.height / 2 < message_len / 2 { 0 } else {
-            self.window_size.height / 2 - message_len / 2
+        let message_begin_line = if self.raw_window_size.height / 2 < message_len / 2 { 0 } else {
+            self.raw_window_size.height / 2 - message_len / 2
         };
         let mut message_line: u16 = 0;
         term.q(Hide)?.save_cursor();
         self.q_clear(ClearType::All, 0, term)?;
-        for i in 0..self.window_size.height {
+        for i in 0..self.raw_window_size.height {
             let Position{ x, y } = self.to_term(0, i);
             term.cursor_to(x, y).q_move_cursor()?;
             if message_line < message_len && i == message_begin_line + message_line {
@@ -273,17 +292,16 @@ fn abs_diff(x: usize, y: usize) -> usize {
     if x > y { x - y } else { y - x }
 }
 
-fn saturating_sub(x: u16, y: usize) -> usize {
-    let xu = x as usize;
-    if y >= xu {
+fn saturating_sub(x: u16, y: u16) -> u16 {
+    if y >= x {
         0
     } else {
-        xu - y
+        x - y
     }
 }
 
-fn log10(mut x: usize) -> usize {
-    let mut log = 0usize;
+fn log10(mut x: usize) -> u16 {
+    let mut log = 0u16;
     while x > 0 {
         x /= 10;
         log += 1;

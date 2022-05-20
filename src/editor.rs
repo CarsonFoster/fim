@@ -70,6 +70,7 @@ impl<'a> Editor<'a> {
 
     fn setup(&mut self) -> Result<()> {
         self.terminal.enter_alternate_screen()?;
+        self.windows.iter_mut().for_each(|w| w.setup(&self.opt));
         self.windows.iter().try_for_each(|w| w.render(&self.opt, &mut self.terminal))?;
         let Position{ x, y } = self.windows[self.current_window].to_term(0, 0);
         self.terminal.move_cursor_to(x, y)
