@@ -76,6 +76,11 @@ impl Window {
             self.draw_welcome_screen(term)
         }
     }
+
+    /// Move the cursor one character left, if possible.
+    pub fn move_left(&mut self, term: &mut Terminal) -> Result<()> {
+        Ok(())
+    }
     
     // NOTE: when you implement splitting, make sure that all split windows have
     // documents, and that you change the existing window to have a new blank document

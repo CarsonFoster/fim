@@ -124,10 +124,7 @@ impl Action {
 
 impl Context for Action {
     fn setup(&mut self, ed: &mut Editor) -> Result<bool> {
-        match self.action.as_str() {
-            "move_left" => (), 
-            _ => (),
-        }
+        ed.action(self.action.as_str())?;
         Ok(true)
     }
 }

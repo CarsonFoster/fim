@@ -31,6 +31,8 @@ pub struct Editor<'a> {
     #[doc(hidden)]
     windows: Vec<Window>,
     #[doc(hidden)]
+    current_window: usize,
+    #[doc(hidden)]
     opt: Options,
     #[doc(hidden)]
     config: Config,
@@ -42,14 +44,14 @@ impl<'a> Editor<'a> {
         let term = Terminal::new()?;
         let window = Window::new(filename, &term)?;
         // TODO: add real default config handling
-        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], opt, config: config.unwrap_or_else(|| Config::empty()) } )
+        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], current_window: 0, opt, config: config.unwrap_or_else(|| Config::empty()) } )
     }
 
     /// Create a new Editor struct with the default welcome screen.
     pub fn default(opt: Options, config: Option<Config>) -> Result<Editor<'a>> {
         let term = Terminal::new()?;
         let window = Window::default(&term);
-        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], opt, config: config.unwrap_or_else(|| Config::empty()) } )
+        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], current_window: 0, opt, config: config.unwrap_or_else(|| Config::empty()) } )
     }
 
     /// Run the editor logic.
@@ -102,6 +104,19 @@ impl<'a> Editor<'a> {
                 }
             }
         }
+        Ok(())
+    }
+
+    /// Actual implementor of [`Action`].
+    ///
+    /// Necessary due to borrow checker's interaction with disjoint struct fields accessed through
+    /// methods.
+    pub fn action(&mut self, action: &str) -> Result<()> {
+        match action {
+            "move_left" => self.windows[self.current_window].move_left(&mut self.terminal)?,
+            _ => (),
+        }
+
         Ok(())
     }
 
