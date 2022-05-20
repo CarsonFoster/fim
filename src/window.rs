@@ -79,7 +79,24 @@ impl Window {
 
     /// Move the cursor one character left, if possible.
     pub fn move_left(&mut self, term: &mut Terminal) -> Result<()> {
-        Ok(())
+        if self.doc.is_none() { return Ok(()) }
+        // assume document position is synced with the cursor position
+        // TODO: handle line wrapping
+        if self.pos_in_doc.x > 0 {
+            self.pos_in_doc.x -= 1;
+            term.cursor_left_by(1).q_move_cursor()?.flush()
+        } else { Ok(()) }
+    }
+
+    /// Move the cursor one character right, if possible.
+    pub fn move_right(&mut self, term: &mut Terminal) -> Result<()> {
+        if self.doc.is_none() { return Ok(()) }
+        // assume document position is synced with the cursor position
+        // TODO: handle line wrapping
+        if self.pos_in_doc.x + 1 < self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().text.len() {
+            self.pos_in_doc.x += 1;
+            term.cursor_right_by(1).q_move_cursor()?.flush()
+        } else { Ok(()) }
     }
     
     // NOTE: when you implement splitting, make sure that all split windows have
@@ -87,7 +104,11 @@ impl Window {
     // if it doesn't have a document, so that the invariants for draw_welcome_screen are
     // maintained. (TODO)
 
-    fn to_term(&self, x: u16, y: u16) -> Position {
+    /// Convert coordinates in this window to terminal coordinates.
+    ///
+    /// For example, (0, 0) in a window is the top left corner, but may be located at the top
+    /// middle of the terminal, if this window is on the right half of the terminal.
+    pub fn to_term(&self, x: u16, y: u16) -> Position {
         assert!(x < self.window_size.width && y < self.window_size.height);
         Position{ x: x + self.window_pos.x, y: y + self.window_pos.y }
     }

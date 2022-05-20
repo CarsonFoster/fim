@@ -2,7 +2,7 @@
 use crate::config::Config;
 use crate::context::*;
 use crate::options::Options;
-use crate::terminal::Terminal;
+use crate::terminal::{Position, Terminal};
 use crate::window::Window;
 use crossterm::{
     Result,
@@ -70,9 +70,9 @@ impl<'a> Editor<'a> {
 
     fn setup(&mut self) -> Result<()> {
         self.terminal.enter_alternate_screen()?;
-        self.terminal.move_cursor_to(0, 0)?;
         self.windows.iter().try_for_each(|w| w.render(&self.opt, &mut self.terminal))?;
-        Ok(())
+        let Position{ x, y } = self.windows[self.current_window].to_term(0, 0);
+        self.terminal.move_cursor_to(x, y)
     }
 
     fn process_keypress(&mut self) -> Result<()> {
@@ -112,8 +112,11 @@ impl<'a> Editor<'a> {
     /// Necessary due to borrow checker's interaction with disjoint struct fields accessed through
     /// methods.
     pub fn action(&mut self, action: &str) -> Result<()> {
+        let current_window = &mut self.windows[self.current_window];
+        let term = &mut self.terminal;
         match action {
-            "move_left" => self.windows[self.current_window].move_left(&mut self.terminal)?,
+            "move_left" => current_window.move_left(term)?,
+            "move_right" => current_window.move_right(term)?,
             _ => (),
         }
 
