@@ -292,6 +292,8 @@ impl Config {
 
     /// Query the configuration for a context [`Factory`].
     pub fn query(&self, context: &str, key: KeyEvent) -> Option<&Factory> {
+        let code = if let KeyCode::Char(c) = key.code { KeyCode::Char(c.to_ascii_uppercase()) } else { key.code };
+        let key = KeyEvent::new(code, key.modifiers);
         self.map.get(context).map_or(None, |m| m.get(&key)) 
     }
 
@@ -378,7 +380,7 @@ impl Config {
         }
         if let Some(old_context) = bind.get(5..bind.len() - 1) {
             let key_event = Self::parse_key_event(key_event, line_no)?;
-            let args = iter.fold(String::new(), |acc, x| acc + " " + x);
+            let args = String::from(iter.fold(String::new(), |acc, x| acc + " " + x).trim());
            
             if let Some(factory) = context(new_context, args) {
                 Ok((old_context.to_string(), key_event, factory))

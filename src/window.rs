@@ -116,12 +116,18 @@ impl Window {
     // documents, and that you change the existing window to have a new blank document
     // if it doesn't have a document, so that the invariants for draw_welcome_screen are
     // maintained. (TODO)
-
-    /// Convert coordinates in this window to terminal coordinates.
+    
+    /// Convert between window-text coordinates and terminal coordinates.
     ///
-    /// For example, (0, 0) in a window is the top left corner, but may be located at the top
-    /// middle of the terminal, if this window is on the right half of the terminal.
+    /// For example, (0, 0) in window-text coordinates represents the location of the first
+    /// character of content you can see in the window, whereas (0, 0) in terminal coordinates
+    /// represents absolute coordinates, well, in the terminal.
     pub fn to_term(&self, x: u16, y: u16) -> Position {
+        assert!(x < self.text_width && y < self.raw_window_size.height);
+        Position{ x: x + self.raw_window_pos.x + self.text_start, y: y + self.raw_window_pos.y }
+    }
+
+    fn raw_to_term(&self, x: u16, y: u16) -> Position {
         assert!(x < self.raw_window_size.width && y < self.raw_window_size.height);
         Position{ x: x + self.raw_window_pos.x, y: y + self.raw_window_pos.y }
     }
@@ -133,7 +139,7 @@ impl Window {
             ClearType::All => {
                 term.save_cursor();
                 for line in 0..self.raw_window_size.height {
-                    let Position{ x, y } = self.to_term(0, line);
+                    let Position{ x, y } = self.raw_to_term(0, line);
                     term.cursor_to(x, y).q_move_cursor()?.q(Print(&clear_str))?;
                 }
                 term.restore_cursor();
@@ -141,7 +147,7 @@ impl Window {
             },
             ClearType::Line => {
                 term.save_cursor();
-                let Position{ x, y } = self.to_term(0, line);
+                let Position{ x, y } = self.raw_to_term(0, line);
                 term.cursor_to(x, y).q_move_cursor()?.q(Print(clear_str))?.restore_cursor();
                 term.q_move_cursor()?;
             }
@@ -192,7 +198,7 @@ impl Window {
                             indices.push(idx);
                         }
                         let mut pieces: Vec<&str> = Vec::new();
-                        let first = if indices.len() >= 1 { &l.text[0..indices[1]] } else { l.text.as_str() };
+                        let first = if indices.len() > 1 { &l.text[0..indices[1]] } else { l.text.as_str() };
                         for i in 1..indices.len() {
                             pieces.push(&l.text[indices[i - 1]..indices[i]]);
                         }
@@ -274,7 +280,7 @@ impl Window {
         term.q(Hide)?.save_cursor();
         self.q_clear(ClearType::All, 0, term)?;
         for i in 0..self.raw_window_size.height {
-            let Position{ x, y } = self.to_term(0, i);
+            let Position{ x, y } = self.raw_to_term(0, i);
             term.cursor_to(x, y).q_move_cursor()?;
             if message_line < message_len && i == message_begin_line + message_line {
                 self.center_welcome(message_line as usize, term)?;
