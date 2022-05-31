@@ -3,16 +3,20 @@
 use std::io::Error;
 use std::path::PathBuf;
 use std::slice::{Iter, SliceIndex};
+use unicode_segmentation::UnicodeSegmentation;
 
 /// Struct that represents a line of text.
 #[derive(Default)]
 pub struct Line {
+    /// The content of the line.
     pub text: String,
+    /// The number of graphemes in the line
+    pub length: usize,
 }
 
 impl From<&str> for Line {
     fn from(text: &str) -> Self {
-        Line{ text: text.to_string() }
+        Line{ text: text.to_string(), length: text.graphemes(true).count() }
     }
 }
 

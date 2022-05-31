@@ -53,6 +53,8 @@ pub struct Window {
     text_start: u16, // window location of first character
     #[doc(hidden)]
     text_width: u16, // length of space allocated for content
+    #[doc(hidden)]
+    target_x: usize, // target x-value (used for moving up and down in documents)
 }
 
 impl Window {
@@ -61,7 +63,7 @@ impl Window {
         let size = term.size();
         assert!(size.height > 1 && size.width > 1);
         let size = Size{ width: size.width, height: size.height - 1 };
-        Window{ doc: None, first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: size.width - 1 }
+        Window{ doc: None, first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: size.width - 1, target_x: 0 }
     }
 
     /// Create a new, full-terminal Window with the contents of the given file.
@@ -72,7 +74,7 @@ impl Window {
         // Don't have options, and so can't calculate text_start and text_width yet
         // However, setup() is called before anything else happens, so they'll be calculated
         // there
-        Ok(Window{ doc: Some(Document::new(filename)?), first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: 0 })
+        Ok(Window{ doc: Some(Document::new(filename)?), first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: 0, target_x: 0 })
     }
 
     pub fn setup(&mut self, opt: &Options) {
@@ -110,6 +112,24 @@ impl Window {
             self.pos_in_doc.x += 1;
             term.cursor_right_by(1).q_move_cursor()?.flush()
         } else { Ok(()) }
+    }
+
+    /// Move the cursor one line up, if possible.
+    ///
+    /// If the line the cursor moves to is long enough, the cursor will stay in the same terminal row.
+    pub fn move_up(&mut self, term: &mut Terminal) -> Result<()> {
+        if self.doc.is_none() { return Ok(()) }
+        if self.pos_in_doc.y > 0 {
+            self.pos_in_doc.y -= 1;
+        }
+        Ok(())
+    }
+
+    /// Move the cursor one line down, if possible.
+    ///
+    /// If the line the cursor moves to is long enough, the cursor will stay in the same terminal row.
+    pub fn move_down(&mut self, term: &mut Terminal) -> Result<()> {
+        Ok(())
     }
     
     // NOTE: when you implement splitting, make sure that all split windows have
