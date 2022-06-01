@@ -9,7 +9,7 @@ use crossterm::{
     cursor::{Hide, Show},
     style::{Print, Stylize},
 };
-use std::cmp::max;
+use std::cmp::{max, min};
 use std::iter::{once, repeat};
 use std::path::PathBuf;
 use unicode_segmentation::UnicodeSegmentation;
@@ -99,6 +99,7 @@ impl Window {
         // TODO: handle line wrapping
         if self.pos_in_doc.x > 0 {
             self.pos_in_doc.x -= 1;
+            self.target_x = self.pos_in_doc.x;
             term.cursor_left_by(1).q_move_cursor()?.flush()
         } else { Ok(()) }
     }
@@ -110,6 +111,7 @@ impl Window {
         // TODO: handle line wrapping
         if self.pos_in_doc.x + 1 < self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().text.len() {
             self.pos_in_doc.x += 1;
+            self.target_x = self.pos_in_doc.x;
             term.cursor_right_by(1).q_move_cursor()?.flush()
         } else { Ok(()) }
     }
@@ -119,17 +121,39 @@ impl Window {
     /// If the line the cursor moves to is long enough, the cursor will stay in the same terminal row.
     pub fn move_up(&mut self, term: &mut Terminal) -> Result<()> {
         if self.doc.is_none() { return Ok(()) }
+        // TODO: handle line wrapping
         if self.pos_in_doc.y > 0 {
             self.pos_in_doc.y -= 1;
-        }
-        Ok(())
+            self.pos_in_doc.x = min(self.target_x, self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().length);
+            term.cursor_left_by((self.target_x - self.pos_in_doc.x).try_into().unwrap()); // line wrapping change needed here too
+            if self.pos_in_doc.y + 1 == self.first_line {
+                // only move cursor in x, TODO: need to re-render (cursor moves one line up, window
+                // moves onen line down)
+            } else {
+                term.cursor_up_by(1);
+            }
+            term.q_move_cursor()?.flush()
+        } else { Ok(()) }
     }
 
     /// Move the cursor one line down, if possible.
     ///
     /// If the line the cursor moves to is long enough, the cursor will stay in the same terminal row.
     pub fn move_down(&mut self, term: &mut Terminal) -> Result<()> {
-        Ok(())
+        if self.doc.is_none() { return Ok(()) }
+        // TODO: handle line wrapping
+        if self.pos_in_doc.y + 1 < self.doc.as_ref().unwrap().num_lines() {
+            self.pos_in_doc.y += 1;
+            self.pos_in_doc.x = min(self.target_x, self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().length);
+            term.cursor_left_by((self.target_x - self.pos_in_doc.x).try_into().unwrap()); // line wrapping change needed here too
+            if self.pos_in_doc.y == self.first_line + self.raw_window_size.height as usize + 1 {
+                // only move cursor in x, TODO: need to re-render (cursor moves one line down,
+                // window moves one line up)
+            } else {
+                term.cursor_down_by(1);
+            }
+            term.q_move_cursor()?.flush()
+        } else { Ok(()) }
     }
     
     // NOTE: when you implement splitting, make sure that all split windows have

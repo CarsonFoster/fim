@@ -35,6 +35,11 @@ impl Document {
         Ok(Document{ filename: Some(filename), lines: Self::vec_from_str(&text) })
     }
 
+    /// Return the number of lines in the document.
+    pub fn num_lines(&self) -> usize {
+        self.lines.len()
+    }
+
     /// Get a line at the given (zero-based) index.
     pub fn line(&self, idx: usize) -> Option<&Line> {
         self.lines.get(idx)
