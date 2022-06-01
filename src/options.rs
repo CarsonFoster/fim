@@ -3,6 +3,7 @@
 //! There are three different types of options: boolean, numeric, and string. These can be set by
 //! the user through configuration files or in-fim commands (eventually, not right now).
 
+#[derive(Copy, Clone)]
 /// Struct that represent the collection of internal configuration options.
 pub struct Options {
     pub line_numbering: LineNumbers,
@@ -38,6 +39,7 @@ impl OptionFactory {
     }
 }
 
+#[derive(Copy, Clone)]
 /// Enum that represents the different types of line numbers fim can use.
 pub enum LineNumbers {
     Off,

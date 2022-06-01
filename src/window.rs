@@ -42,6 +42,8 @@ pub struct Window {
     #[doc(hidden)]
     doc: Option<Document>,
     #[doc(hidden)]
+    opt: Options,
+    #[doc(hidden)]
     first_line: usize, // zero-based index of first line in document on screen
     #[doc(hidden)]
     pos_in_doc: DocPosition, // location of cursor in document
@@ -59,34 +61,39 @@ pub struct Window {
 
 impl Window {
     /// Create a new, full-terminal Window with the default welcome message.
-    pub fn default(term: &Terminal) -> Self {
+    pub fn default(term: &Terminal, opt: Options) -> Self {
         let size = term.size();
         assert!(size.height > 1 && size.width > 1);
         let size = Size{ width: size.width, height: size.height - 1 };
-        Window{ doc: None, first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: size.width - 1, target_x: 0 }
+        Window{ doc: None, first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: size.width - 1, target_x: 0, opt }
     }
 
     /// Create a new, full-terminal Window with the contents of the given file.
-    pub fn new(filename: PathBuf, term: &Terminal) -> Result<Self> {
+    pub fn new(filename: PathBuf, term: &Terminal, opt: Options) -> Result<Self> {
         let size = term.size();
         assert!(size.height > 1 && size.width > 1);
         let size = Size{ width: size.width, height: size.height - 1 };
         // Don't have options, and so can't calculate text_start and text_width yet
         // However, setup() is called before anything else happens, so they'll be calculated
         // there
-        Ok(Window{ doc: Some(Document::new(filename)?), first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: 0, target_x: 0 })
+        Ok(Window{ doc: Some(Document::new(filename)?), first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: 0, target_x: 0, opt })
     }
 
-    pub fn setup(&mut self, opt: &Options) {
-        let (x, y) = self.compute_text_attrs(opt);
+    /// Update the window's options.
+    pub fn update_options(&mut self, opt: &Options) {
+        self.opt = *opt;
+    }
+
+    pub fn setup(&mut self) {
+        let (x, y) = self.compute_text_attrs();
         self.text_start = x;
         self.text_width = y;
     }
 
     /// Render this window's contents to the terminal screen.
-    pub fn render(&self, opt: &Options, term: &mut Terminal) -> Result<()> {
+    pub fn render(&self, term: &mut Terminal) -> Result<()> {
         if self.doc.is_some() {
-            self.draw_document(opt, term)
+            self.draw_document(term)
         } else {
             self.draw_welcome_screen(term)
         }
@@ -199,13 +206,13 @@ impl Window {
         Ok(())
     }
 
-    fn compute_text_attrs(&self, opt: &Options) -> (u16, u16) {
+    fn compute_text_attrs(&self) -> (u16, u16) {
         // number of characters necessary for line numbering
         // note that there is a space after a line number, accounted for here
         // also note that this is an approximation (good be slightly off due to line wrapping,
         // but idc, it's too much effort to get an exact number for like one character of
         // difference)
-        let line_number_chars: u16 = match opt.line_numbering {
+        let line_number_chars: u16 = match self.opt.line_numbering {
             LineNumbers::Off => 0,
             LineNumbers::On => log10(self.raw_window_size.height as usize + self.first_line - 1) + 1,
             LineNumbers::Relative => log10(max(self.pos_in_doc.y, max(
@@ -216,7 +223,7 @@ impl Window {
         (line_number_chars, text_width)
     }
 
-    fn draw_document(&self, opt: &Options, term: &mut Terminal) -> Result<()> {
+    fn draw_document(&self, term: &mut Terminal) -> Result<()> {
         if let Some(doc) = self.doc.as_ref() {
             #[derive(Copy, Clone)]
             enum LineType<'a> {
@@ -258,7 +265,7 @@ impl Window {
                .try_for_each(|(terminal_line, lt)| { 
                     term.cursor_to(0, terminal_line as u16).q_move_cursor()?;
                     if let LineType::Content(text) = lt {
-                        match opt.line_numbering {
+                        match self.opt.line_numbering {
                             LineNumbers::Off => {
                                 term.q(Print(text))
                             },

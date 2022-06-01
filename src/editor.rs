@@ -42,7 +42,7 @@ impl<'a> Editor<'a> {
     /// Create a new Editor struct from a file.
     pub fn new(filename: PathBuf, opt: Options, config: Option<Config>) -> Result<Editor<'a>> {
         let term = Terminal::new()?;
-        let window = Window::new(filename, &term)?;
+        let window = Window::new(filename, &term, opt)?;
         // TODO: add real default config handling
         Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], current_window: 0, opt, config: config.unwrap_or_else(|| Config::empty()) } )
     }
@@ -50,7 +50,7 @@ impl<'a> Editor<'a> {
     /// Create a new Editor struct with the default welcome screen.
     pub fn default(opt: Options, config: Option<Config>) -> Result<Editor<'a>> {
         let term = Terminal::new()?;
-        let window = Window::default(&term);
+        let window = Window::default(&term, opt);
         Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], current_window: 0, opt, config: config.unwrap_or_else(|| Config::empty()) } )
     }
 
@@ -70,8 +70,8 @@ impl<'a> Editor<'a> {
 
     fn setup(&mut self) -> Result<()> {
         self.terminal.enter_alternate_screen()?;
-        self.windows.iter_mut().for_each(|w| w.setup(&self.opt));
-        self.windows.iter().try_for_each(|w| w.render(&self.opt, &mut self.terminal))?;
+        self.windows.iter_mut().for_each(|w| w.setup());
+        self.windows.iter().try_for_each(|w| w.render(&mut self.terminal))?;
         let Position{ x, y } = self.windows[self.current_window].to_term(0, 0);
         self.terminal.move_cursor_to(x, y)
     }
