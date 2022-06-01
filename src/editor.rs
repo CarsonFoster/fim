@@ -118,6 +118,8 @@ impl<'a> Editor<'a> {
         match action {
             "move_left" => current_window.move_left(term)?,
             "move_right" => current_window.move_right(term)?,
+            "move_up" => current_window.move_up(term)?,
+            "move_down" => current_window.move_down(term)?,
             _ => (),
         }
 

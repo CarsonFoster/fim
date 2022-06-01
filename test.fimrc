@@ -1,2 +1,4 @@
 bind(NormalMode) h Action move_left
 bind(NormalMode) l Action move_right
+bind(NormalMode) j Action move_down
+bind(NormalMode) k Action move_up
