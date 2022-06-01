@@ -44,11 +44,14 @@
 <span id="44">44</span>
 <span id="45">45</span>
 <span id="46">46</span>
+<span id="47">47</span>
+<span id="48">48</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module for handling internal configuration options.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! There are three different types of options: boolean, numeric, and string. These can be set by</span>
 <span class="doccomment">//! the user through configuration files or in-fim commands (eventually, not right now).</span>
 
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
 <span class="doccomment">/// Struct that represent the collection of internal configuration options.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Options</span> {
     <span class="kw">pub</span> <span class="ident">line_numbering</span>: <span class="ident">LineNumbers</span>,
@@ -84,6 +87,7 @@
     }
 }
 
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
 <span class="doccomment">/// Enum that represents the different types of line numbers fim can use.</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">LineNumbers</span> {
     <span class="ident">Off</span>,

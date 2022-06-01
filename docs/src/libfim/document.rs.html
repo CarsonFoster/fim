@@ -74,21 +74,34 @@
 <span id="74">74</span>
 <span id="75">75</span>
 <span id="76">76</span>
+<span id="77">77</span>
+<span id="78">78</span>
+<span id="79">79</span>
+<span id="80">80</span>
+<span id="81">81</span>
+<span id="82">82</span>
+<span id="83">83</span>
+<span id="84">84</span>
+<span id="85">85</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module for handling the content of files (&#39;documents&#39;).</span>
 
 <span class="kw">use</span> <span class="ident">std::io::Error</span>;
 <span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
 <span class="kw">use</span> <span class="ident">std::slice</span>::{<span class="ident">Iter</span>, <span class="ident">SliceIndex</span>};
+<span class="kw">use</span> <span class="ident">unicode_segmentation::UnicodeSegmentation</span>;
 
 <span class="doccomment">/// Struct that represents a line of text.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Default</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Line</span> {
+    <span class="doccomment">/// The content of the line.</span>
     <span class="kw">pub</span> <span class="ident">text</span>: <span class="ident">String</span>,
+    <span class="doccomment">/// The number of graphemes in the line</span>
+    <span class="kw">pub</span> <span class="ident">length</span>: <span class="ident">usize</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">From</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="kw">for</span> <span class="ident">Line</span> {
     <span class="kw">fn</span> <span class="ident">from</span>(<span class="ident">text</span>: <span class="kw-2">&amp;</span><span class="ident">str</span>) -&gt; <span class="self">Self</span> {
-        <span class="ident">Line</span>{ <span class="ident">text</span>: <span class="ident">text</span>.<span class="ident">to_string</span>() }
+        <span class="ident">Line</span>{ <span class="ident">text</span>: <span class="ident">text</span>.<span class="ident">to_string</span>(), <span class="ident">length</span>: <span class="ident">text</span>.<span class="ident">graphemes</span>(<span class="bool-val">true</span>).<span class="ident">count</span>() }
     }
 }
 
@@ -105,6 +118,11 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>(<span class="ident">filename</span>: <span class="ident">PathBuf</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="self">Self</span>, <span class="ident">Error</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">text</span> <span class="op">=</span> <span class="ident">std::fs::read_to_string</span>(<span class="kw-2">&amp;</span><span class="ident">filename</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="ident">Document</span>{ <span class="ident">filename</span>: <span class="prelude-val">Some</span>(<span class="ident">filename</span>), <span class="ident">lines</span>: <span class="ident"><span class="self">Self</span>::vec_from_str</span>(<span class="kw-2">&amp;</span><span class="ident">text</span>) })
+    }
+
+    <span class="doccomment">/// Return the number of lines in the document.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">num_lines</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="ident">usize</span> {
+        <span class="self">self</span>.<span class="ident">lines</span>.<span class="ident">len</span>()
     }
 
     <span class="doccomment">/// Get a line at the given (zero-based) index.</span>
