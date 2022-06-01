@@ -10,7 +10,6 @@ use crossterm::{
     style::{Print, Stylize},
 };
 use std::cmp::{max, min};
-use std::collections::BTreeMap;
 use std::iter::{once, repeat};
 use std::path::PathBuf;
 use unicode_segmentation::UnicodeSegmentation;
@@ -40,8 +39,18 @@ enum ClearType {
 
 #[derive(Copy, Clone)]
 struct WindowLineProperties {
-    pub lines: u16,    // number of window lines the Line takes up
+    pub lines: usize,    // number of window lines the Line takes up
     pub graphemes: u16 // number of graphemes on the last window line (all others must have raw_window_size.width graphemes)
+}
+
+impl WindowLineProperties {
+    pub fn lines_u16(&self) -> Option<u16> {
+        if self.lines > u16::MAX as usize {
+            None
+        } else {
+            Some(self.lines as u16)
+        }
+    }
 }
 
 /// Struct that represents a fim window.
@@ -65,7 +74,7 @@ pub struct Window {
     #[doc(hidden)]
     target_x: usize, // target x-value (used for moving up and down in documents)
     #[doc(hidden)]
-    line_properties: BTreeMap<usize, WindowLineProperties>,
+    line_properties: Vec<WindowLineProperties>,
 }
 
 impl Window {
@@ -74,7 +83,7 @@ impl Window {
         let size = term.size();
         assert!(size.height > 1 && size.width > 1);
         let size = Size{ width: size.width, height: size.height - 1 };
-        Window{ doc: None, first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: size.width - 1, target_x: 0, opt, line_properties: BTreeMap::new() }
+        Window{ doc: None, first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: size.width - 1, target_x: 0, opt, line_properties: Vec::new() }
     }
 
     /// Create a new, full-terminal Window with the contents of the given file.
@@ -84,10 +93,9 @@ impl Window {
         let size = Size{ width: size.width, height: size.height - 1 };
         let pos_in_doc = DocPosition::default();
         let (text_start, text_width) = Self::_compute_text_attrs(&opt, &size, &pos_in_doc, 0);
-        // Don't have options, and so can't calculate text_start and text_width yet
-        // However, setup() is called before anything else happens, so they'll be calculated
-        // there
-        Ok(Window{ doc: Some(Document::new(filename)?), first_line: 0, pos_in_doc, raw_window_pos: Position::default(), raw_window_size: size, text_start, text_width, target_x: 0, opt, line_properties: BTreeMap::new() })
+        let document = Document::new(filename)?;
+        let line_properties = Self::setup_line_properties(&document, text_width);
+        Ok(Window{ doc: Some(document), first_line: 0, pos_in_doc, raw_window_pos: Position::default(), raw_window_size: size, text_start, text_width, target_x: 0, opt, line_properties })
     }
 
     /// Update the window's options.
@@ -188,6 +196,16 @@ impl Window {
         Position{ x: x + self.raw_window_pos.x, y: y + self.raw_window_pos.y }
     }
 
+    fn setup_line_properties(doc: &Document, text_width: u16) -> Vec<WindowLineProperties> {
+        let mut line_properties = Vec::with_capacity(doc.num_lines()); 
+        for line in doc {
+            let rem = (line.length % text_width as usize) as u16;
+            let props = WindowLineProperties{ lines: div_ceil(line.length, text_width), graphemes: rem };
+            line_properties.push(props);
+        }
+        line_properties
+    }
+
     fn q_clear(&self, clear_type: ClearType, line: u16, term: &mut Terminal) -> Result<()> { // line is in window coords
         // does not change cursor visibility
         let clear_str = " ".repeat(self.raw_window_size.width as usize);
@@ -254,7 +272,7 @@ impl Window {
                         // note that we've already consumed the first character of the next chunk
                         // we need to get the (width + 1)th character from the start of the chunk,
                         // width + 1 - 1 = width
-                        while let Some((idx, _)) = graphemes.nth(self.raw_window_size.width.into()) {
+                        while let Some((idx, _)) = graphemes.nth(self.raw_window_size.width.into()) { // TODO: check logic here!
                             indices.push(idx);
                         }
                         let mut pieces: Vec<&str> = Vec::new();
@@ -268,7 +286,7 @@ impl Window {
                     };
                     output
                 })
-               .chain(once(LineType::Tilde).cycle())           
+               .chain(repeat(LineType::Tilde))
                .enumerate()
                .take(self.raw_window_size.height.into())
                .try_for_each(|(terminal_line, lt)| { 
@@ -352,6 +370,10 @@ impl Window {
         term.restore_cursor();
         term.q_move_cursor()?.q(Show)?.flush()
     }
+}
+
+fn div_ceil(quotient: usize, divisor: u16) -> usize {
+    (quotient as f64 / divisor as f64).ceil() as usize
 }
 
 fn abs_diff(x: usize, y: usize) -> usize {
