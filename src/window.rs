@@ -10,6 +10,7 @@ use crossterm::{
     style::{Print, Stylize},
 };
 use std::cmp::{max, min};
+use std::collections::BTreeMap;
 use std::iter::{once, repeat};
 use std::path::PathBuf;
 use unicode_segmentation::UnicodeSegmentation;
@@ -37,6 +38,12 @@ enum ClearType {
    Line
 }
 
+#[derive(Copy, Clone)]
+struct WindowLineProperties {
+    pub lines: u16,    // number of window lines the Line takes up
+    pub graphemes: u16 // number of graphemes on the last window line (all others must have raw_window_size.width graphemes)
+}
+
 /// Struct that represents a fim window.
 pub struct Window {
     #[doc(hidden)]
@@ -57,6 +64,8 @@ pub struct Window {
     text_width: u16, // length of space allocated for content
     #[doc(hidden)]
     target_x: usize, // target x-value (used for moving up and down in documents)
+    #[doc(hidden)]
+    line_properties: BTreeMap<usize, WindowLineProperties>,
 }
 
 impl Window {
@@ -65,7 +74,7 @@ impl Window {
         let size = term.size();
         assert!(size.height > 1 && size.width > 1);
         let size = Size{ width: size.width, height: size.height - 1 };
-        Window{ doc: None, first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: size.width - 1, target_x: 0, opt }
+        Window{ doc: None, first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: size.width - 1, target_x: 0, opt, line_properties: BTreeMap::new() }
     }
 
     /// Create a new, full-terminal Window with the contents of the given file.
@@ -76,7 +85,7 @@ impl Window {
         // Don't have options, and so can't calculate text_start and text_width yet
         // However, setup() is called before anything else happens, so they'll be calculated
         // there
-        Ok(Window{ doc: Some(Document::new(filename)?), first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: 0, target_x: 0, opt })
+        Ok(Window{ doc: Some(Document::new(filename)?), first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: 0, target_x: 0, opt, line_properties: BTreeMap::new() })
     }
 
     /// Update the window's options.
@@ -84,6 +93,7 @@ impl Window {
         self.opt = *opt;
     }
 
+    /// Perform necessary setup operations for the Window.
     pub fn setup(&mut self) {
         let (x, y) = self.compute_text_attrs();
         self.text_start = x;
