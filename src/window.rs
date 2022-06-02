@@ -34,7 +34,7 @@ pub struct DocPosition {
 #[derive(Copy, Clone)]
 enum ClearType {
    All,
-   Line
+   LineNumbers,
 }
 
 #[derive(Copy, Clone)]
@@ -233,24 +233,18 @@ impl Window {
 
     fn q_clear(&self, clear_type: ClearType, line: u16, term: &mut Terminal) -> Result<()> { // line is in window coords
         // does not change cursor visibility
-        let clear_str = " ".repeat(self.raw_window_size.width as usize);
-        match clear_type {
-            ClearType::All => {
-                term.save_cursor();
-                for line in 0..self.raw_window_size.height {
-                    let Position{ x, y } = self.raw_to_term(0, line);
-                    term.cursor_to(x, y).q_move_cursor()?.q(Print(&clear_str))?;
-                }
-                term.restore_cursor();
-                term.q_move_cursor()?;
-            },
-            ClearType::Line => {
-                term.save_cursor();
-                let Position{ x, y } = self.raw_to_term(0, line);
-                term.cursor_to(x, y).q_move_cursor()?.q(Print(clear_str))?.restore_cursor();
-                term.q_move_cursor()?;
-            }
+        let clear_line = " ".repeat(self.raw_window_size.width as usize);
+        let clear_line_numbers = " ".repeat(self.text_start as usize);
+        term.save_cursor();
+        for line in 0..self.raw_window_size.height {
+            let Position{ x, y } = self.raw_to_term(0, line);
+            term.cursor_to(x, y).q_move_cursor()?.q(Print(match clear_type {
+                ClearType::All => &clear_line,
+                ClearType::LineNumbers => &clear_line_numbers,
+            }))?;
         }
+        term.restore_cursor();
+        term.q_move_cursor()?;
         Ok(())
     }
     
