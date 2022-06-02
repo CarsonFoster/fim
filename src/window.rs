@@ -7,9 +7,9 @@ use crate::terminal::{Position, Size, Terminal};
 use crossterm::{
     Result,
     cursor::{Hide, Show},
-    style::{Print, Stylize},
+    style::{Print, StyledContent, Stylize},
 };
-use std::cmp::min;
+use std::cmp::{max, min};
 use std::iter::{once, repeat};
 use std::path::PathBuf;
 use unicode_segmentation::UnicodeSegmentation;
@@ -148,9 +148,9 @@ impl Window {
 
             if self.pos_in_doc.y + 1 == self.first_line {
                 self.first_line -= 1;
-                // re-render
+                self.render(term)?;
             } else if let LineNumbers::Relative = self.opt.line_numbering {
-                // re-render line numbers only
+                self.update_line_numbers(term)?;
             }
             self.q_move(term)?;
             term.flush()?;
@@ -170,9 +170,9 @@ impl Window {
 
             if self.pos_in_doc.y == self.first_line + self.raw_window_size.height as usize {
                 self.first_line += 1;
-                // re-render
+                self.render(term)?;
             } else if let LineNumbers::Relative = self.opt.line_numbering {
-                // re-render line numbers only
+                self.update_line_numbers(term)?;
             }
             self.q_move(term)?;
             term.flush()?;
@@ -231,7 +231,8 @@ impl Window {
         line_properties
     }
 
-    fn line_number(&self, line: u16) -> String {
+    fn line_number(&self, line: u16) -> StyledContent<String> {
+        if line as usize >= self.doc.as_ref().map(|d| d.num_lines()).or(Some(usize::MAX)).unwrap() { return "~".to_string().blue() }
         match self.opt.line_numbering {
             LineNumbers::Off => String::new(),
             LineNumbers::On => once(' ').chain((line as usize + self.first_line + 1).to_string().chars().rev())
@@ -246,22 +247,19 @@ impl Window {
                              .chars().rev().collect::<String>()
                 }
             }
-        }
+        }.dark_yellow()
     }
 
     fn update_line_numbers(&self, term: &mut Terminal) -> Result<()> {
         if let LineNumbers::Off = self.opt.line_numbering { return Ok(()); }
-        // term.q(Hide)?;
+        term.q(Hide)?.save_cursor();
         self.q_clear(ClearType::LineNumbers, term)?;
-        term.save_cursor();
         for line in 0..self.raw_window_size.height {
             let Position{ x, y } = self.raw_to_term(0, line);
-            term.cursor_to(x, y).q_move_cursor()?.q(Print(self.line_number(line).dark_yellow()))?;
+            term.cursor_to(x, y).q_move_cursor()?.q(Print(self.line_number(line)))?;
         }
         term.restore_cursor();
-        term.q_move_cursor()?;
-        // term.q(Show)?;
-        term.flush()?;
+        term.q_move_cursor()?.q(Show)?.flush()?;
         Ok(())
     }
 
@@ -286,7 +284,7 @@ impl Window {
         // includes extra space after line numbers
         let line_number_chars: u16 = match opt.line_numbering {
             LineNumbers::Off => 0,
-            _ => log10(doc_length) + 1,
+            _ => max(log10(doc_length) + 1, 3),
         };
         let text_width = saturating_sub(raw_window_size.width, line_number_chars);
         (line_number_chars, text_width)
@@ -334,7 +332,7 @@ impl Window {
                .try_for_each(|(terminal_line, lt)| { 
                     term.cursor_to(0, terminal_line as u16).q_move_cursor()?;
                     if let LineType::Content(text) = lt {
-                        term.q(Print(self.line_number(terminal_line as u16).dark_yellow()))?.q(Print(text))
+                        term.q(Print(self.line_number(terminal_line as u16)))?.q(Print(text))
                     } else if let LineType::Continued(text) = lt {
                         term.q(Print(text)) // TODO: check logic here
                     } else {
