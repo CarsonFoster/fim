@@ -115,25 +115,25 @@ impl Window {
     /// Move the cursor one character left, if possible.
     pub fn move_left(&mut self, term: &mut Terminal) -> Result<()> {
         if self.doc.is_none() { return Ok(()) }
-        // assume document position is synced with the cursor position
-        // TODO: handle line wrapping
         if self.pos_in_doc.x > 0 {
             self.pos_in_doc.x -= 1;
             self.target_x = self.pos_in_doc.x;
-            term.cursor_left_by(1).q_move_cursor()?.flush()
-        } else { Ok(()) }
+            self.q_move(term)?;
+            term.flush()?;
+        }
+        Ok(())
     }
 
     /// Move the cursor one character right, if possible.
     pub fn move_right(&mut self, term: &mut Terminal) -> Result<()> {
         if self.doc.is_none() { return Ok(()) }
-        // assume document position is synced with the cursor position
-        // TODO: handle line wrapping
         if self.pos_in_doc.x + 1 < self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().text.len() {
             self.pos_in_doc.x += 1;
             self.target_x = self.pos_in_doc.x;
-            term.cursor_right_by(1).q_move_cursor()?.flush()
-        } else { Ok(()) }
+            self.q_move(term)?;
+            term.flush()?;
+        }
+        Ok(())
     }
 
     /// Move the cursor one line up, if possible.
