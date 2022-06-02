@@ -138,42 +138,46 @@ impl Window {
 
     /// Move the cursor one line up, if possible.
     ///
-    /// If the line the cursor moves to is long enough, the cursor will stay in the same terminal row.
+    /// If the line the cursor moves to is long enough, the cursor will stay in the same terminal
+    /// column.
     pub fn move_up(&mut self, term: &mut Terminal) -> Result<()> {
         if self.doc.is_none() { return Ok(()) }
-        // TODO: handle line wrapping
         if self.pos_in_doc.y > 0 {
             self.pos_in_doc.y -= 1;
             self.pos_in_doc.x = min(self.target_x, self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().length);
-            term.cursor_left_by((self.target_x - self.pos_in_doc.x).try_into().unwrap()); // line wrapping change needed here too
+
             if self.pos_in_doc.y + 1 == self.first_line {
-                // only move cursor in x, TODO: need to re-render (cursor moves one line up, window
-                // moves one line down)
-            } else {
-                term.cursor_up_by(1);
+                self.first_line -= 1;
+                // re-render
+            } else if let LineNumbers::Relative = self.opt.line_numbering {
+                // re-render line numbers only
             }
-            term.q_move_cursor()?.flush()
-        } else { Ok(()) }
+            self.q_move(term)?;
+            term.flush()?;
+        }
+        Ok(())
     }
 
     /// Move the cursor one line down, if possible.
     ///
-    /// If the line the cursor moves to is long enough, the cursor will stay in the same terminal row.
+    /// If the line the cursor moves to is long enough, the cursor will stay in the same terminal
+    /// column.
     pub fn move_down(&mut self, term: &mut Terminal) -> Result<()> {
         if self.doc.is_none() { return Ok(()) }
-        // TODO: handle line wrapping
         if self.pos_in_doc.y + 1 < self.doc.as_ref().unwrap().num_lines() {
             self.pos_in_doc.y += 1;
             self.pos_in_doc.x = min(self.target_x, self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().length);
-            term.cursor_left_by((self.target_x - self.pos_in_doc.x).try_into().unwrap()); // line wrapping change needed here too
-            if self.pos_in_doc.y == self.first_line + self.raw_window_size.height as usize + 1 {
-                // only move cursor in x, TODO: need to re-render (cursor moves one line down,
-                // window moves one line up)
-            } else {
-                term.cursor_down_by(1);
+
+            if self.pos_in_doc.y == self.first_line + self.raw_window_size.height as usize {
+                self.first_line += 1;
+                // re-render
+            } else if let LineNumbers::Relative = self.opt.line_numbering {
+                // re-render line numbers only
             }
-            term.q_move_cursor()?.flush()
-        } else { Ok(()) }
+            self.q_move(term)?;
+            term.flush()?;
+        }
+        Ok(())
     }
     
     // NOTE: when you implement splitting, make sure that all split windows have
@@ -251,6 +255,8 @@ impl Window {
     }
     
     fn _compute_text_attrs(opt: &Options, raw_window_size: &Size, pos_in_doc: &DocPosition, first_line: usize) -> (u16, u16) {
+        // TODO: make line spacing based on last line
+
         // number of characters necessary for line numbering
         // note that there is a space after a line number, accounted for here
         // also note that this is an approximation (good be slightly off due to line wrapping,
