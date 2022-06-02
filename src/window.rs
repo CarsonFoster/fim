@@ -92,8 +92,8 @@ impl Window {
         assert!(size.height > 1 && size.width > 1);
         let size = Size{ width: size.width, height: size.height - 1 };
         let pos_in_doc = DocPosition::default();
-        let (text_start, text_width) = Self::_compute_text_attrs(&opt, &size, &pos_in_doc, 0);
         let document = Document::new(filename)?;
+        let (text_start, text_width) = Self::compute_text_attrs(&opt, &size, document.num_lines());
         let line_properties = Self::setup_line_properties(&document, text_width);
         Ok(Window{ doc: Some(document), first_line: 0, pos_in_doc, raw_window_pos: Position::default(), raw_window_size: size, text_start, text_width, target_x: 0, opt, line_properties })
     }
@@ -254,27 +254,14 @@ impl Window {
         Ok(())
     }
     
-    fn _compute_text_attrs(opt: &Options, raw_window_size: &Size, pos_in_doc: &DocPosition, first_line: usize) -> (u16, u16) {
-        // TODO: make line spacing based on last line
-
-        // number of characters necessary for line numbering
-        // note that there is a space after a line number, accounted for here
-        // also note that this is an approximation (good be slightly off due to line wrapping,
-        // but idc, it's too much effort to get an exact number for like one character of
-        // difference)
+    fn compute_text_attrs(opt: &Options, raw_window_size: &Size, doc_length: usize) -> (u16, u16) {
+        // includes extra space after line numbers
         let line_number_chars: u16 = match opt.line_numbering {
             LineNumbers::Off => 0,
-            LineNumbers::On => log10(raw_window_size.height as usize + first_line - 1) + 1,
-            LineNumbers::Relative => log10(max(pos_in_doc.y, max(
-                                               abs_diff(pos_in_doc.y, first_line),
-                                               abs_diff(pos_in_doc.y, first_line + raw_window_size.height as usize - 1)))) + 1,
+            _ => log10(doc_length) + 1,
         };
         let text_width = saturating_sub(raw_window_size.width, line_number_chars);
         (line_number_chars, text_width)
-    }
-
-    fn compute_text_attrs(&self) -> (u16, u16) {
-        Self::_compute_text_attrs(&self.opt, &self.raw_window_size, &self.pos_in_doc, self.first_line)
     }
 
     fn draw_document(&self, term: &mut Terminal) -> Result<()> {
