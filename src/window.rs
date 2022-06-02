@@ -9,7 +9,7 @@ use crossterm::{
     cursor::{Hide, Show},
     style::{Print, Stylize},
 };
-use std::cmp::{max, min};
+use std::cmp::min;
 use std::iter::{once, repeat};
 use std::path::PathBuf;
 use unicode_segmentation::UnicodeSegmentation;
@@ -231,7 +231,41 @@ impl Window {
         line_properties
     }
 
-    fn q_clear(&self, clear_type: ClearType, line: u16, term: &mut Terminal) -> Result<()> { // line is in window coords
+    fn line_number(&self, line: u16) -> String {
+        match self.opt.line_numbering {
+            LineNumbers::Off => String::new(),
+            LineNumbers::On => once(' ').chain((line as usize + self.first_line + 1).to_string().chars().rev())
+                                        .chain(repeat(' ')).take(self.text_start as usize).collect::<String>()
+                                        .chars().rev().collect::<String>(),
+            LineNumbers::Relative => {
+                if self.pos_in_doc.y == self.first_line + line as usize {
+                    (self.pos_in_doc.y + 1).to_string().chars().chain(repeat(' ')).take(self.text_start as usize).collect::<String>()
+                } else {
+                    once(' ').chain(abs_diff(self.pos_in_doc.y, line as usize + self.first_line).to_string().chars().rev())
+                             .chain(repeat(' ')).take(self.text_start as usize).collect::<String>()
+                             .chars().rev().collect::<String>()
+                }
+            }
+        }
+    }
+
+    fn update_line_numbers(&self, term: &mut Terminal) -> Result<()> {
+        if let LineNumbers::Off = self.opt.line_numbering { return Ok(()); }
+        // term.q(Hide)?;
+        self.q_clear(ClearType::LineNumbers, term)?;
+        term.save_cursor();
+        for line in 0..self.raw_window_size.height {
+            let Position{ x, y } = self.raw_to_term(0, line);
+            term.cursor_to(x, y).q_move_cursor()?.q(Print(self.line_number(line).dark_yellow()))?;
+        }
+        term.restore_cursor();
+        term.q_move_cursor()?;
+        // term.q(Show)?;
+        term.flush()?;
+        Ok(())
+    }
+
+    fn q_clear(&self, clear_type: ClearType, term: &mut Terminal) -> Result<()> {
         // does not change cursor visibility
         let clear_line = " ".repeat(self.raw_window_size.width as usize);
         let clear_line_numbers = " ".repeat(self.text_start as usize);
@@ -271,7 +305,7 @@ impl Window {
             let text_width = self.text_width as usize;
 
             term.q(Hide)?.save_cursor();
-            self.q_clear(ClearType::All, 0, term)?;
+            self.q_clear(ClearType::All, term)?;
             doc.iter_from(self.first_line).unwrap() // we assert that first_line is a valid index
                .flat_map(|l| {
                     let mut graphemes = l.text.as_str().grapheme_indices(true);
@@ -300,29 +334,9 @@ impl Window {
                .try_for_each(|(terminal_line, lt)| { 
                     term.cursor_to(0, terminal_line as u16).q_move_cursor()?;
                     if let LineType::Content(text) = lt {
-                        match self.opt.line_numbering {
-                            LineNumbers::Off => {
-                                term.q(Print(text))
-                            },
-                            LineNumbers::On => {
-                                let line_number: String = once(' ').chain((terminal_line + self.first_line + 1).to_string().chars().rev())
-                                    .chain(repeat(' ')).take(line_number_chars).collect::<String>().chars().rev().collect();
-                                term.q(Print(line_number.dark_yellow()))?
-                                    .q(Print(text))
-                            },
-                            LineNumbers::Relative => {
-                                let line_number: String = if self.pos_in_doc.y == self.first_line + terminal_line {
-                                    (self.pos_in_doc.y + 1).to_string().chars().chain(repeat(' ')).take(line_number_chars).collect()
-                                } else {
-                                    once(' ').chain(abs_diff(self.pos_in_doc.y, terminal_line + self.first_line).to_string().chars().rev())
-                                        .chain(repeat(' ')).take(line_number_chars).collect::<String>().chars().rev().collect()
-                                };
-                                term.q(Print(line_number.dark_yellow()))?
-                                    .q(Print(text))
-                            }
-                        }
+                        term.q(Print(self.line_number(terminal_line as u16).dark_yellow()))?.q(Print(text))
                     } else if let LineType::Continued(text) = lt {
-                        term.q(Print(text))
+                        term.q(Print(text)) // TODO: check logic here
                     } else {
                         term.q(Print("~".blue()))
                     }.map(|_| ())
@@ -364,7 +378,7 @@ impl Window {
         };
         let mut message_line: u16 = 0;
         term.q(Hide)?.save_cursor();
-        self.q_clear(ClearType::All, 0, term)?;
+        self.q_clear(ClearType::All, term)?;
         for i in 0..self.raw_window_size.height {
             let Position{ x, y } = self.raw_to_term(0, i);
             term.cursor_to(x, y).q_move_cursor()?;
