@@ -374,6 +374,48 @@
 <span id="374">374</span>
 <span id="375">375</span>
 <span id="376">376</span>
+<span id="377">377</span>
+<span id="378">378</span>
+<span id="379">379</span>
+<span id="380">380</span>
+<span id="381">381</span>
+<span id="382">382</span>
+<span id="383">383</span>
+<span id="384">384</span>
+<span id="385">385</span>
+<span id="386">386</span>
+<span id="387">387</span>
+<span id="388">388</span>
+<span id="389">389</span>
+<span id="390">390</span>
+<span id="391">391</span>
+<span id="392">392</span>
+<span id="393">393</span>
+<span id="394">394</span>
+<span id="395">395</span>
+<span id="396">396</span>
+<span id="397">397</span>
+<span id="398">398</span>
+<span id="399">399</span>
+<span id="400">400</span>
+<span id="401">401</span>
+<span id="402">402</span>
+<span id="403">403</span>
+<span id="404">404</span>
+<span id="405">405</span>
+<span id="406">406</span>
+<span id="407">407</span>
+<span id="408">408</span>
+<span id="409">409</span>
+<span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
+<span id="413">413</span>
+<span id="414">414</span>
+<span id="415">415</span>
+<span id="416">416</span>
+<span id="417">417</span>
+<span id="418">418</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module for handling fim&#39;s editor windows.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! A window has a single active [`Document`] and can be split vertically or horizontally.</span>
@@ -383,10 +425,9 @@
 <span class="kw">use</span> <span class="ident">crossterm</span>::{
     <span class="prelude-ty">Result</span>,
     <span class="ident">cursor</span>::{<span class="ident">Hide</span>, <span class="ident">Show</span>},
-    <span class="ident">style</span>::{<span class="ident">Print</span>, <span class="ident">Stylize</span>},
+    <span class="ident">style</span>::{<span class="ident">Print</span>, <span class="ident">StyledContent</span>, <span class="ident">Stylize</span>},
 };
 <span class="kw">use</span> <span class="ident">std::cmp</span>::{<span class="ident">max</span>, <span class="ident">min</span>};
-<span class="kw">use</span> <span class="ident">std::collections::BTreeMap</span>;
 <span class="kw">use</span> <span class="ident">std::iter</span>::{<span class="ident">once</span>, <span class="ident">repeat</span>};
 <span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
 <span class="kw">use</span> <span class="ident">unicode_segmentation::UnicodeSegmentation</span>;
@@ -411,13 +452,23 @@
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
 <span class="kw">enum</span> <span class="ident">ClearType</span> {
    <span class="ident">All</span>,
-   <span class="ident">Line</span>
+   <span class="ident">LineNumbers</span>,
 }
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
 <span class="kw">struct</span> <span class="ident">WindowLineProperties</span> {
-    <span class="kw">pub</span> <span class="ident">lines</span>: <span class="ident">u16</span>,    <span class="comment">// number of window lines the Line takes up</span>
+    <span class="kw">pub</span> <span class="ident">lines</span>: <span class="ident">usize</span>,    <span class="comment">// number of window lines the Line takes up</span>
     <span class="kw">pub</span> <span class="ident">graphemes</span>: <span class="ident">u16</span> <span class="comment">// number of graphemes on the last window line (all others must have raw_window_size.width graphemes)</span>
+}
+
+<span class="kw">impl</span> <span class="ident">WindowLineProperties</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">lines_u16</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">u16</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">lines</span> <span class="op">&gt;</span> <span class="ident">u16::MAX</span> <span class="kw">as</span> <span class="ident">usize</span> {
+            <span class="prelude-val">None</span>
+        } <span class="kw">else</span> {
+            <span class="prelude-val">Some</span>(<span class="self">self</span>.<span class="ident">lines</span> <span class="kw">as</span> <span class="ident">u16</span>)
+        }
+    }
 }
 
 <span class="doccomment">/// Struct that represents a fim window.</span>
@@ -441,7 +492,7 @@
     <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
     <span class="ident">target_x</span>: <span class="ident">usize</span>, <span class="comment">// target x-value (used for moving up and down in documents)</span>
     <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="ident">line_properties</span>: <span class="ident">BTreeMap</span><span class="op">&lt;</span><span class="ident">usize</span>, <span class="ident">WindowLineProperties</span><span class="op">&gt;</span>,
+    <span class="ident">line_properties</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">WindowLineProperties</span><span class="op">&gt;</span>,
 }
 
 <span class="kw">impl</span> <span class="ident">Window</span> {
@@ -450,7 +501,7 @@
         <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">term</span>.<span class="ident">size</span>();
         <span class="macro">assert!</span>(<span class="ident">size</span>.<span class="ident">height</span> <span class="op">&gt;</span> <span class="number">1</span> <span class="op">&amp;&amp;</span> <span class="ident">size</span>.<span class="ident">width</span> <span class="op">&gt;</span> <span class="number">1</span>);
         <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">Size</span>{ <span class="ident">width</span>: <span class="ident">size</span>.<span class="ident">width</span>, <span class="ident">height</span>: <span class="ident">size</span>.<span class="ident">height</span> <span class="op">-</span> <span class="number">1</span> };
-        <span class="ident">Window</span>{ <span class="ident">doc</span>: <span class="prelude-val">None</span>, <span class="ident">first_line</span>: <span class="number">0</span>, <span class="ident">pos_in_doc</span>: <span class="ident">DocPosition::default</span>(), <span class="ident">raw_window_pos</span>: <span class="ident">Position::default</span>(), <span class="ident">raw_window_size</span>: <span class="ident">size</span>, <span class="ident">text_start</span>: <span class="number">0</span>, <span class="ident">text_width</span>: <span class="ident">size</span>.<span class="ident">width</span> <span class="op">-</span> <span class="number">1</span>, <span class="ident">target_x</span>: <span class="number">0</span>, <span class="ident">opt</span>, <span class="ident">line_properties</span>: <span class="ident">BTreeMap::new</span>() }
+        <span class="ident">Window</span>{ <span class="ident">doc</span>: <span class="prelude-val">None</span>, <span class="ident">first_line</span>: <span class="number">0</span>, <span class="ident">pos_in_doc</span>: <span class="ident">DocPosition::default</span>(), <span class="ident">raw_window_pos</span>: <span class="ident">Position::default</span>(), <span class="ident">raw_window_size</span>: <span class="ident">size</span>, <span class="ident">text_start</span>: <span class="number">0</span>, <span class="ident">text_width</span>: <span class="ident">size</span>.<span class="ident">width</span> <span class="op">-</span> <span class="number">1</span>, <span class="ident">target_x</span>: <span class="number">0</span>, <span class="ident">opt</span>, <span class="ident">line_properties</span>: <span class="ident">Vec::new</span>() }
     }
 
     <span class="doccomment">/// Create a new, full-terminal Window with the contents of the given file.</span>
@@ -459,11 +510,10 @@
         <span class="macro">assert!</span>(<span class="ident">size</span>.<span class="ident">height</span> <span class="op">&gt;</span> <span class="number">1</span> <span class="op">&amp;&amp;</span> <span class="ident">size</span>.<span class="ident">width</span> <span class="op">&gt;</span> <span class="number">1</span>);
         <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">Size</span>{ <span class="ident">width</span>: <span class="ident">size</span>.<span class="ident">width</span>, <span class="ident">height</span>: <span class="ident">size</span>.<span class="ident">height</span> <span class="op">-</span> <span class="number">1</span> };
         <span class="kw">let</span> <span class="ident">pos_in_doc</span> <span class="op">=</span> <span class="ident">DocPosition::default</span>();
-        <span class="kw">let</span> (<span class="ident">text_start</span>, <span class="ident">text_width</span>) <span class="op">=</span> <span class="ident"><span class="self">Self</span>::_compute_text_attrs</span>(<span class="kw-2">&amp;</span><span class="ident">opt</span>, <span class="kw-2">&amp;</span><span class="ident">size</span>, <span class="kw-2">&amp;</span><span class="ident">pos_in_doc</span>, <span class="number">0</span>);
-        <span class="comment">// Don&#39;t have options, and so can&#39;t calculate text_start and text_width yet</span>
-        <span class="comment">// However, setup() is called before anything else happens, so they&#39;ll be calculated</span>
-        <span class="comment">// there</span>
-        <span class="prelude-val">Ok</span>(<span class="ident">Window</span>{ <span class="ident">doc</span>: <span class="prelude-val">Some</span>(<span class="ident">Document::new</span>(<span class="ident">filename</span>)<span class="question-mark">?</span>), <span class="ident">first_line</span>: <span class="number">0</span>, <span class="ident">pos_in_doc</span>, <span class="ident">raw_window_pos</span>: <span class="ident">Position::default</span>(), <span class="ident">raw_window_size</span>: <span class="ident">size</span>, <span class="ident">text_start</span>, <span class="ident">text_width</span>, <span class="ident">target_x</span>: <span class="number">0</span>, <span class="ident">opt</span>, <span class="ident">line_properties</span>: <span class="ident">BTreeMap::new</span>() })
+        <span class="kw">let</span> <span class="ident">document</span> <span class="op">=</span> <span class="ident">Document::new</span>(<span class="ident">filename</span>)<span class="question-mark">?</span>;
+        <span class="kw">let</span> (<span class="ident">text_start</span>, <span class="ident">text_width</span>) <span class="op">=</span> <span class="ident"><span class="self">Self</span>::compute_text_attrs</span>(<span class="kw-2">&amp;</span><span class="ident">opt</span>, <span class="kw-2">&amp;</span><span class="ident">size</span>, <span class="ident">document</span>.<span class="ident">num_lines</span>());
+        <span class="kw">let</span> <span class="ident">line_properties</span> <span class="op">=</span> <span class="ident"><span class="self">Self</span>::setup_line_properties</span>(<span class="kw-2">&amp;</span><span class="ident">document</span>, <span class="ident">text_width</span>);
+        <span class="prelude-val">Ok</span>(<span class="ident">Window</span>{ <span class="ident">doc</span>: <span class="prelude-val">Some</span>(<span class="ident">document</span>), <span class="ident">first_line</span>: <span class="number">0</span>, <span class="ident">pos_in_doc</span>, <span class="ident">raw_window_pos</span>: <span class="ident">Position::default</span>(), <span class="ident">raw_window_size</span>: <span class="ident">size</span>, <span class="ident">text_start</span>, <span class="ident">text_width</span>, <span class="ident">target_x</span>: <span class="number">0</span>, <span class="ident">opt</span>, <span class="ident">line_properties</span> })
     }
 
     <span class="doccomment">/// Update the window&#39;s options.</span>
@@ -483,65 +533,69 @@
     <span class="doccomment">/// Move the cursor one character left, if possible.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">move_left</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">term</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Terminal</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">doc</span>.<span class="ident">is_none</span>() { <span class="kw">return</span> <span class="prelude-val">Ok</span>(()) }
-        <span class="comment">// assume document position is synced with the cursor position</span>
-        <span class="comment">// TODO: handle line wrapping</span>
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">x</span> <span class="op">&gt;</span> <span class="number">0</span> {
             <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">x</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
             <span class="self">self</span>.<span class="ident">target_x</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">x</span>;
-            <span class="ident">term</span>.<span class="ident">cursor_left_by</span>(<span class="number">1</span>).<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>.<span class="ident">flush</span>()
-        } <span class="kw">else</span> { <span class="prelude-val">Ok</span>(()) }
+            <span class="self">self</span>.<span class="ident">q_move</span>(<span class="ident">term</span>)<span class="question-mark">?</span>;
+            <span class="ident">term</span>.<span class="ident">flush</span>()<span class="question-mark">?</span>;
+        }
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// Move the cursor one character right, if possible.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">move_right</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">term</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Terminal</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">doc</span>.<span class="ident">is_none</span>() { <span class="kw">return</span> <span class="prelude-val">Ok</span>(()) }
-        <span class="comment">// assume document position is synced with the cursor position</span>
-        <span class="comment">// TODO: handle line wrapping</span>
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">x</span> <span class="op">+</span> <span class="number">1</span> <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">doc</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">line</span>(<span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span>).<span class="ident">unwrap</span>().<span class="ident">text</span>.<span class="ident">len</span>() {
             <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">x</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
             <span class="self">self</span>.<span class="ident">target_x</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">x</span>;
-            <span class="ident">term</span>.<span class="ident">cursor_right_by</span>(<span class="number">1</span>).<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>.<span class="ident">flush</span>()
-        } <span class="kw">else</span> { <span class="prelude-val">Ok</span>(()) }
+            <span class="self">self</span>.<span class="ident">q_move</span>(<span class="ident">term</span>)<span class="question-mark">?</span>;
+            <span class="ident">term</span>.<span class="ident">flush</span>()<span class="question-mark">?</span>;
+        }
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// Move the cursor one line up, if possible.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// If the line the cursor moves to is long enough, the cursor will stay in the same terminal row.</span>
+    <span class="doccomment">/// If the line the cursor moves to is long enough, the cursor will stay in the same terminal</span>
+    <span class="doccomment">/// column.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">move_up</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">term</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Terminal</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">doc</span>.<span class="ident">is_none</span>() { <span class="kw">return</span> <span class="prelude-val">Ok</span>(()) }
-        <span class="comment">// TODO: handle line wrapping</span>
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span> <span class="op">&gt;</span> <span class="number">0</span> {
             <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
             <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">x</span> <span class="op">=</span> <span class="ident">min</span>(<span class="self">self</span>.<span class="ident">target_x</span>, <span class="self">self</span>.<span class="ident">doc</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">line</span>(<span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span>).<span class="ident">unwrap</span>().<span class="ident">length</span>);
-            <span class="ident">term</span>.<span class="ident">cursor_left_by</span>((<span class="self">self</span>.<span class="ident">target_x</span> <span class="op">-</span> <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">x</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>()); <span class="comment">// line wrapping change needed here too</span>
+
             <span class="kw">if</span> <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span> <span class="op">+</span> <span class="number">1</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">first_line</span> {
-                <span class="comment">// only move cursor in x, TODO: need to re-render (cursor moves one line up, window</span>
-                <span class="comment">// moves onen line down)</span>
-            } <span class="kw">else</span> {
-                <span class="ident">term</span>.<span class="ident">cursor_up_by</span>(<span class="number">1</span>);
+                <span class="self">self</span>.<span class="ident">first_line</span> <span class="op">-</span><span class="op">=</span> <span class="number">1</span>;
+                <span class="self">self</span>.<span class="ident">render</span>(<span class="ident">term</span>)<span class="question-mark">?</span>;
+            } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="ident">LineNumbers::Relative</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">opt</span>.<span class="ident">line_numbering</span> {
+                <span class="self">self</span>.<span class="ident">update_line_numbers</span>(<span class="ident">term</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">term</span>.<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>.<span class="ident">flush</span>()
-        } <span class="kw">else</span> { <span class="prelude-val">Ok</span>(()) }
+            <span class="self">self</span>.<span class="ident">q_move</span>(<span class="ident">term</span>)<span class="question-mark">?</span>;
+            <span class="ident">term</span>.<span class="ident">flush</span>()<span class="question-mark">?</span>;
+        }
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="doccomment">/// Move the cursor one line down, if possible.</span>
     <span class="doccomment">///</span>
-    <span class="doccomment">/// If the line the cursor moves to is long enough, the cursor will stay in the same terminal row.</span>
+    <span class="doccomment">/// If the line the cursor moves to is long enough, the cursor will stay in the same terminal</span>
+    <span class="doccomment">/// column.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">move_down</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">term</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Terminal</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">doc</span>.<span class="ident">is_none</span>() { <span class="kw">return</span> <span class="prelude-val">Ok</span>(()) }
-        <span class="comment">// TODO: handle line wrapping</span>
         <span class="kw">if</span> <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span> <span class="op">+</span> <span class="number">1</span> <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">doc</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">num_lines</span>() {
             <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
             <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">x</span> <span class="op">=</span> <span class="ident">min</span>(<span class="self">self</span>.<span class="ident">target_x</span>, <span class="self">self</span>.<span class="ident">doc</span>.<span class="ident">as_ref</span>().<span class="ident">unwrap</span>().<span class="ident">line</span>(<span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span>).<span class="ident">unwrap</span>().<span class="ident">length</span>);
-            <span class="ident">term</span>.<span class="ident">cursor_left_by</span>((<span class="self">self</span>.<span class="ident">target_x</span> <span class="op">-</span> <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">x</span>).<span class="ident">try_into</span>().<span class="ident">unwrap</span>()); <span class="comment">// line wrapping change needed here too</span>
-            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">first_line</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">raw_window_size</span>.<span class="ident">height</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="number">1</span> {
-                <span class="comment">// only move cursor in x, TODO: need to re-render (cursor moves one line down,</span>
-                <span class="comment">// window moves one line up)</span>
-            } <span class="kw">else</span> {
-                <span class="ident">term</span>.<span class="ident">cursor_down_by</span>(<span class="number">1</span>);
+
+            <span class="kw">if</span> <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">first_line</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">raw_window_size</span>.<span class="ident">height</span> <span class="kw">as</span> <span class="ident">usize</span> {
+                <span class="self">self</span>.<span class="ident">first_line</span> <span class="op">+</span><span class="op">=</span> <span class="number">1</span>;
+                <span class="self">self</span>.<span class="ident">render</span>(<span class="ident">term</span>)<span class="question-mark">?</span>;
+            } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="ident">LineNumbers::Relative</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">opt</span>.<span class="ident">line_numbering</span> {
+                <span class="self">self</span>.<span class="ident">update_line_numbers</span>(<span class="ident">term</span>)<span class="question-mark">?</span>;
             }
-            <span class="ident">term</span>.<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>.<span class="ident">flush</span>()
-        } <span class="kw">else</span> { <span class="prelude-val">Ok</span>(()) }
+            <span class="self">self</span>.<span class="ident">q_move</span>(<span class="ident">term</span>)<span class="question-mark">?</span>;
+            <span class="ident">term</span>.<span class="ident">flush</span>()<span class="question-mark">?</span>;
+        }
+        <span class="prelude-val">Ok</span>(())
     }
     
     <span class="comment">// NOTE: when you implement splitting, make sure that all split windows have</span>
@@ -564,48 +618,94 @@
         <span class="ident">Position</span>{ <span class="ident">x</span>: <span class="ident">x</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">raw_window_pos</span>.<span class="ident">x</span>, <span class="ident">y</span>: <span class="ident">y</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">raw_window_pos</span>.<span class="ident">y</span> }
     }
 
-    <span class="kw">fn</span> <span class="ident">q_clear</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">clear_type</span>: <span class="ident">ClearType</span>, <span class="ident">line</span>: <span class="ident">u16</span>, <span class="ident">term</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Terminal</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> { <span class="comment">// line is in window coords</span>
-        <span class="comment">// does not change cursor visibility</span>
-        <span class="kw">let</span> <span class="ident">clear_str</span> <span class="op">=</span> <span class="string">&quot; &quot;</span>.<span class="ident">repeat</span>(<span class="self">self</span>.<span class="ident">raw_window_size</span>.<span class="ident">width</span> <span class="kw">as</span> <span class="ident">usize</span>);
-        <span class="kw">match</span> <span class="ident">clear_type</span> {
-            <span class="ident">ClearType::All</span> =&gt; {
-                <span class="ident">term</span>.<span class="ident">save_cursor</span>();
-                <span class="kw">for</span> <span class="ident">line</span> <span class="kw">in</span> <span class="number">0</span>..<span class="self">self</span>.<span class="ident">raw_window_size</span>.<span class="ident">height</span> {
-                    <span class="kw">let</span> <span class="ident">Position</span>{ <span class="ident">x</span>, <span class="ident">y</span> } <span class="op">=</span> <span class="self">self</span>.<span class="ident">raw_to_term</span>(<span class="number">0</span>, <span class="ident">line</span>);
-                    <span class="ident">term</span>.<span class="ident">cursor_to</span>(<span class="ident">x</span>, <span class="ident">y</span>).<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>.<span class="ident">q</span>(<span class="ident">Print</span>(<span class="kw-2">&amp;</span><span class="ident">clear_str</span>))<span class="question-mark">?</span>;
-                }
-                <span class="ident">term</span>.<span class="ident">restore_cursor</span>();
-                <span class="ident">term</span>.<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>;
-            },
-            <span class="ident">ClearType::Line</span> =&gt; {
-                <span class="ident">term</span>.<span class="ident">save_cursor</span>();
-                <span class="kw">let</span> <span class="ident">Position</span>{ <span class="ident">x</span>, <span class="ident">y</span> } <span class="op">=</span> <span class="self">self</span>.<span class="ident">raw_to_term</span>(<span class="number">0</span>, <span class="ident">line</span>);
-                <span class="ident">term</span>.<span class="ident">cursor_to</span>(<span class="ident">x</span>, <span class="ident">y</span>).<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>.<span class="ident">q</span>(<span class="ident">Print</span>(<span class="ident">clear_str</span>))<span class="question-mark">?</span>.<span class="ident">restore_cursor</span>();
-                <span class="ident">term</span>.<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>;
-            }
+    <span class="kw">fn</span> <span class="ident">to_window_text</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">Position</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span> <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">first_line</span> { <span class="kw">return</span> <span class="prelude-val">None</span>; }
+        <span class="kw">let</span> <span class="ident">lines_from_line</span> <span class="op">=</span> <span class="ident">div_ceil</span>(<span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">x</span>, <span class="self">self</span>.<span class="ident">text_width</span>);
+        <span class="kw">let</span> <span class="ident">x</span> <span class="op">=</span> (<span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">x</span> <span class="op">%</span> <span class="self">self</span>.<span class="ident">text_width</span> <span class="kw">as</span> <span class="ident">usize</span>) <span class="kw">as</span> <span class="ident">u16</span>;
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">y</span> <span class="op">=</span> <span class="number">0</span>;
+        <span class="kw">for</span> <span class="ident">line</span> <span class="kw">in</span> <span class="self">self</span>.<span class="ident">first_line</span>..<span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span> {
+            <span class="ident">y</span> <span class="op">+</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">line_properties</span>[<span class="ident">line</span>].<span class="ident">lines</span>
+        }
+        <span class="ident">y</span> <span class="op">+</span><span class="op">=</span> <span class="ident">lines_from_line</span> <span class="op">-</span> <span class="number">1</span>;
+        <span class="kw">if</span> <span class="ident">y</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">raw_window_size</span>.<span class="ident">height</span>.<span class="ident">into</span>() <span class="op">|</span><span class="op">|</span> <span class="ident">x</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">text_width</span> { <span class="prelude-val">None</span> }
+        <span class="kw">else</span> { <span class="prelude-val">Some</span>(<span class="ident">Position</span>{ <span class="ident">x</span>, <span class="ident">y</span>: <span class="ident">y</span> <span class="kw">as</span> <span class="ident">u16</span> }) } <span class="comment">// y guaranteed to fit into u16 since &lt; height, which is u16</span>
+    }
+
+    <span class="kw">fn</span> <span class="ident">q_move</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">term</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Terminal</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">Position</span>{ <span class="ident">x</span>: <span class="ident">x_wt</span>, <span class="ident">y</span>: <span class="ident">y_wt</span> }) <span class="op">=</span> <span class="self">self</span>.<span class="ident">to_window_text</span>() {
+            <span class="kw">let</span> <span class="ident">Position</span>{ <span class="ident">x</span>, <span class="ident">y</span> } <span class="op">=</span> <span class="self">self</span>.<span class="ident">to_term</span>(<span class="ident">x_wt</span>, <span class="ident">y_wt</span>); 
+            <span class="ident">term</span>.<span class="ident">cursor_to</span>(<span class="ident">x</span>, <span class="ident">y</span>).<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     }
-    
-    <span class="kw">fn</span> <span class="ident">_compute_text_attrs</span>(<span class="ident">opt</span>: <span class="kw-2">&amp;</span><span class="ident">Options</span>, <span class="ident">raw_window_size</span>: <span class="kw-2">&amp;</span><span class="ident">Size</span>, <span class="ident">pos_in_doc</span>: <span class="kw-2">&amp;</span><span class="ident">DocPosition</span>, <span class="ident">first_line</span>: <span class="ident">usize</span>) -&gt; (<span class="ident">u16</span>, <span class="ident">u16</span>) {
-        <span class="comment">// number of characters necessary for line numbering</span>
-        <span class="comment">// note that there is a space after a line number, accounted for here</span>
-        <span class="comment">// also note that this is an approximation (good be slightly off due to line wrapping,</span>
-        <span class="comment">// but idc, it&#39;s too much effort to get an exact number for like one character of</span>
-        <span class="comment">// difference)</span>
-        <span class="kw">let</span> <span class="ident">line_number_chars</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">opt</span>.<span class="ident">line_numbering</span> {
-            <span class="ident">LineNumbers::Off</span> =&gt; <span class="number">0</span>,
-            <span class="ident">LineNumbers::On</span> =&gt; <span class="ident">log10</span>(<span class="ident">raw_window_size</span>.<span class="ident">height</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="ident">first_line</span> <span class="op">-</span> <span class="number">1</span>) <span class="op">+</span> <span class="number">1</span>,
-            <span class="ident">LineNumbers::Relative</span> =&gt; <span class="ident">log10</span>(<span class="ident">max</span>(<span class="ident">pos_in_doc</span>.<span class="ident">y</span>, <span class="ident">max</span>(
-                                               <span class="ident">abs_diff</span>(<span class="ident">pos_in_doc</span>.<span class="ident">y</span>, <span class="ident">first_line</span>),
-                                               <span class="ident">abs_diff</span>(<span class="ident">pos_in_doc</span>.<span class="ident">y</span>, <span class="ident">first_line</span> <span class="op">+</span> <span class="ident">raw_window_size</span>.<span class="ident">height</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">-</span> <span class="number">1</span>)))) <span class="op">+</span> <span class="number">1</span>,
-        };
-        <span class="kw">let</span> <span class="ident">text_width</span> <span class="op">=</span> <span class="ident">saturating_sub</span>(<span class="ident">raw_window_size</span>.<span class="ident">height</span>, <span class="ident">line_number_chars</span>);
-        (<span class="ident">line_number_chars</span>, <span class="ident">text_width</span>)
+
+    <span class="kw">fn</span> <span class="ident">setup_line_properties</span>(<span class="ident">doc</span>: <span class="kw-2">&amp;</span><span class="ident">Document</span>, <span class="ident">text_width</span>: <span class="ident">u16</span>) -&gt; <span class="ident">Vec</span><span class="op">&lt;</span><span class="ident">WindowLineProperties</span><span class="op">&gt;</span> {
+        <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">line_properties</span> <span class="op">=</span> <span class="ident">Vec::with_capacity</span>(<span class="ident">doc</span>.<span class="ident">num_lines</span>()); 
+        <span class="kw">for</span> <span class="ident">line</span> <span class="kw">in</span> <span class="ident">doc</span> {
+            <span class="kw">let</span> <span class="ident">rem</span> <span class="op">=</span> (<span class="ident">line</span>.<span class="ident">length</span> <span class="op">%</span> <span class="ident">text_width</span> <span class="kw">as</span> <span class="ident">usize</span>) <span class="kw">as</span> <span class="ident">u16</span>;
+            <span class="kw">let</span> <span class="ident">props</span> <span class="op">=</span> <span class="ident">WindowLineProperties</span>{ <span class="ident">lines</span>: <span class="ident">div_ceil</span>(<span class="ident">line</span>.<span class="ident">length</span>, <span class="ident">text_width</span>), <span class="ident">graphemes</span>: <span class="ident">rem</span> };
+            <span class="ident">line_properties</span>.<span class="ident">push</span>(<span class="ident">props</span>);
+        }
+        <span class="ident">line_properties</span>
     }
 
-    <span class="kw">fn</span> <span class="ident">compute_text_attrs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="ident">u16</span>, <span class="ident">u16</span>) {
-        <span class="ident"><span class="self">Self</span>::_compute_text_attrs</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">opt</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">raw_window_size</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">pos_in_doc</span>, <span class="self">self</span>.<span class="ident">first_line</span>)
+    <span class="kw">fn</span> <span class="ident">line_number</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">line</span>: <span class="ident">u16</span>) -&gt; <span class="ident">StyledContent</span><span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="ident">line</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">&gt;</span><span class="op">=</span> <span class="self">self</span>.<span class="ident">doc</span>.<span class="ident">as_ref</span>().<span class="ident">map</span>(<span class="op">|</span><span class="ident">d</span><span class="op">|</span> <span class="ident">d</span>.<span class="ident">num_lines</span>()).<span class="ident">or</span>(<span class="prelude-val">Some</span>(<span class="ident">usize::MAX</span>)).<span class="ident">unwrap</span>() { <span class="kw">return</span> <span class="string">&quot;~&quot;</span>.<span class="ident">to_string</span>().<span class="ident">blue</span>() }
+        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">opt</span>.<span class="ident">line_numbering</span> {
+            <span class="ident">LineNumbers::Off</span> =&gt; <span class="ident">String::new</span>(),
+            <span class="ident">LineNumbers::On</span> =&gt; <span class="ident">once</span>(<span class="string">&#39; &#39;</span>).<span class="ident">chain</span>((<span class="ident">line</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">first_line</span> <span class="op">+</span> <span class="number">1</span>).<span class="ident">to_string</span>().<span class="ident">chars</span>().<span class="ident">rev</span>())
+                                        .<span class="ident">chain</span>(<span class="ident">repeat</span>(<span class="string">&#39; &#39;</span>)).<span class="ident">take</span>(<span class="self">self</span>.<span class="ident">text_start</span> <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>()
+                                        .<span class="ident">chars</span>().<span class="ident">rev</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>(),
+            <span class="ident">LineNumbers::Relative</span> =&gt; {
+                <span class="kw">if</span> <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">first_line</span> <span class="op">+</span> <span class="ident">line</span> <span class="kw">as</span> <span class="ident">usize</span> {
+                    (<span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span> <span class="op">+</span> <span class="number">1</span>).<span class="ident">to_string</span>().<span class="ident">chars</span>().<span class="ident">chain</span>(<span class="ident">repeat</span>(<span class="string">&#39; &#39;</span>)).<span class="ident">take</span>(<span class="self">self</span>.<span class="ident">text_start</span> <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>()
+                } <span class="kw">else</span> {
+                    <span class="ident">once</span>(<span class="string">&#39; &#39;</span>).<span class="ident">chain</span>(<span class="ident">abs_diff</span>(<span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span>, <span class="ident">line</span> <span class="kw">as</span> <span class="ident">usize</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">first_line</span>).<span class="ident">to_string</span>().<span class="ident">chars</span>().<span class="ident">rev</span>())
+                             .<span class="ident">chain</span>(<span class="ident">repeat</span>(<span class="string">&#39; &#39;</span>)).<span class="ident">take</span>(<span class="self">self</span>.<span class="ident">text_start</span> <span class="kw">as</span> <span class="ident">usize</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>()
+                             .<span class="ident">chars</span>().<span class="ident">rev</span>().<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>()
+                }
+            }
+        }.<span class="ident">dark_yellow</span>()
+    }
+
+    <span class="kw">fn</span> <span class="ident">update_line_numbers</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">term</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Terminal</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="ident">LineNumbers::Off</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">opt</span>.<span class="ident">line_numbering</span> { <span class="kw">return</span> <span class="prelude-val">Ok</span>(()); }
+        <span class="ident">term</span>.<span class="ident">q</span>(<span class="ident">Hide</span>)<span class="question-mark">?</span>.<span class="ident">save_cursor</span>();
+        <span class="self">self</span>.<span class="ident">q_clear</span>(<span class="ident">ClearType::LineNumbers</span>, <span class="ident">term</span>)<span class="question-mark">?</span>;
+        <span class="kw">for</span> <span class="ident">line</span> <span class="kw">in</span> <span class="number">0</span>..<span class="self">self</span>.<span class="ident">raw_window_size</span>.<span class="ident">height</span> {
+            <span class="kw">let</span> <span class="ident">Position</span>{ <span class="ident">x</span>, <span class="ident">y</span> } <span class="op">=</span> <span class="self">self</span>.<span class="ident">raw_to_term</span>(<span class="number">0</span>, <span class="ident">line</span>);
+            <span class="ident">term</span>.<span class="ident">cursor_to</span>(<span class="ident">x</span>, <span class="ident">y</span>).<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>.<span class="ident">q</span>(<span class="ident">Print</span>(<span class="self">self</span>.<span class="ident">line_number</span>(<span class="ident">line</span>)))<span class="question-mark">?</span>;
+        }
+        <span class="ident">term</span>.<span class="ident">restore_cursor</span>();
+        <span class="ident">term</span>.<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>.<span class="ident">q</span>(<span class="ident">Show</span>)<span class="question-mark">?</span>.<span class="ident">flush</span>()<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">fn</span> <span class="ident">q_clear</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">clear_type</span>: <span class="ident">ClearType</span>, <span class="ident">term</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Terminal</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+        <span class="comment">// does not change cursor visibility</span>
+        <span class="kw">let</span> <span class="ident">clear_line</span> <span class="op">=</span> <span class="string">&quot; &quot;</span>.<span class="ident">repeat</span>(<span class="self">self</span>.<span class="ident">raw_window_size</span>.<span class="ident">width</span> <span class="kw">as</span> <span class="ident">usize</span>);
+        <span class="kw">let</span> <span class="ident">clear_line_numbers</span> <span class="op">=</span> <span class="string">&quot; &quot;</span>.<span class="ident">repeat</span>(<span class="self">self</span>.<span class="ident">text_start</span> <span class="kw">as</span> <span class="ident">usize</span>);
+        <span class="ident">term</span>.<span class="ident">save_cursor</span>();
+        <span class="kw">for</span> <span class="ident">line</span> <span class="kw">in</span> <span class="number">0</span>..<span class="self">self</span>.<span class="ident">raw_window_size</span>.<span class="ident">height</span> {
+            <span class="kw">let</span> <span class="ident">Position</span>{ <span class="ident">x</span>, <span class="ident">y</span> } <span class="op">=</span> <span class="self">self</span>.<span class="ident">raw_to_term</span>(<span class="number">0</span>, <span class="ident">line</span>);
+            <span class="ident">term</span>.<span class="ident">cursor_to</span>(<span class="ident">x</span>, <span class="ident">y</span>).<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>.<span class="ident">q</span>(<span class="ident">Print</span>(<span class="kw">match</span> <span class="ident">clear_type</span> {
+                <span class="ident">ClearType::All</span> =&gt; <span class="kw-2">&amp;</span><span class="ident">clear_line</span>,
+                <span class="ident">ClearType::LineNumbers</span> =&gt; <span class="kw-2">&amp;</span><span class="ident">clear_line_numbers</span>,
+            }))<span class="question-mark">?</span>;
+        }
+        <span class="ident">term</span>.<span class="ident">restore_cursor</span>();
+        <span class="ident">term</span>.<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
+    }
+    
+    <span class="kw">fn</span> <span class="ident">compute_text_attrs</span>(<span class="ident">opt</span>: <span class="kw-2">&amp;</span><span class="ident">Options</span>, <span class="ident">raw_window_size</span>: <span class="kw-2">&amp;</span><span class="ident">Size</span>, <span class="ident">doc_length</span>: <span class="ident">usize</span>) -&gt; (<span class="ident">u16</span>, <span class="ident">u16</span>) {
+        <span class="comment">// includes extra space after line numbers</span>
+        <span class="kw">let</span> <span class="ident">line_number_chars</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="kw">match</span> <span class="ident">opt</span>.<span class="ident">line_numbering</span> {
+            <span class="ident">LineNumbers::Off</span> =&gt; <span class="number">0</span>,
+            <span class="kw">_</span> =&gt; <span class="ident">max</span>(<span class="ident">log10</span>(<span class="ident">doc_length</span>) <span class="op">+</span> <span class="number">1</span>, <span class="number">3</span>),
+        };
+        <span class="kw">let</span> <span class="ident">text_width</span> <span class="op">=</span> <span class="ident">saturating_sub</span>(<span class="ident">raw_window_size</span>.<span class="ident">width</span>, <span class="ident">line_number_chars</span>);
+        (<span class="ident">line_number_chars</span>, <span class="ident">text_width</span>)
     }
 
     <span class="kw">fn</span> <span class="ident">draw_document</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">term</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Terminal</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
@@ -621,7 +721,7 @@
             <span class="kw">let</span> <span class="ident">text_width</span> <span class="op">=</span> <span class="self">self</span>.<span class="ident">text_width</span> <span class="kw">as</span> <span class="ident">usize</span>;
 
             <span class="ident">term</span>.<span class="ident">q</span>(<span class="ident">Hide</span>)<span class="question-mark">?</span>.<span class="ident">save_cursor</span>();
-            <span class="self">self</span>.<span class="ident">q_clear</span>(<span class="ident">ClearType::All</span>, <span class="number">0</span>, <span class="ident">term</span>)<span class="question-mark">?</span>;
+            <span class="self">self</span>.<span class="ident">q_clear</span>(<span class="ident">ClearType::All</span>, <span class="ident">term</span>)<span class="question-mark">?</span>;
             <span class="ident">doc</span>.<span class="ident">iter_from</span>(<span class="self">self</span>.<span class="ident">first_line</span>).<span class="ident">unwrap</span>() <span class="comment">// we assert that first_line is a valid index</span>
                .<span class="ident">flat_map</span>(<span class="op">|</span><span class="ident">l</span><span class="op">|</span> {
                     <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">graphemes</span> <span class="op">=</span> <span class="ident">l</span>.<span class="ident">text</span>.<span class="ident">as_str</span>().<span class="ident">grapheme_indices</span>(<span class="bool-val">true</span>);
@@ -630,7 +730,7 @@
                         <span class="comment">// note that we&#39;ve already consumed the first character of the next chunk</span>
                         <span class="comment">// we need to get the (width + 1)th character from the start of the chunk,</span>
                         <span class="comment">// width + 1 - 1 = width</span>
-                        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">idx</span>, <span class="kw">_</span>)) <span class="op">=</span> <span class="ident">graphemes</span>.<span class="ident">nth</span>(<span class="self">self</span>.<span class="ident">raw_window_size</span>.<span class="ident">width</span>.<span class="ident">into</span>()) {
+                        <span class="kw">while</span> <span class="kw">let</span> <span class="prelude-val">Some</span>((<span class="ident">idx</span>, <span class="kw">_</span>)) <span class="op">=</span> <span class="ident">graphemes</span>.<span class="ident">nth</span>(<span class="self">self</span>.<span class="ident">raw_window_size</span>.<span class="ident">width</span>.<span class="ident">into</span>()) { <span class="comment">// TODO: check logic here!</span>
                             <span class="ident">indices</span>.<span class="ident">push</span>(<span class="ident">idx</span>);
                         }
                         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">pieces</span>: <span class="ident">Vec</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="ident">str</span><span class="op">&gt;</span> <span class="op">=</span> <span class="ident">Vec::new</span>();
@@ -644,35 +744,15 @@
                     };
                     <span class="ident">output</span>
                 })
-               .<span class="ident">chain</span>(<span class="ident">once</span>(<span class="ident">LineType::Tilde</span>).<span class="ident">cycle</span>())           
+               .<span class="ident">chain</span>(<span class="ident">repeat</span>(<span class="ident">LineType::Tilde</span>))
                .<span class="ident">enumerate</span>()
                .<span class="ident">take</span>(<span class="self">self</span>.<span class="ident">raw_window_size</span>.<span class="ident">height</span>.<span class="ident">into</span>())
                .<span class="ident">try_for_each</span>(<span class="op">|</span>(<span class="ident">terminal_line</span>, <span class="ident">lt</span>)<span class="op">|</span> { 
                     <span class="ident">term</span>.<span class="ident">cursor_to</span>(<span class="number">0</span>, <span class="ident">terminal_line</span> <span class="kw">as</span> <span class="ident">u16</span>).<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>;
                     <span class="kw">if</span> <span class="kw">let</span> <span class="ident">LineType::Content</span>(<span class="ident">text</span>) <span class="op">=</span> <span class="ident">lt</span> {
-                        <span class="kw">match</span> <span class="self">self</span>.<span class="ident">opt</span>.<span class="ident">line_numbering</span> {
-                            <span class="ident">LineNumbers::Off</span> =&gt; {
-                                <span class="ident">term</span>.<span class="ident">q</span>(<span class="ident">Print</span>(<span class="ident">text</span>))
-                            },
-                            <span class="ident">LineNumbers::On</span> =&gt; {
-                                <span class="kw">let</span> <span class="ident">line_number</span>: <span class="ident">String</span> <span class="op">=</span> <span class="ident">once</span>(<span class="string">&#39; &#39;</span>).<span class="ident">chain</span>((<span class="ident">terminal_line</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">first_line</span> <span class="op">+</span> <span class="number">1</span>).<span class="ident">to_string</span>().<span class="ident">chars</span>().<span class="ident">rev</span>())
-                                    .<span class="ident">chain</span>(<span class="ident">repeat</span>(<span class="string">&#39; &#39;</span>)).<span class="ident">take</span>(<span class="ident">line_number_chars</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>().<span class="ident">chars</span>().<span class="ident">rev</span>().<span class="ident">collect</span>();
-                                <span class="ident">term</span>.<span class="ident">q</span>(<span class="ident">Print</span>(<span class="ident">line_number</span>.<span class="ident">dark_yellow</span>()))<span class="question-mark">?</span>
-                                    .<span class="ident">q</span>(<span class="ident">Print</span>(<span class="ident">text</span>))
-                            },
-                            <span class="ident">LineNumbers::Relative</span> =&gt; {
-                                <span class="kw">let</span> <span class="ident">line_number</span>: <span class="ident">String</span> <span class="op">=</span> <span class="kw">if</span> <span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span> <span class="op">==</span> <span class="self">self</span>.<span class="ident">first_line</span> <span class="op">+</span> <span class="ident">terminal_line</span> {
-                                    (<span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span> <span class="op">+</span> <span class="number">1</span>).<span class="ident">to_string</span>().<span class="ident">chars</span>().<span class="ident">chain</span>(<span class="ident">repeat</span>(<span class="string">&#39; &#39;</span>)).<span class="ident">take</span>(<span class="ident">line_number_chars</span>).<span class="ident">collect</span>()
-                                } <span class="kw">else</span> {
-                                    <span class="ident">once</span>(<span class="string">&#39; &#39;</span>).<span class="ident">chain</span>(<span class="ident">abs_diff</span>(<span class="self">self</span>.<span class="ident">pos_in_doc</span>.<span class="ident">y</span>, <span class="ident">terminal_line</span> <span class="op">+</span> <span class="self">self</span>.<span class="ident">first_line</span>).<span class="ident">to_string</span>().<span class="ident">chars</span>().<span class="ident">rev</span>())
-                                        .<span class="ident">chain</span>(<span class="ident">repeat</span>(<span class="string">&#39; &#39;</span>)).<span class="ident">take</span>(<span class="ident">line_number_chars</span>).<span class="ident">collect</span>::<span class="op">&lt;</span><span class="ident">String</span><span class="op">&gt;</span>().<span class="ident">chars</span>().<span class="ident">rev</span>().<span class="ident">collect</span>()
-                                };
-                                <span class="ident">term</span>.<span class="ident">q</span>(<span class="ident">Print</span>(<span class="ident">line_number</span>.<span class="ident">dark_yellow</span>()))<span class="question-mark">?</span>
-                                    .<span class="ident">q</span>(<span class="ident">Print</span>(<span class="ident">text</span>))
-                            }
-                        }
+                        <span class="ident">term</span>.<span class="ident">q</span>(<span class="ident">Print</span>(<span class="self">self</span>.<span class="ident">line_number</span>(<span class="ident">terminal_line</span> <span class="kw">as</span> <span class="ident">u16</span>)))<span class="question-mark">?</span>.<span class="ident">q</span>(<span class="ident">Print</span>(<span class="ident">text</span>))
                     } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="ident">LineType::Continued</span>(<span class="ident">text</span>) <span class="op">=</span> <span class="ident">lt</span> {
-                        <span class="ident">term</span>.<span class="ident">q</span>(<span class="ident">Print</span>(<span class="ident">text</span>))
+                        <span class="ident">term</span>.<span class="ident">q</span>(<span class="ident">Print</span>(<span class="ident">text</span>)) <span class="comment">// TODO: check logic here</span>
                     } <span class="kw">else</span> {
                         <span class="ident">term</span>.<span class="ident">q</span>(<span class="ident">Print</span>(<span class="string">&quot;~&quot;</span>.<span class="ident">blue</span>()))
                     }.<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> ())
@@ -714,7 +794,7 @@
         };
         <span class="kw">let</span> <span class="kw-2">mut</span> <span class="ident">message_line</span>: <span class="ident">u16</span> <span class="op">=</span> <span class="number">0</span>;
         <span class="ident">term</span>.<span class="ident">q</span>(<span class="ident">Hide</span>)<span class="question-mark">?</span>.<span class="ident">save_cursor</span>();
-        <span class="self">self</span>.<span class="ident">q_clear</span>(<span class="ident">ClearType::All</span>, <span class="number">0</span>, <span class="ident">term</span>)<span class="question-mark">?</span>;
+        <span class="self">self</span>.<span class="ident">q_clear</span>(<span class="ident">ClearType::All</span>, <span class="ident">term</span>)<span class="question-mark">?</span>;
         <span class="kw">for</span> <span class="ident">i</span> <span class="kw">in</span> <span class="number">0</span>..<span class="self">self</span>.<span class="ident">raw_window_size</span>.<span class="ident">height</span> {
             <span class="kw">let</span> <span class="ident">Position</span>{ <span class="ident">x</span>, <span class="ident">y</span> } <span class="op">=</span> <span class="self">self</span>.<span class="ident">raw_to_term</span>(<span class="number">0</span>, <span class="ident">i</span>);
             <span class="ident">term</span>.<span class="ident">cursor_to</span>(<span class="ident">x</span>, <span class="ident">y</span>).<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>;
@@ -728,6 +808,10 @@
         <span class="ident">term</span>.<span class="ident">restore_cursor</span>();
         <span class="ident">term</span>.<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>.<span class="ident">q</span>(<span class="ident">Show</span>)<span class="question-mark">?</span>.<span class="ident">flush</span>()
     }
+}
+
+<span class="kw">fn</span> <span class="ident">div_ceil</span>(<span class="ident">quotient</span>: <span class="ident">usize</span>, <span class="ident">divisor</span>: <span class="ident">u16</span>) -&gt; <span class="ident">usize</span> {
+    <span class="kw">if</span> <span class="ident">quotient</span> <span class="op">==</span> <span class="number">0</span> { <span class="number">1</span> } <span class="kw">else</span> { (<span class="ident">quotient</span> <span class="kw">as</span> <span class="ident">f64</span> <span class="op">/</span> <span class="ident">divisor</span> <span class="kw">as</span> <span class="ident">f64</span>).<span class="ident">ceil</span>() <span class="kw">as</span> <span class="ident">usize</span> }
 }
 
 <span class="kw">fn</span> <span class="ident">abs_diff</span>(<span class="ident">x</span>: <span class="ident">usize</span>, <span class="ident">y</span>: <span class="ident">usize</span>) -&gt; <span class="ident">usize</span> {
