@@ -196,6 +196,27 @@ impl Window {
         Position{ x: x + self.raw_window_pos.x, y: y + self.raw_window_pos.y }
     }
 
+    fn to_window_text(&self) -> Option<Position> {
+        if self.pos_in_doc.y < self.first_line { return None; }
+        let lines_from_line = div_ceil(self.pos_in_doc.x, self.text_width);
+        let x = (self.pos_in_doc.x % self.text_width as usize) as u16;
+        let mut y = 0;
+        for line in self.first_line..self.pos_in_doc.y {
+            y += self.line_properties[line].lines
+        }
+        y += lines_from_line - 1;
+        if y >= self.raw_window_size.height.into() || x >= self.text_width { None }
+        else { Some(Position{ x, y: y as u16 }) } // y guaranteed to fit into u16 since < height, which is u16
+    }
+
+    fn q_move(&self, term: &mut Terminal) -> Result<()> {
+        if let Some(Position{ x: x_wt, y: y_wt }) = self.to_window_text() {
+            let Position{ x, y } = self.to_term(x_wt, y_wt); 
+            term.cursor_to(x, y).q_move_cursor()?;
+        }
+        Ok(())
+    }
+
     fn setup_line_properties(doc: &Document, text_width: u16) -> Vec<WindowLineProperties> {
         let mut line_properties = Vec::with_capacity(doc.num_lines()); 
         for line in doc {
