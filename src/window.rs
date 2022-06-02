@@ -148,7 +148,7 @@ impl Window {
             term.cursor_left_by((self.target_x - self.pos_in_doc.x).try_into().unwrap()); // line wrapping change needed here too
             if self.pos_in_doc.y + 1 == self.first_line {
                 // only move cursor in x, TODO: need to re-render (cursor moves one line up, window
-                // moves onen line down)
+                // moves one line down)
             } else {
                 term.cursor_up_by(1);
             }
@@ -394,7 +394,7 @@ impl Window {
 }
 
 fn div_ceil(quotient: usize, divisor: u16) -> usize {
-    (quotient as f64 / divisor as f64).ceil() as usize
+    if quotient == 0 { 1 } else { (quotient as f64 / divisor as f64).ceil() as usize }
 }
 
 fn abs_diff(x: usize, y: usize) -> usize {
