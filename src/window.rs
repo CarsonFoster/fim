@@ -263,7 +263,7 @@ impl Window {
                                                abs_diff(pos_in_doc.y, first_line),
                                                abs_diff(pos_in_doc.y, first_line + raw_window_size.height as usize - 1)))) + 1,
         };
-        let text_width = saturating_sub(raw_window_size.height, line_number_chars);
+        let text_width = saturating_sub(raw_window_size.width, line_number_chars);
         (line_number_chars, text_width)
     }
 
