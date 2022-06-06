@@ -10,6 +10,7 @@ clap = { version = "3.1.18", features = ["derive"] }
 crossterm = "0.23.1"
 lazy_static = "1.4.0"
 unicode-segmentation = "1.7.1"
+try_from_string = { path = "./try_from_string" }
 
 [[bin]]
 name = "fim"
