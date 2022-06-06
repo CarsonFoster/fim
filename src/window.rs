@@ -100,7 +100,7 @@ impl Window {
 
     /// Update the window's options.
     pub fn update_options(&mut self, opt: &Options) {
-        self.opt = *opt;
+        self.opt = opt.clone();
     }
 
     /// Render this window's contents to the terminal screen.

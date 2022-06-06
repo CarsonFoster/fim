@@ -3,15 +3,17 @@
 //! There are three different types of options: boolean, numeric, and string. These can be set by
 //! the user through configuration files or in-fim commands (eventually, not right now).
 
-#[derive(Copy, Clone)]
 /// Struct that represent the collection of internal configuration options.
+#[derive(Clone)]
 pub struct Options {
     pub line_numbering: LineNumbers,
+    pub layout: LayoutType,
 }
 
+/// The defaults are relative line numbering and the QWERTY layout.
 impl Default for Options {
     fn default() -> Self {
-        Options{ line_numbering: LineNumbers::Relative }
+        Options{ line_numbering: LineNumbers::Relative, layout: LayoutType::Qwerty }
     }
 }
 
@@ -23,6 +25,8 @@ pub struct OptionFactory {
 
 impl OptionFactory {
     /// Create a new [`OptionFactory`].
+    ///
+    /// The `Options` object begins with its default value.
     pub fn new() -> Self {
         OptionFactory{ opt: Options::default() }
     }
@@ -37,6 +41,12 @@ impl OptionFactory {
         self.opt.line_numbering = numbering; 
         self
     }
+
+    /// Set the `layout` field of the `Options` object.
+    pub fn set_layout(&mut self, layout: LayoutType) -> &mut Self {
+        self.opt.layout = layout;
+        self
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -45,4 +55,18 @@ pub enum LineNumbers {
     Off,
     On,
     Relative
+}
+
+/// Enum that represents different keyboard layouts.
+/// 
+/// There are three built-in layouts: QWERTY, Dvorak, and Colemak. Users can also define their own
+/// layouts, providing a string to identify it. 
+#[derive(Clone)]
+pub enum LayoutType {
+    Qwerty,
+    Dvorak,
+    Colemak,
+    Custom {
+        name: String
+    }
 }
