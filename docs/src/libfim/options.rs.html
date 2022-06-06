@@ -70,6 +70,11 @@
 <span id="70">70</span>
 <span id="71">71</span>
 <span id="72">72</span>
+<span id="73">73</span>
+<span id="74">74</span>
+<span id="75">75</span>
+<span id="76">76</span>
+<span id="77">77</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module for handling internal configuration options.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! There are three different types of options: boolean, numeric, and string. These can be set by</span>
@@ -106,6 +111,11 @@
     <span class="doccomment">/// Consume the `OptionFactory` and return the created `Options` object.</span>
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">options</span>(<span class="self">self</span>) -&gt; <span class="ident">Options</span> {
         <span class="self">self</span>.<span class="ident">opt</span>
+    }
+
+    <span class="doccomment">/// Return a reference to the `Options` object in the process of being created.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">peek</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Options</span> {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">opt</span>
     }
 
     <span class="doccomment">/// Set the `line_numbering` field of the `Options` object.</span>

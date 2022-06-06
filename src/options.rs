@@ -36,6 +36,11 @@ impl OptionFactory {
         self.opt
     }
 
+    /// Return a reference to the `Options` object in the process of being created.
+    pub fn peek(&self) -> &Options {
+        &self.opt
+    }
+
     /// Set the `line_numbering` field of the `Options` object.
     pub fn set_line_numbering(&mut self, numbering: LineNumbers) -> &mut Self {
         self.opt.line_numbering = numbering; 
