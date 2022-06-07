@@ -10,7 +10,9 @@ clap = { version = "3.1.18", features = ["derive"] }
 crossterm = "0.23.1"
 lazy_static = "1.4.0"
 unicode-segmentation = "1.7.1"
-try_from_string = { path = "./try_from_string" }
+option_string = { path = "./option_string" }
+option_bool = { path = "./option_bool" }
+option_number = { path = "./option_number" }
 
 [[bin]]
 name = "fim"
