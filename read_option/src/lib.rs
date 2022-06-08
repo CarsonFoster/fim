@@ -49,6 +49,10 @@ fn gen_read_option(fields: &Punctuated<Field, Comma>) -> TokenStream {
     }
 
     let gen = quote! {
+        /// Read a single option/value pair from the passed string slice.
+        ///
+        /// Returns `true` if a pair was read and inputted into the `OptionFactory`, and `false`
+        /// otherwise.
         pub fn read_option(factory: &mut OptionFactory, s: &str) -> bool {
             #(#asserts)*
             if let Some(s) = s.strip_prefix("set ") {

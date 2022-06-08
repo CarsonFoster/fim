@@ -408,9 +408,13 @@
 <span id="408">408</span>
 <span id="409">409</span>
 <span id="410">410</span>
+<span id="411">411</span>
+<span id="412">412</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module for handling configuration files that map keyboard presses to contexts.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Config Format</span>
+<span class="doccomment">//!</span>
+<span class="doccomment">//! ## `bind` Lines</span>
 <span class="doccomment">//! A `bind` line consists of four parts: the bind term, the key event term, the new</span>
 <span class="doccomment">//! context term, and the rest of the line (which represents optional arguments).</span>
 <span class="doccomment">//! - the `bind` term is formed like this: `bind(&lt;context&gt;)`, where `&lt;context&gt;` represents the name</span>
@@ -421,11 +425,11 @@
 <span class="doccomment">//! you wanted to enter command mode, the new context term would be `CommandMode`.</span>
 <span class="doccomment">//! - the optional arguments: no required form overall, specific to each context.</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! # Key Event Format</span>
+<span class="doccomment">//! ### Key Event Format</span>
 <span class="doccomment">//! A key event is either a literal key character (e.g. `A`, `6`, or `/`), one of the following</span>
 <span class="doccomment">//! representations of special characters, or a modifier string.</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! ## Special Characters</span>
+<span class="doccomment">//! ### Special Characters</span>
 <span class="doccomment">//! - `&lt;Tab&gt;`: the tab key</span>
 <span class="doccomment">//! - `&lt;CR&gt;` or `&lt;Enter&gt;`: the enter key</span>
 <span class="doccomment">//! - `&lt;F1&gt;` ... `&lt;F12&gt;`: a function key</span>
@@ -440,12 +444,12 @@
 <span class="doccomment">//! - `&lt;BS&gt;`: the backspace key</span>
 <span class="doccomment">//! - `&lt;Esc&gt;`: the escape key</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! ## Modifier Strings</span>
+<span class="doccomment">//! ### Modifier Strings</span>
 <span class="doccomment">//! A modifier string consists of an opening angled bracket, the modifiers (i.e. control, alt,</span>
 <span class="doccomment">//! shift), the key press, and a closing angled bracket. The inner key press can be a literal key</span>
 <span class="doccomment">//! character or a special character (without the surrounding angled brackets).</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! ### Allowed Modifiers</span>
+<span class="doccomment">//! #### Allowed Modifiers</span>
 <span class="doccomment">//! - `C-`: Control is pressed</span>
 <span class="doccomment">//! - `A-`: Alt is pressed</span>
 <span class="doccomment">//! - `S-`: Shift is pressed</span>
@@ -454,7 +458,7 @@
 <span class="doccomment">//! - `S-A-`: Shift and Alt are pressed</span>
 <span class="doccomment">//! - `C-S-A-`: Control, Shift, and Alt are all pressed</span>
 <span class="doccomment">//!</span>
-<span class="doccomment">//! ### Examples</span>
+<span class="doccomment">//! #### Examples</span>
 <span class="doccomment">//! - `&lt;C-S&gt;`: Control + S</span>
 <span class="doccomment">//! - `&lt;C-C&gt;`: Control + C</span>
 <span class="doccomment">//! - `&lt;A-Tab&gt;`: Alt + Tab</span>
