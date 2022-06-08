@@ -105,6 +105,7 @@ dependencies = [
  "option_bool",
  "option_number",
  "option_string",
+ "read_option",
  "unicode-segmentation",
 ]
 
@@ -293,6 +294,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a1feb54ed693b93a84e14094943b84b7c4eae204c512b7ccb95ab0c66d278ad1"
 dependencies = [
  "proc-macro2",
+]
+
+[[package]]
+name = "read_option"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn",
 ]
 
 [[package]]

@@ -3,8 +3,11 @@
 //! There are three different types of options: boolean, numeric, and string. These can be set by
 //! the user through configuration files or in-fim commands (eventually, not right now).
 
+use read_option::ReadOption;
+use option_string::OptionString;
+
 /// Struct that represent the collection of internal configuration options.
-#[derive(Clone)]
+#[derive(Clone, ReadOption)]
 pub struct Options {
     pub line_numbering: LineNumbers,
     pub layout: LayoutType,
@@ -54,7 +57,7 @@ impl OptionFactory {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, OptionString)]
 /// Enum that represents the different types of line numbers fim can use.
 pub enum LineNumbers {
     Off,
@@ -73,5 +76,17 @@ pub enum LayoutType {
     Colemak,
     Custom {
         name: String
+    }
+}
+
+impl std::str::FromStr for LayoutType {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "Qwerty" => Self::Qwerty,
+            "Dvorak" => Self::Dvorak,
+            "Colemak" => Self::Colemak,
+            _ => Self::Custom{ name: s.to_string() }
+        })
     }
 }

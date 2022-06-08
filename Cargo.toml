@@ -13,6 +13,7 @@ unicode-segmentation = "1.7.1"
 option_string = { path = "./option_string" }
 option_bool = { path = "./option_bool" }
 option_number = { path = "./option_number" }
+read_option = { path = "./read_option" }
 
 [[bin]]
 name = "fim"
