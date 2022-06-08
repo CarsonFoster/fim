@@ -98,7 +98,7 @@ pub enum LayoutType {
 }
 
 impl std::str::FromStr for LayoutType {
-    type Err = ();
+    type Err = std::convert::Infallible;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         Ok(match s {
             "Qwerty" => Self::Qwerty,
