@@ -18,7 +18,7 @@ fn impl_option_string(ast: &DeriveInput) -> TokenStream {
             }
             let ident = &variant.ident;
             matches.push(quote! {
-                stringify!(#ident) => ::std::result::Result::Ok(<#enum_name>::#variant), 
+                stringify!(#ident) => ::std::result::Result::Ok(<#enum_name>::#ident), 
             });
         }
 
