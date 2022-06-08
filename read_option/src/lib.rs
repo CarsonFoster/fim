@@ -81,7 +81,7 @@ fn gen_read_option(fields: &Punctuated<Field, Comma>) -> TokenStream {
         /// Read a single option/value pair from the passed string slice.
         ///
         /// Returns `true` if a pair was read and inputted into the `OptionFactory`, and `false`
-        /// otherwise.
+        /// otherwise. See the [Config module-level documentation](crate::config) for details on the parsing.
         pub fn read_option(factory: &mut OptionFactory, s: &str) -> bool {
             #(#asserts)*
             if let Some((opt, val)) = extract_opt_val(s) {
@@ -98,7 +98,8 @@ fn gen_read_option(fields: &Punctuated<Field, Comma>) -> TokenStream {
         /// Read a single option/value pair from the passed string slice, and set the associated
         /// value in the passed `Options` object.
         ///
-        /// Returns `true` if a pair was read and set in the `Options`, and `false` otherwise.
+        /// Returns `true` if a pair was read and set in the `Options`, and `false` otherwise. See
+        /// the [Config module-level documentation](crate::config) for details on the parsing.
         pub fn set_option(opt: &mut Options, s: &str) -> bool {
             #(#asserts)*
             if let Some((opt_name, val)) = extract_opt_val(s) {

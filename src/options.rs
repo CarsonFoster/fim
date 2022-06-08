@@ -9,7 +9,9 @@ use option_string::OptionString;
 /// Struct that represent the collection of internal configuration options.
 #[derive(Clone, ReadOption)]
 pub struct Options {
+    /// Type of line numbering to use; string (enum) option
     pub line_numbering: LineNumbers,
+    /// Keyboard layout to use; string option
     pub layout: LayoutType,
 }
 
@@ -59,9 +61,19 @@ impl OptionFactory {
 
 #[derive(Copy, Clone, OptionString)]
 /// Enum that represents the different types of line numbers fim can use.
+///
+/// String (enum) option: possible values are `Off`, `On`, and `Relative`.
 pub enum LineNumbers {
+    /// No line numbering.
     Off,
+    /// Absolute line numbering.
+    ///
+    /// Each line is labeled with its line number.
     On,
+    /// Relative line numbering.
+    ///
+    /// The line the cursor is on is labeled with its line number, while all other lines are
+    /// labeled with how many lines away they are from the current line.
     Relative
 }
 
@@ -69,11 +81,17 @@ pub enum LineNumbers {
 /// 
 /// There are three built-in layouts: QWERTY, Dvorak, and Colemak. Users can also define their own
 /// layouts, providing a string to identify it. 
+/// String option: possible values are `Qwerty`, `Dvorak`, `Colemak`, or any other string (for a
+/// custom layout).
 #[derive(Clone)]
 pub enum LayoutType {
+    /// The standard keyboard layout.
     Qwerty,
+    /// The [Dvorak](https://en.wikipedia.org/wiki/Dvorak_keyboard_layout) keyboard layout.
     Dvorak,
+    /// The [Colemak](https://en.wikipedia.org/wiki/Colemak) keyboard layout.
     Colemak,
+    /// A user-defined keyboard layout.
     Custom {
         name: String
     }
