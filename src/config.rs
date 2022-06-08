@@ -1,6 +1,8 @@
 //! A module for handling configuration files that map keyboard presses to contexts.
 //!
 //! # Config Format
+//!
+//! ## `bind` Lines
 //! A `bind` line consists of four parts: the bind term, the key event term, the new
 //! context term, and the rest of the line (which represents optional arguments).
 //! - the `bind` term is formed like this: `bind(<context>)`, where `<context>` represents the name
@@ -11,11 +13,11 @@
 //! you wanted to enter command mode, the new context term would be `CommandMode`.
 //! - the optional arguments: no required form overall, specific to each context.
 //!
-//! # Key Event Format
+//! ### Key Event Format
 //! A key event is either a literal key character (e.g. `A`, `6`, or `/`), one of the following
 //! representations of special characters, or a modifier string.
 //!
-//! ## Special Characters
+//! ### Special Characters
 //! - `<Tab>`: the tab key
 //! - `<CR>` or `<Enter>`: the enter key
 //! - `<F1>` ... `<F12>`: a function key
@@ -30,12 +32,12 @@
 //! - `<BS>`: the backspace key
 //! - `<Esc>`: the escape key
 //!
-//! ## Modifier Strings
+//! ### Modifier Strings
 //! A modifier string consists of an opening angled bracket, the modifiers (i.e. control, alt,
 //! shift), the key press, and a closing angled bracket. The inner key press can be a literal key
 //! character or a special character (without the surrounding angled brackets).
 //!
-//! ### Allowed Modifiers
+//! #### Allowed Modifiers
 //! - `C-`: Control is pressed
 //! - `A-`: Alt is pressed
 //! - `S-`: Shift is pressed
@@ -44,7 +46,7 @@
 //! - `S-A-`: Shift and Alt are pressed
 //! - `C-S-A-`: Control, Shift, and Alt are all pressed
 //!
-//! ### Examples
+//! #### Examples
 //! - `<C-S>`: Control + S
 //! - `<C-C>`: Control + C
 //! - `<A-Tab>`: Alt + Tab
