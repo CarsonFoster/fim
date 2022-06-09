@@ -5,8 +5,7 @@
 //! (vimscript or its analogue won't be included for a long time, sorry)
 
 pub use libfim::{config, context, document, editor, layout, terminal, window};
-use libfim::config::keybinds::Config;
-use libfim::config::options::Options;
+use libfim::config::Config;
 use libfim::editor::Editor;
 use clap::Parser;
 use std::path::PathBuf;
@@ -28,10 +27,9 @@ struct Args {
 #[doc(hidden)]
 fn main() {
     let mut args = Args::parse();
-    let opt = Options::default(); // TODO: options
     let config = if let Some(config) = args.config_file {
         let filename = config.as_os_str().to_string_lossy().to_string();
-        let result = Config::from_file(config);
+        let result = Config::new(config);
         if let Err(e) = result {
             println!("[-] Failed to parse configuration file {}: {}", filename, e);
             std::process::exit(1);
@@ -39,9 +37,9 @@ fn main() {
         Some(result.unwrap())
     } else { None };
     let fim = if let Some(filename) = args.file.take() {
-        Editor::new(filename, opt, config)
+        Editor::new(filename, config)
     } else {
-        Editor::default(opt, config)
+        Editor::default(config)
     };
     match fim {
         Ok(mut fim) => {
