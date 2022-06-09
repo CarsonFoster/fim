@@ -1,8 +1,9 @@
 #[macro_use]
 extern crate lazy_static;
 
-pub mod context;
 pub mod config;
+pub mod config_error;
+pub mod context;
 pub mod document;
 pub mod editor;
 pub mod layout;
