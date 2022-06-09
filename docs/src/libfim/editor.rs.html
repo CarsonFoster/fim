@@ -191,9 +191,9 @@
 <span id="191">191</span>
 <span id="192">192</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module that contains the main editor logic.</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::config::Config</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::config::keybinds::Config</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::config::options::Options</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::context</span>::<span class="kw-2">*</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::options::Options</span>;
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::terminal</span>::{<span class="ident">Position</span>, <span class="ident">Terminal</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::window::Window</span>;
 <span class="kw">use</span> <span class="ident">crossterm</span>::{

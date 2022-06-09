@@ -419,8 +419,8 @@
 </pre><pre class="rust"><code><span class="doccomment">//! A module for handling fim&#39;s editor windows.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! A window has a single active [`Document`] and can be split vertically or horizontally.</span>
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::config::options</span>::{<span class="ident">LineNumbers</span>, <span class="ident">Options</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::document::Document</span>;
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::options</span>::{<span class="ident">LineNumbers</span>, <span class="ident">Options</span>};
 <span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::terminal</span>::{<span class="ident">Position</span>, <span class="ident">Size</span>, <span class="ident">Terminal</span>};
 <span class="kw">use</span> <span class="ident">crossterm</span>::{
     <span class="prelude-ty">Result</span>,

@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Config","Struct that represents key press to context mapping."]]});
+initSidebarItems({"mod":[["config_error","A module that provides the error types for configuration parsing."],["keybinds","A module for handling how keys are assigned to [`Context`]s."],["options","A module for handling internal configuration options."]]});

@@ -3,19 +3,19 @@
 //! # Config Format
 //!
 //! ## Option Lines
-//! An option line sets the value of an option (one of the fields of an [`Options`](crate::options::Options)
+//! An option line sets the value of an option (one of the fields of an [`Options`](self::options::Options)
 //! object). The syntax of an option line is as follows: `set`, a mandatory space, the name of the option,
 //! optional whitespace, `=`, optional whitespace, and the value of the option. In short, an option
 //! line is composed like this: `set <OPTION_NAME> = <OPTION_VALUE>`.
 //!
-//! The name of the option is the name of the corresponding field in the [`Options`](crate::options::Options)
+//! The name of the option is the name of the corresponding field in the [`Options`](self::options::Options)
 //! object. For example, since there is a `line_numbering` field in `Options`, `line_numbering` is the name of
 //! the option.
 //!
 //! The value of the option depends on the type of option: string, numeric, or boolean. You can
 //! find the type of an option by looking at the documentation of the fields of
-//! [`Options`](crate::options::Options) or by looking at the documentation for the associated
-//! types of options (e.g. [`LineNumbers`](crate::options::LineNumbers). A
+//! [`Options`](self::options::Options) or by looking at the documentation for the associated
+//! types of options (e.g. [`LineNumbers`](self::options::LineNumbers). A
 //! boolean option's value is either `true` or `false`. A numeric option's value is a 32-bit,
 //! signed, decimal integer. A string option's value is a string (but note that leading and trailing
 //! whitespace is trimmed from the value). Enums that are declared string options have a
@@ -24,10 +24,10 @@
 //! 
 //! ### Examples
 //! - `set line_numbering = Relative\r\n`: sets the `line_numbering` field in an
-//! [`Options`](crate::options::Options) object
-//! to be [`LineNumbers::Relative`](crate::options::LineNumbers::Relative).
-//! - `set layout=Dvorak`: sets the `layout` field in an [`Options`](crate::options::Options) object to be
-//! [`LayoutType::Dvorak`](crate::options::LayoutType::Dvorak).
+//! [`Options`](self::options::Options) object
+//! to be [`LineNumbers::Relative`](self::options::LineNumbers::Relative).
+//! - `set layout=Dvorak`: sets the `layout` field in an [`Options`](self::options::Options) object to be
+//! [`LayoutType::Dvorak`](self::options::LayoutType::Dvorak).
 //!
 //! ## `bind` Lines
 //! A `bind` line consists of four parts: the bind term, the key event term, the new

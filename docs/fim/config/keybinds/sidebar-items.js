@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Config","Struct that represents key press to context mapping."]]});

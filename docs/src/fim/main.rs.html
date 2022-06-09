@@ -63,10 +63,10 @@
 <span class="doccomment">//!</span>
 <span class="doccomment">//! (vimscript or its analogue won&#39;t be included for a long time, sorry)</span>
 
-<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">libfim</span>::{<span class="ident">config</span>, <span class="ident">config_error</span>, <span class="ident">context</span>, <span class="ident">document</span>, <span class="ident">editor</span>, <span class="ident">layout</span>, <span class="ident">options</span>, <span class="ident">terminal</span>, <span class="ident">window</span>};
-<span class="kw">use</span> <span class="ident">libfim::config::Config</span>;
+<span class="kw">pub</span> <span class="kw">use</span> <span class="ident">libfim</span>::{<span class="ident">config</span>, <span class="ident">context</span>, <span class="ident">document</span>, <span class="ident">editor</span>, <span class="ident">layout</span>, <span class="ident">terminal</span>, <span class="ident">window</span>};
+<span class="kw">use</span> <span class="ident">libfim::config::keybinds::Config</span>;
+<span class="kw">use</span> <span class="ident">libfim::config::options::Options</span>;
 <span class="kw">use</span> <span class="ident">libfim::editor::Editor</span>;
-<span class="kw">use</span> <span class="ident">libfim::options::Options</span>;
 <span class="kw">use</span> <span class="ident">clap::Parser</span>;
 <span class="kw">use</span> <span class="ident">std::path::PathBuf</span>;
 
