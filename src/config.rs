@@ -87,36 +87,56 @@ use std::fs::read_to_string;
 use std::collections::HashMap;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
+#[derive(Debug, PartialEq)]
+/// Enum for containing errors that might occur in parsing bind lines.
+pub enum BindParseError {
+    /// User wants to map a key to a non-existent context.
+    NoMatchingContext{ context: String }, 
+    /// Not enough terms in a `bind` line.
+    NotEnoughTerms,
+    /// The `bind` term isn't formed correctly.
+    MalformedBindTerm,
+    /// Unexpected unicode character in the `bind` term.
+    UnicodeBoundaryErrorInBind,
+    /// The key event term isn't formed correctly.
+    MalformedKeyEventTerm,
+    /// Unexpected unicode character in the key event term.
+    UnicodeBoundaryErrorInKeyEvent,
+}
+
+#[doc(hidden)]
+impl BindParseError {
+    pub fn value(&self) -> String { 
+        match self {
+            BindParseError::NoMatchingContext{ context } => format!("no matching context {} found", context),
+            BindParseError::NotEnoughTerms => format!("not enough terms (expected at least 3)"),
+            BindParseError::MalformedBindTerm => format!("incorrect syntax in bind term"),
+            BindParseError::UnicodeBoundaryErrorInBind => format!("unexpected unicode character in bind term"),
+            BindParseError::MalformedKeyEventTerm => format!("incorrect syntax in key event term"),
+            BindParseError::UnicodeBoundaryErrorInKeyEvent => format!("unexpected unicode character in key event term"),
+        }
+    }
+}
+
 #[derive(Debug)]
-#[non_exhaustive]
 /// Enum for containing errors that might occur in parsing configurations.
 pub enum ConfigParseError {
-    /// User wants to map a key to a non-existent context.
-    NoMatchingContext{ context: String, line: u16 }, 
-    /// Not enough terms in a `bind` line.
-    NotEnoughTerms{ line: u16 },
-    /// The `bind` term isn't formed correctly.
-    MalformedBindTerm{ line: u16 },
-    /// Unexpected unicode character in the `bind` term.
-    UnicodeBoundaryErrorInBind{ line: u16 },
-    /// The key event term isn't formed correctly.
-    MalformedKeyEventTerm{ line: u16 },
-    /// Unexpected unicode character in the key event term.
-    UnicodeBoundaryErrorInKeyEvent{ line: u16 },
+    /// See [`BindParseError`].
+    BindParseError{ error: BindParseError, line: u16 },
     /// IO error (e.g. cannot open the config file)
     IOError{ error: std::io::Error },
 }
 
-#[doc(hidden)]
 impl ConfigParseError {
+    /// Create a `ConfigParseError::BindParseError` from the inner BindParseError.
+    pub fn bind(error: BindParseError, line: u16) -> Self {
+        ConfigParseError::BindParseError{ error, line }
+    }
+
+    #[doc(hidden)]
     pub fn value(&self) -> String {
         match self {
-            ConfigParseError::NoMatchingContext{ context, line } => format!("line {}: no matching context {} found", line, context),
-            ConfigParseError::NotEnoughTerms{ line } => format!("line {}: not enough terms (expected at least 3)", line),
-            ConfigParseError::MalformedBindTerm{ line } => format!("line {}: incorrect syntax in bind term", line),
-            ConfigParseError::UnicodeBoundaryErrorInBind{ line } => format!("line {}: unexpected unicode character in bind term", line),
-            ConfigParseError::MalformedKeyEventTerm{ line } => format!("line {}: incorrect syntax in key event term", line),
-            ConfigParseError::UnicodeBoundaryErrorInKeyEvent{ line } => format!("line {}: unexpected unicode character in key event term", line),
+            ConfigParseError::BindParseError{ error, line } => format!("error parsing bind statement on line {}: {}", line, error.value()),
             ConfigParseError::IOError{ error } => error.to_string(),
         }
     }
@@ -124,19 +144,9 @@ impl ConfigParseError {
 
 impl PartialEq for ConfigParseError {
     fn eq(&self, other: &Self) -> bool {
-       match (self, other) { 
-            (ConfigParseError::NoMatchingContext{ context, line }, ConfigParseError::NoMatchingContext{ context: other_context, line: other_line })
-				=> context == other_context && line == other_line,
-            (ConfigParseError::NotEnoughTerms{ line }, ConfigParseError::NotEnoughTerms{ line: other_line })
-                => line == other_line,
-            (ConfigParseError::MalformedBindTerm{ line }, ConfigParseError::MalformedBindTerm{ line: other_line })
-                => line == other_line,
-            (ConfigParseError::UnicodeBoundaryErrorInBind{ line }, ConfigParseError::UnicodeBoundaryErrorInBind{ line: other_line })
-                => line == other_line,
-            (ConfigParseError::MalformedKeyEventTerm{ line }, ConfigParseError::MalformedKeyEventTerm{ line: other_line })
-                => line == other_line,
-            (ConfigParseError::UnicodeBoundaryErrorInKeyEvent{ line }, ConfigParseError::UnicodeBoundaryErrorInKeyEvent{ line: other_line })
-                => line == other_line,
+        match (self, other) { 
+            (ConfigParseError::BindParseError{ error, line }, ConfigParseError::BindParseError{ error: other_error, line: other_line })
+                => line == other_line && error == other_error,
             (ConfigParseError::IOError{ error }, ConfigParseError::IOError{ error: other_error })
                 => error.kind() == other_error.kind(),
             _ => false
@@ -148,7 +158,7 @@ impl fmt::Display for ConfigParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             ConfigParseError::IOError{ error } => error.fmt(f),
-            _ => write!(f, "Error in parsing configuration: {}", self.value()),
+            _ => write!(f, "error in parsing configuration: {}", self.value()),
         }
     }
 }
@@ -331,7 +341,7 @@ impl Config {
         let no_modifiers = MAP.query(key_event);
         let key_event = if let Some(key) = no_modifiers { key } else {
             if key_event.get(0..1) != Some("<") || key_event.get(key_event.len() - 1..) != Some(">") {
-                return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no });
+                return Err(ConfigParseError::bind(BindParseError::MalformedKeyEventTerm, line_no));
             }
             let mut modifiers = KeyModifiers::empty();
             if let Some(key_event) = key_event.get(1..key_event.len() - 1) {
@@ -353,7 +363,7 @@ impl Config {
                     state = transitions[transition as usize][state as usize];
                     if state == State::Accept || state == State::Reject {
                         if key.len() == 8 {
-                            return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no });
+                            return Err(ConfigParseError::bind(BindParseError::MalformedKeyEventTerm, line_no));
                         }
                         key.push(ch); 
                     }
@@ -365,7 +375,7 @@ impl Config {
                     });
                 }
                 match state {
-                    State::Start | State::C_ | State::A_ | State::S_ => return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no }),
+                    State::Start | State::C_ | State::A_ | State::S_ => return Err(ConfigParseError::bind(BindParseError::MalformedKeyEventTerm, line_no)),
                     State::C => {
                         key.push('C');
                         modifiers.remove(KeyModifiers::CONTROL);
@@ -382,11 +392,11 @@ impl Config {
                 }
                 let code = match MAP.query_code(&key) {
                     Some(c) => c,
-                    None => return Err(ConfigParseError::MalformedKeyEventTerm{ line: line_no })
+                    None => return Err(ConfigParseError::bind(BindParseError::MalformedKeyEventTerm, line_no))
                 };
                 KeyEvent::new(code, modifiers)
             } else {
-                return Err(ConfigParseError::UnicodeBoundaryErrorInKeyEvent{ line: line_no });
+                return Err(ConfigParseError::bind(BindParseError::UnicodeBoundaryErrorInKeyEvent, line_no));
             }
         };
         Ok(key_event)
@@ -399,13 +409,13 @@ impl Config {
         let key_event = iter.next();
         let new_context = iter.next();
         if bind.is_none() || key_event.is_none() || new_context.is_none() {
-            return Err(ConfigParseError::NotEnoughTerms{ line: line_no });
+            return Err(ConfigParseError::bind(BindParseError::NotEnoughTerms, line_no));
         }
         let bind = bind.unwrap();
         let key_event = key_event.unwrap();
         let new_context = new_context.unwrap();
         if bind.len() < 6 || bind.get(0..5) != Some("bind(") || bind.get(bind.len() - 1..) != Some(")") {
-            return Err(ConfigParseError::MalformedBindTerm{ line: line_no });
+            return Err(ConfigParseError::bind(BindParseError::MalformedBindTerm, line_no));
         }
         if let Some(old_context) = bind.get(5..bind.len() - 1) {
             let key_event = Self::parse_key_event(key_event, line_no)?;
@@ -414,21 +424,21 @@ impl Config {
             if let Some(factory) = context(new_context, args) {
                 Ok((old_context.to_string(), key_event, factory))
             } else {
-                Err(ConfigParseError::NoMatchingContext{ context: new_context.to_string(), line: line_no })
+                Err(ConfigParseError::bind(BindParseError::NoMatchingContext{ context: new_context.to_string() }, line_no))
             }
         } else {
-            Err(ConfigParseError::UnicodeBoundaryErrorInBind{ line: line_no })
+            Err(ConfigParseError::bind(BindParseError::UnicodeBoundaryErrorInBind, line_no))
         }
     }
 }
 
 #[test]
 fn test_parse_line_key_event() {
-    assert_eq!(Config::parse_key_event("", 1).err(), Some(ConfigParseError::MalformedKeyEventTerm{ line: 1 }));
+    assert_eq!(Config::parse_key_event("", 1).err(), Some(ConfigParseError::bind(BindParseError::MalformedKeyEventTerm, 1)));
     assert_eq!(Config::parse_key_event("a", 1).unwrap(), KeyEvent::new(KeyCode::Char('A'), KeyModifiers::NONE));
     assert_eq!(Config::parse_key_event("B", 1).unwrap(), KeyEvent::new(KeyCode::Char('B'), KeyModifiers::NONE));
     assert_eq!(Config::parse_key_event("<Tab>", 1).unwrap(), KeyEvent::new(KeyCode::Tab, KeyModifiers::NONE));
-    assert_eq!(Config::parse_key_event("<tab>", 1).err(), Some(ConfigParseError::MalformedKeyEventTerm{ line: 1 }));
+    assert_eq!(Config::parse_key_event("<tab>", 1).err(), Some(ConfigParseError::bind(BindParseError::MalformedKeyEventTerm, 1)));
     assert_eq!(Config::parse_key_event("<C-C>", 1).unwrap(), KeyEvent::new(KeyCode::Char('C'), KeyModifiers::CONTROL));
     assert_eq!(Config::parse_key_event("<C-S-A>", 1).unwrap(), KeyEvent::new(KeyCode::Char('A'), KeyModifiers::CONTROL.union(KeyModifiers::SHIFT)));
     assert_eq!(Config::parse_key_event("<C-A-->", 1).unwrap(), KeyEvent::new(KeyCode::Char('-'), KeyModifiers::CONTROL.union(KeyModifiers::ALT)));
