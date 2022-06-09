@@ -1,1 +1,1 @@
-initSidebarItems({"enum":[["BindParseError","Enum for containing errors that might occur in parsing bind lines."],["ConfigParseError","Enum for containing errors that might occur in parsing configurations."]]});
+initSidebarItems({"enum":[["BindParseError","Enum for containing errors that might occur in parsing bind lines."],["ConfigParseError","Enum for containing errors that might occur in parsing configurations."],["OptionParseError","Enum for containing errors that might occur in parsing option lines."]]});
