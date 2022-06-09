@@ -1,5 +1,5 @@
 //! A module that contains the main editor logic.
-use crate::config::keybinds::Config;
+use crate::config::keybinds::KeyBinds;
 use crate::config::options::Options;
 use crate::context::*;
 use crate::terminal::{Position, Terminal};
@@ -35,23 +35,23 @@ pub struct Editor<'a> {
     #[doc(hidden)]
     opt: Options,
     #[doc(hidden)]
-    config: Config,
+    key_binds: KeyBinds,
 }
 
 impl<'a> Editor<'a> {
     /// Create a new Editor struct from a file.
-    pub fn new(filename: PathBuf, opt: Options, config: Option<Config>) -> Result<Editor<'a>> {
+    pub fn new(filename: PathBuf, opt: Options, key_binds: Option<KeyBinds>) -> Result<Editor<'a>> {
         let term = Terminal::new()?;
         let window = Window::new(filename, &term, opt.clone())?;
         // TODO: add real default config handling
-        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], current_window: 0, opt, config: config.unwrap_or_else(|| Config::empty()) } )
+        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], current_window: 0, opt, key_binds: key_binds.unwrap_or_else(|| KeyBinds::new()) } )
     }
 
     /// Create a new Editor struct with the default welcome screen.
-    pub fn default(opt: Options, config: Option<Config>) -> Result<Editor<'a>> {
+    pub fn default(opt: Options, key_binds: Option<KeyBinds>) -> Result<Editor<'a>> {
         let term = Terminal::new()?;
         let window = Window::default(&term, opt.clone());
-        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], current_window: 0, opt, config: config.unwrap_or_else(|| Config::empty()) } )
+        Ok( Editor{ terminal: term, quit: false, context_stack: vec![Box::new(NormalMode)], push_context_stack: Vec::new(), has_been_setup_stack: vec![true], command_stack: Vec::new(), windows: vec![window], current_window: 0, opt, key_binds: key_binds.unwrap_or_else(|| KeyBinds::new()) } )
     }
 
     /// Run the editor logic.
@@ -168,9 +168,9 @@ impl<'a> Editor<'a> {
         &mut self.terminal
     }
 
-    /// Return a reference to the `Config` object.
-    pub fn config(&self) -> &Config {
-        &self.config
+    /// Return a reference to the `KeyBinds` object.
+    pub fn key_binds(&self) -> &KeyBinds {
+        &self.key_binds
     }
 
     /// Push a command to the command history stack.
