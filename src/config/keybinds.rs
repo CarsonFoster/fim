@@ -1,16 +1,14 @@
 //! A module for handling how keys are assigned to [`Context`]s.
-use super::config_error::*;
+use super::config_error::BindParseError;
 use crate::context::*;
-use std::path::PathBuf;
-use std::fs::read_to_string;
 use std::collections::HashMap;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
-struct ConfigMap {
+struct KeyBindMap {
     unprintable: HashMap<String, KeyEvent>,
 }
 
-impl ConfigMap {
+impl KeyBindMap {
     fn new() -> Self {
         let mut unprintable = HashMap::new();
         let pairs = [("BS", KeyCode::Backspace), ("CR", KeyCode::Enter), ("Enter", KeyCode::Enter), ("Left", KeyCode::Left),
@@ -23,7 +21,7 @@ impl ConfigMap {
         for i in 1u8..=12 {
             unprintable.insert(format!("F{}", i), KeyEvent::new(KeyCode::F(i), KeyModifiers::NONE));
         }
-        ConfigMap{ unprintable }
+        KeyBindMap{ unprintable }
     }
 
     pub fn query(&self, rep: &str) -> Option<KeyEvent> {
@@ -58,60 +56,52 @@ impl ConfigMap {
 }
 
 lazy_static! {
-    static ref MAP: ConfigMap = ConfigMap::new();
-}
-
-#[derive(Clone, Copy, PartialEq)]
-enum State {
-   Start, C, A, S, C_, A_, S_, Accept, Reject
-}
-
-enum Transition {
-    C, A, S, Hyphen, Else
+    static ref MAP: KeyBindMap = KeyBindMap::new();
 }
 
 /// Struct that represents key press to context mapping.
-pub struct Config {
+pub struct KeyBinds {
     #[doc(hidden)]
     map: HashMap<String, HashMap<KeyEvent, Factory>>
 }
 
-impl Config {
-    /// Create a Config from a string representing the text of the configuration.
-    pub fn new(text: &str) -> Result<Config, ConfigParseError> {
-        let mut map = HashMap::new();
-        for (line, line_no) in text.lines().zip(0u16..) {
-            let (context, keypress, factory) = Self::parse_line(line, line_no)?;
-            map.entry(context).or_insert(HashMap::new())
-               .entry(keypress).or_insert(factory);
-        }
-        Ok(Config{ map })
+impl KeyBinds {
+    /// Create an empty `KeyBinds`.
+    pub fn new() -> KeyBinds {
+        KeyBinds{ map: HashMap::new() }
     }
 
-    /// Create an empty Config.
-    pub fn empty() -> Config {
-        Config{ map: HashMap::new() }
+    /// Parses the passed line as a `bind` line and adds the resulting key binds to self.
+    ///
+    /// Replaces previous key binds.
+    pub fn add(&mut self, line: &str) -> Result<(), BindParseError> {
+        let (context, keypress, factory) = Self::parse_line(line)?;
+        self.map.entry(context).or_insert(HashMap::new()).insert(keypress, factory);
+        Ok(())
     }
 
-    /// Create a Config from a file.
-    pub fn from_file(filename: PathBuf) -> Result<Config, ConfigParseError> {
-        let text = read_to_string(filename)?;
-        Self::new(&text)
-    }
-
-    /// Query the configuration for a context [`Factory`].
+    /// Query the key binds for an associated context [`Factory`].
     pub fn query(&self, context: &str, key: KeyEvent) -> Option<&Factory> {
         let code = if let KeyCode::Char(c) = key.code { KeyCode::Char(c.to_ascii_uppercase()) } else { key.code };
         let key = KeyEvent::new(code, key.modifiers);
-        self.map.get(context).map_or(None, |m| m.get(&key)) 
+        self.map.get(context).map(|m| m.get(&key)).flatten()
     }
 
     #[doc(hidden)]
-    pub fn parse_key_event(key_event: &str, line_no: u16) -> Result<KeyEvent, ConfigParseError> {
+    pub fn parse_key_event(key_event: &str) -> Result<KeyEvent, BindParseError> {
+        #[derive(Clone, Copy, PartialEq)]
+        enum State {
+           Start, C, A, S, C_, A_, S_, Accept, Reject
+        }
+
+        enum Transition {
+            C, A, S, Hyphen, Else
+        }
+
         let no_modifiers = MAP.query(key_event);
         let key_event = if let Some(key) = no_modifiers { key } else {
             if key_event.get(0..1) != Some("<") || key_event.get(key_event.len() - 1..) != Some(">") {
-                return Err(ConfigParseError::bind(BindParseError::MalformedKeyEventTerm, line_no));
+                return Err(BindParseError::MalformedKeyEventTerm);
             }
             let mut modifiers = KeyModifiers::empty();
             if let Some(key_event) = key_event.get(1..key_event.len() - 1) {
@@ -133,7 +123,7 @@ impl Config {
                     state = transitions[transition as usize][state as usize];
                     if state == State::Accept || state == State::Reject {
                         if key.len() == 8 {
-                            return Err(ConfigParseError::bind(BindParseError::MalformedKeyEventTerm, line_no));
+                            return Err(BindParseError::MalformedKeyEventTerm);
                         }
                         key.push(ch); 
                     }
@@ -145,7 +135,7 @@ impl Config {
                     });
                 }
                 match state {
-                    State::Start | State::C_ | State::A_ | State::S_ => return Err(ConfigParseError::bind(BindParseError::MalformedKeyEventTerm, line_no)),
+                    State::Start | State::C_ | State::A_ | State::S_ => return Err(BindParseError::MalformedKeyEventTerm),
                     State::C => {
                         key.push('C');
                         modifiers.remove(KeyModifiers::CONTROL);
@@ -162,53 +152,53 @@ impl Config {
                 }
                 let code = match MAP.query_code(&key) {
                     Some(c) => c,
-                    None => return Err(ConfigParseError::bind(BindParseError::MalformedKeyEventTerm, line_no))
+                    None => return Err(BindParseError::MalformedKeyEventTerm)
                 };
                 KeyEvent::new(code, modifiers)
             } else {
-                return Err(ConfigParseError::bind(BindParseError::UnicodeBoundaryErrorInKeyEvent, line_no));
+                return Err(BindParseError::UnicodeBoundaryErrorInKeyEvent);
             }
         };
         Ok(key_event)
     }
 
     #[doc(hidden)]
-    pub fn parse_line(line: &str, line_no: u16) -> Result<(String, KeyEvent, Factory), ConfigParseError> {
+    pub fn parse_line(line: &str) -> Result<(String, KeyEvent, Factory), BindParseError> {
         let mut iter = line.split(' ');
         let bind = iter.next();
         let key_event = iter.next();
         let new_context = iter.next();
         if bind.is_none() || key_event.is_none() || new_context.is_none() {
-            return Err(ConfigParseError::bind(BindParseError::NotEnoughTerms, line_no));
+            return Err(BindParseError::NotEnoughTerms);
         }
         let bind = bind.unwrap();
         let key_event = key_event.unwrap();
         let new_context = new_context.unwrap();
         if bind.len() < 6 || bind.get(0..5) != Some("bind(") || bind.get(bind.len() - 1..) != Some(")") {
-            return Err(ConfigParseError::bind(BindParseError::MalformedBindTerm, line_no));
+            return Err(BindParseError::MalformedBindTerm);
         }
         if let Some(old_context) = bind.get(5..bind.len() - 1) {
-            let key_event = Self::parse_key_event(key_event, line_no)?;
+            let key_event = Self::parse_key_event(key_event)?;
             let args = String::from(iter.fold(String::new(), |acc, x| acc + " " + x).trim());
            
             if let Some(factory) = context(new_context, args) {
                 Ok((old_context.to_string(), key_event, factory))
             } else {
-                Err(ConfigParseError::bind(BindParseError::NoMatchingContext{ context: new_context.to_string() }, line_no))
+                Err(BindParseError::NoMatchingContext{ context: new_context.to_string() })
             }
         } else {
-            Err(ConfigParseError::bind(BindParseError::UnicodeBoundaryErrorInBind, line_no))
+            Err(BindParseError::UnicodeBoundaryErrorInBind)
         }
     }
 }
 
 #[test]
 fn test_parse_line_key_event() {
-    assert_eq!(Config::parse_key_event("", 1).err(), Some(ConfigParseError::bind(BindParseError::MalformedKeyEventTerm, 1)));
+    assert_eq!(Config::parse_key_event("", 1).err(), Some(BindParseError::MalformedKeyEventTerm));
     assert_eq!(Config::parse_key_event("a", 1).unwrap(), KeyEvent::new(KeyCode::Char('A'), KeyModifiers::NONE));
     assert_eq!(Config::parse_key_event("B", 1).unwrap(), KeyEvent::new(KeyCode::Char('B'), KeyModifiers::NONE));
     assert_eq!(Config::parse_key_event("<Tab>", 1).unwrap(), KeyEvent::new(KeyCode::Tab, KeyModifiers::NONE));
-    assert_eq!(Config::parse_key_event("<tab>", 1).err(), Some(ConfigParseError::bind(BindParseError::MalformedKeyEventTerm, 1)));
+    assert_eq!(Config::parse_key_event("<tab>", 1).err(), Some(BindParseError::MalformedKeyEventTerm));
     assert_eq!(Config::parse_key_event("<C-C>", 1).unwrap(), KeyEvent::new(KeyCode::Char('C'), KeyModifiers::CONTROL));
     assert_eq!(Config::parse_key_event("<C-S-A>", 1).unwrap(), KeyEvent::new(KeyCode::Char('A'), KeyModifiers::CONTROL.union(KeyModifiers::SHIFT)));
     assert_eq!(Config::parse_key_event("<C-A-->", 1).unwrap(), KeyEvent::new(KeyCode::Char('-'), KeyModifiers::CONTROL.union(KeyModifiers::ALT)));
