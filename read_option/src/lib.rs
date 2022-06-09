@@ -27,7 +27,7 @@ fn impl_read_option(ast: &DeriveInput) -> TokenStream {
 fn gen_error() -> TokenStream2 {
     let enum_def = quote! {
         /// Enum for containing errors that might occur in parsing option lines.
-        #[derive(Debug)]
+        #[derive(Debug, PartialEq)]
         pub enum OptionParseError {
             /// Did not find `set ` at the beginning of the line.
             NoSetPlusSpace,
