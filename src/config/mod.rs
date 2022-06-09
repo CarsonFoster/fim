@@ -80,7 +80,58 @@
 //! - `<S-A-Enter>`: Shift + Alt + Enter
 //! - `<C-S-A-Left>`: Control + Shift + Alt + left arrow key
 //! - `<C-A-Del>`: Control + Alt + Delete (this will probably be intercepted by your OS)
+//!
+//! ## Comments
+//! Line comments begin with a `"`. Note that currently all comments must be on their own line.
+//!
+//! ### Examples
+//! - `" this is a comment`
+//! - `set line_numbering = Dvorak " I really like Dvorak`: DOES NOT WORK! Place the comment above
+//! the option statement.
 
 pub mod config_error;
 pub mod keybinds;
 pub mod options;
+
+use self::config_error::ConfigParseError;
+use self::keybinds::KeyBinds;
+use self::options::Options;
+use std::path::PathBuf;
+use std::fs::read_to_string;
+
+pub struct Config {
+    pub opt: Options,
+    pub key_binds: KeyBinds
+}
+
+impl Config {
+    pub fn new(file: PathBuf) -> Result<Self, ConfigParseError> {
+        let mut opt = Options::default();
+        let mut key_binds = KeyBinds::new();
+        let string = read_to_string(file)?;
+        for (line, line_no) in string.lines().zip(1u16..) {
+            if line.trim().len() == 0 || line.starts_with('"') { continue; }
+            if line.starts_with("bind") {
+                let result = key_binds.add(line);
+                if result.is_err() {
+                    return Err(ConfigParseError::bind(result.unwrap_err(), line_no));
+                }
+            } else if line.starts_with("set") {
+                let result = opt.set_option(line);
+                if result.is_err() {
+                    return Err(ConfigParseError::option(result.unwrap_err(), line_no));
+                }
+            } else {
+                return Err(ConfigParseError::NotAStatement{ line: line_no });
+            }
+        }
+
+        Ok(Config{ opt, key_binds })
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config{ opt: Options::default(), key_binds: KeyBinds::new() }
+    }
+}

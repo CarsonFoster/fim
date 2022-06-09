@@ -41,6 +41,8 @@ pub enum ConfigParseError {
     BindParseError{ error: BindParseError, line: u16 },
     /// See [`OptionParseError`](super::options::OptionParseError).
     OptionParseError{ error: OptionParseError, line: u16 },
+    /// Could not determine the statement type of the line.
+    NotAStatement{ line: u16 },
     /// IO error (e.g. cannot open the config file)
     IOError{ error: std::io::Error },
 }
@@ -61,6 +63,7 @@ impl ConfigParseError {
         match self {
             Self::BindParseError{ error, line } => format!("error parsing bind statement on line {}: {}", line, error.value()),
             Self::OptionParseError{ error, line } => format!("error parsing option statement on line {}: {}", line, error.value()),
+            Self::NotAStatement{ line } => format!("could not determine statement type of line {}", line),
             Self::IOError{ error } => error.to_string(),
         }
     }
