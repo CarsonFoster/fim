@@ -22,12 +22,12 @@ pub enum BindParseError {
 impl BindParseError {
     pub fn value(&self) -> String { 
         match self {
-            BindParseError::NoMatchingContext{ context } => format!("no matching context {} found", context),
-            BindParseError::NotEnoughTerms => format!("not enough terms (expected at least 3)"),
-            BindParseError::MalformedBindTerm => format!("incorrect syntax in bind term"),
-            BindParseError::UnicodeBoundaryErrorInBind => format!("unexpected unicode character in bind term"),
-            BindParseError::MalformedKeyEventTerm => format!("incorrect syntax in key event term"),
-            BindParseError::UnicodeBoundaryErrorInKeyEvent => format!("unexpected unicode character in key event term"),
+            Self::NoMatchingContext{ context } => format!("no matching context {} found", context),
+            Self::NotEnoughTerms => format!("not enough terms (expected at least 3)"),
+            Self::MalformedBindTerm => format!("incorrect syntax in bind term"),
+            Self::UnicodeBoundaryErrorInBind => format!("unexpected unicode character in bind term"),
+            Self::MalformedKeyEventTerm => format!("incorrect syntax in key event term"),
+            Self::UnicodeBoundaryErrorInKeyEvent => format!("unexpected unicode character in key event term"),
         }
     }
 }
@@ -50,8 +50,8 @@ impl ConfigParseError {
     #[doc(hidden)]
     pub fn value(&self) -> String {
         match self {
-            ConfigParseError::BindParseError{ error, line } => format!("error parsing bind statement on line {}: {}", line, error.value()),
-            ConfigParseError::IOError{ error } => error.to_string(),
+            Self::BindParseError{ error, line } => format!("error parsing bind statement on line {}: {}", line, error.value()),
+            Self::IOError{ error } => error.to_string(),
         }
     }
 }
@@ -59,9 +59,9 @@ impl ConfigParseError {
 impl PartialEq for ConfigParseError {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) { 
-            (ConfigParseError::BindParseError{ error, line }, ConfigParseError::BindParseError{ error: other_error, line: other_line })
+            (Self::BindParseError{ error, line }, Self::BindParseError{ error: other_error, line: other_line })
                 => line == other_line && error == other_error,
-            (ConfigParseError::IOError{ error }, ConfigParseError::IOError{ error: other_error })
+            (Self::IOError{ error }, Self::IOError{ error: other_error })
                 => error.kind() == other_error.kind(),
             _ => false
         }
@@ -71,7 +71,7 @@ impl PartialEq for ConfigParseError {
 impl fmt::Display for ConfigParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ConfigParseError::IOError{ error } => error.fmt(f),
+            Self::IOError{ error } => error.fmt(f),
             _ => write!(f, "error in parsing configuration: {}", self.value()),
         }
     }
@@ -79,7 +79,7 @@ impl fmt::Display for ConfigParseError {
 
 impl From<std::io::Error> for ConfigParseError {
     fn from(e: std::io::Error) -> Self {
-        ConfigParseError::IOError{ error: e }
+        Self::IOError{ error: e }
     }
 }
 
