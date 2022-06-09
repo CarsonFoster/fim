@@ -121,15 +121,17 @@ fn gen_extract_opt_val_func() -> TokenStream2 {
 
 fn gen_read_option_func(asserts: &Vec<TokenStream2>, matches: &Vec<TokenStream2>) -> TokenStream2 {
     quote! {
-        /// Read a single option/value pair from the passed string slice.
-        ///
-        /// See the [Config module-level documentation](crate::config) for details on the parsing.
-        pub fn read_option(factory: &mut OptionFactory, s: &str) -> Result<(), OptionParseError> {
-            #(#asserts)*
-            let (opt, val) = extract_opt_val(s)?;
-            match opt {
-                #(#matches)*
-                _ => Err(OptionParseError::NoMatchingOption{ option: opt.to_string() })
+        impl OptionFactory {
+            /// Read a single option/value pair from the passed string slice.
+            ///
+            /// See the [Config module-level documentation](crate::config) for details on the parsing.
+            pub fn read_option(&mut self, s: &str) -> Result<(), OptionParseError> {
+                #(#asserts)*
+                let (opt, val) = extract_opt_val(s)?;
+                match opt {
+                    #(#matches)*
+                    _ => Err(OptionParseError::NoMatchingOption{ option: opt.to_string() })
+                }
             }
         }
     }
@@ -137,23 +139,25 @@ fn gen_read_option_func(asserts: &Vec<TokenStream2>, matches: &Vec<TokenStream2>
 
 fn gen_set_option_func(asserts: &Vec<TokenStream2>, matches: &Vec<TokenStream2>) -> TokenStream2 {
     quote! {
-        /// Read a single option/value pair from the passed string slice, and set the associated
-        /// value in the passed `Options` object.
-        ///
-        /// See the [Config module-level documentation](crate::config) for details on the parsing.
-        pub fn set_option(opt: &mut Options, s: &str) -> Result<(), OptionParseError> {
-            #(#asserts)*
-            let (opt_name, val) = extract_opt_val(s)?;
-            match opt_name {
-                #(#matches)*
-                _ => Err(OptionParseError::NoMatchingOption{ option: opt_name.to_string() })
+        impl Options {
+            /// Read a single option/value pair from the passed string slice, and set the associated
+            /// value.
+            ///
+            /// See the [Config module-level documentation](crate::config) for details on the parsing.
+            pub fn set_option(&mut self, s: &str) -> Result<(), OptionParseError> {
+                #(#asserts)*
+                let (opt_name, val) = extract_opt_val(s)?;
+                match opt_name {
+                    #(#matches)*
+                    _ => Err(OptionParseError::NoMatchingOption{ option: opt_name.to_string() })
+                }
             }
         }
     }
 }
 
 fn gen_read_option(fields: &Punctuated<Field, Comma>) -> TokenStream {
-    let mut matches = Vec::new();
+    let mut matches_read = Vec::new();
     let mut matches_set = Vec::new();
     let mut asserts = Vec::new();
     for field in fields.iter() {
@@ -170,10 +174,10 @@ fn gen_read_option(fields: &Punctuated<Field, Comma>) -> TokenStream {
         });
 
         let func = format_ident!("set_{}", ident);
-        matches.push(quote! {
+        matches_read.push(quote! {
             stringify!(#ident) => {
                 let val_object = val.parse::<#ty>()?;
-                factory.#func(val_object);
+                self.#func(val_object);
                 Ok(())
             }, 
         });
@@ -181,7 +185,7 @@ fn gen_read_option(fields: &Punctuated<Field, Comma>) -> TokenStream {
         matches_set.push(quote! {
             stringify!(#ident) => {
                 let val_object = val.parse::<#ty>()?;
-                opt.#ident = val_object;
+                self.#ident = val_object;
                 Ok(())
             },
         });
@@ -189,7 +193,7 @@ fn gen_read_option(fields: &Punctuated<Field, Comma>) -> TokenStream {
 
     let error_enum = gen_error();
     let extract_opt_val_func = gen_extract_opt_val_func();
-    let read_option_func = gen_read_option_func(&asserts, &matches);
+    let read_option_func = gen_read_option_func(&asserts, &matches_read);
     let set_option_func = gen_set_option_func(&asserts, &matches_set);
 
     let gen = quote! {
