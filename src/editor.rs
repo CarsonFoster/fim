@@ -1,7 +1,7 @@
 //! A module that contains the main editor logic.
-use crate::config::Config;
+use crate::config::keybinds::Config;
+use crate::config::options::Options;
 use crate::context::*;
-use crate::options::Options;
 use crate::terminal::{Position, Terminal};
 use crate::window::Window;
 use crossterm::{

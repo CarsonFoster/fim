@@ -1,8 +1,8 @@
 //! A module for handling fim's editor windows.
 //!
 //! A window has a single active [`Document`] and can be split vertically or horizontally.
+use crate::config::options::{LineNumbers, Options};
 use crate::document::Document;
-use crate::options::{LineNumbers, Options};
 use crate::terminal::{Position, Size, Terminal};
 use crossterm::{
     Result,
