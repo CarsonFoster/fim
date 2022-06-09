@@ -1,4 +1,6 @@
 //! A module that provides the error types for configuration parsing.
+
+pub use super::options::OptionParseError;
 use std::fmt;
 
 #[derive(Debug, PartialEq)]
@@ -37,20 +39,28 @@ impl BindParseError {
 pub enum ConfigParseError {
     /// See [`BindParseError`].
     BindParseError{ error: BindParseError, line: u16 },
+    /// See [`OptionParseError`](super::options::OptionParseError).
+    OptionParseError{ error: OptionParseError, line: u16 },
     /// IO error (e.g. cannot open the config file)
     IOError{ error: std::io::Error },
 }
 
 impl ConfigParseError {
-    /// Create a `ConfigParseError::BindParseError` from the inner BindParseError.
+    /// Create a `ConfigParseError::BindParseError` from the inner `BindParseError`.
     pub fn bind(error: BindParseError, line: u16) -> Self {
-        ConfigParseError::BindParseError{ error, line }
+        Self::BindParseError{ error, line }
+    }
+
+    /// Create a `ConfigParseError::OptionParseError` from the inner `OptionParseError`.
+    pub fn option(error: OptionParseError, line: u16) -> Self {
+        Self::OptionParseError{ error, line }
     }
 
     #[doc(hidden)]
     pub fn value(&self) -> String {
         match self {
             Self::BindParseError{ error, line } => format!("error parsing bind statement on line {}: {}", line, error.value()),
+            Self::OptionParseError{ error, line } => format!("error parsing option statement on line {}: {}", line, error.value()),
             Self::IOError{ error } => error.to_string(),
         }
     }
@@ -60,6 +70,8 @@ impl PartialEq for ConfigParseError {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) { 
             (Self::BindParseError{ error, line }, Self::BindParseError{ error: other_error, line: other_line })
+                => line == other_line && error == other_error,
+            (Self::OptionParseError{ error, line }, Self::OptionParseError{ error: other_error, line: other_line })
                 => line == other_line && error == other_error,
             (Self::IOError{ error }, Self::IOError{ error: other_error })
                 => error.kind() == other_error.kind(),
