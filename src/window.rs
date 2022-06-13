@@ -250,7 +250,7 @@ impl Window {
         }.dark_yellow()
     }
 
-    fn update_line_numbers(&self, term: &mut Terminal) -> Result<()> {
+    /*fn update_line_numbers(&self, term: &mut Terminal) -> Result<()> {
         if let LineNumbers::Off = self.opt.line_numbering { return Ok(()); }
         term.q(Hide)?.save_cursor();
         self.q_clear(ClearType::LineNumbers, term)?;
@@ -261,6 +261,29 @@ impl Window {
         term.restore_cursor();
         term.q_move_cursor()?.q(Show)?.flush()?;
         Ok(())
+    }*/
+
+    fn update_line_numbers(&self, term: &mut Terminal) -> Result<()> {
+        if let LineNumbers::Off = self.opt.line_numbering { return Ok(()); }
+        term.q(Hide)?.save_cursor();
+        self.q_clear(ClearType::LineNumbers, term)?;
+        let mut window_line: u16 = 0;
+        let mut doc_line: usize = self.first_line;
+        let line_count = self.doc.as_ref().unwrap().num_lines();
+        while window_line < self.raw_window_size.height && doc_line < line_count {
+            let Position{ x, y } = self.raw_to_term(0, window_line);
+            term.cursor_to(x, y).q_move_cursor()?.q(Print(self.line_number(window_line)))?;
+            let end = min(self.line_properties[doc_line].lines_u16().unwrap_or(u16::MAX), self.raw_window_size.height - window_line); 
+            window_line += end;
+            doc_line += 1;
+        }
+        while window_line < self.raw_window_size.height {
+            let Position{ x, y } = self.raw_to_term(0, window_line);
+            term.cursor_to(x, y).q_move_cursor()?.q(Print(self.line_number(window_line)))?;
+            window_line += 1;
+        }
+        term.restore_cursor();
+        term.q_move_cursor()?.q(Show)?.flush()
     }
 
     fn q_clear(&self, clear_type: ClearType, term: &mut Terminal) -> Result<()> {
@@ -299,7 +322,6 @@ impl Window {
                 Tilde
             }
 
-            let line_number_chars = self.text_start as usize;
             let text_width = self.text_width as usize;
 
             term.q(Hide)?.save_cursor();
@@ -334,7 +356,7 @@ impl Window {
                     if let LineType::Content(text) = lt {
                         term.q(Print(self.line_number(terminal_line as u16)))?.q(Print(text))
                     } else if let LineType::Continued(text) = lt {
-                        term.q(Print(text)) // TODO: check logic here
+                        term.q(Print(" ".repeat(self.text_start as usize)))?.q(Print(text)) // TODO: check logic here
                     } else {
                         term.q(Print("~".blue()))
                     }.map(|_| ())
