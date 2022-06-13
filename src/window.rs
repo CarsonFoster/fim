@@ -364,19 +364,17 @@ impl Window {
             doc.iter_from(self.first_line).unwrap() // we assert that first_line is a valid index
                .flat_map(|l| {
                     let mut graphemes = l.text.as_str().grapheme_indices(true);
-                    let output: Box<dyn Iterator<Item = LineType>> = if let Some((idx, _)) = graphemes.nth(text_width + 1) {
+                    let output: Box<dyn Iterator<Item = LineType>> = if let Some((idx, _)) = graphemes.nth(text_width) {
                         let mut indices = vec![idx]; 
-                        // note that we've already consumed the first character of the next chunk
-                        // we need to get the (width + 1)th character from the start of the chunk,
-                        // width + 1 - 1 = width
-                        while let Some((idx, _)) = graphemes.nth(self.raw_window_size.width.into()) { // TODO: check logic here!
+                        while let Some((idx, _)) = graphemes.nth(text_width - 1) {
                             indices.push(idx);
                         }
                         let mut pieces: Vec<&str> = Vec::new();
-                        let first = if indices.len() > 1 { &l.text[0..indices[1]] } else { l.text.as_str() };
-                        for i in 1..indices.len() {
-                            pieces.push(&l.text[indices[i - 1]..indices[i]]);
+                        let first = &l.text[..indices[0]];
+                        for i in 0..(indices.len() - 1) {
+                            pieces.push(&l.text[indices[i]..indices[i + 1]]);
                         }
+                        pieces.push(&l.text[*indices.last().unwrap()..]);
                         Box::new(once(LineType::Content(first)).chain(pieces.into_iter().map(|p| LineType::Continued(p))))
                     } else {
                         Box::new(once(LineType::Content(l.text.as_str())))
