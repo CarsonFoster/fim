@@ -30,6 +30,13 @@ pub struct DocPosition {
     pub y: usize
 }
 
+#[derive(Copy, Clone)]
+enum WindowLineType {
+    DocLine(usize),
+    WrappedLine,
+    Tilde
+}
+
 #[non_exhaustive]
 #[derive(Copy, Clone)]
 enum ClearType {
@@ -225,29 +232,57 @@ impl Window {
         let mut line_properties = Vec::with_capacity(doc.num_lines()); 
         for line in doc {
             let rem = (line.length % text_width as usize) as u16;
-            let props = WindowLineProperties{ lines: div_ceil(line.length, text_width), graphemes: rem };
+            let lines = div_ceil(line.length, text_width);
+            let props = WindowLineProperties{ lines, graphemes: rem };
             line_properties.push(props);
         }
         line_properties
     }
 
-    fn line_number(&self, line: u16) -> StyledContent<String> {
-        if line as usize >= self.doc.as_ref().map(|d| d.num_lines()).or(Some(usize::MAX)).unwrap() { return "~".to_string().blue() }
-        match self.opt.line_numbering {
-            LineNumbers::Off => String::new(),
-            LineNumbers::On => once(' ').chain((line as usize + self.first_line + 1).to_string().chars().rev())
-                                        .chain(repeat(' ')).take(self.text_start as usize).collect::<String>()
-                                        .chars().rev().collect::<String>(),
-            LineNumbers::Relative => {
-                if self.pos_in_doc.y == self.first_line + line as usize {
-                    (self.pos_in_doc.y + 1).to_string().chars().chain(repeat(' ')).take(self.text_start as usize).collect::<String>()
-                } else {
-                    once(' ').chain(abs_diff(self.pos_in_doc.y, line as usize + self.first_line).to_string().chars().rev())
-                             .chain(repeat(' ')).take(self.text_start as usize).collect::<String>()
-                             .chars().rev().collect::<String>()
-                }
+    fn window_to_doc(&self, line: u16) -> WindowLineType {
+        let mut window_line = 0u16;
+        let mut doc_line = self.first_line;
+        let line_count = self.doc.as_ref().unwrap().num_lines();
+        while window_line < line && doc_line < line_count {
+            if let Some(l) = self.line_properties[doc_line].lines_u16() {
+                window_line += l;
+                doc_line += 1;
+            } else {
+                return WindowLineType::WrappedLine;
             }
-        }.dark_yellow()
+        }
+        if doc_line >= line_count {
+            WindowLineType::Tilde
+        } else if window_line == line {
+            WindowLineType::DocLine(doc_line)
+        } else {
+            WindowLineType::WrappedLine
+        }
+    }
+
+    fn line_number(&self, line: u16) -> StyledContent<String> {
+        match self.window_to_doc(line) {
+            WindowLineType::WrappedLine => "".to_string().stylize(),
+            WindowLineType::Tilde => "~".to_string().blue(),
+            WindowLineType::DocLine(doc_line) => {
+                // if line as usize >= self.doc.as_ref().map(|d| d.num_lines()).or(Some(usize::MAX)).unwrap() { return "~".to_string().blue() }
+                match self.opt.line_numbering {
+                    LineNumbers::Off => String::new(),
+                    LineNumbers::On => once(' ').chain((doc_line + 1).to_string().chars().rev())
+                                                .chain(repeat(' ')).take(self.text_start as usize).collect::<String>()
+                                                .chars().rev().collect::<String>(),
+                    LineNumbers::Relative => {
+                        if self.pos_in_doc.y == doc_line as usize {
+                            (doc_line + 1).to_string().chars().chain(repeat(' ')).take(self.text_start as usize).collect::<String>()
+                        } else {
+                            once(' ').chain(abs_diff(self.pos_in_doc.y, doc_line).to_string().chars().rev())
+                                     .chain(repeat(' ')).take(self.text_start as usize).collect::<String>()
+                                     .chars().rev().collect::<String>()
+                        }
+                    }
+                }.dark_yellow()
+            }
+        }
     }
 
     /*fn update_line_numbers(&self, term: &mut Terminal) -> Result<()> {
