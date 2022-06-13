@@ -193,7 +193,7 @@
 <span class="doccomment">/// layouts, providing a string to identify it. </span>
 <span class="doccomment">/// String option: possible values are `Qwerty`, `Dvorak`, `Colemak`, or any other string (for a</span>
 <span class="doccomment">/// custom layout).</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">PartialEq</span>, <span class="ident">Eq</span>, <span class="ident">Hash</span>)]</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">LayoutType</span> {
     <span class="doccomment">/// The standard keyboard layout.</span>
     <span class="ident">Qwerty</span>,

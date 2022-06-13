@@ -135,6 +135,15 @@
 <span id="135">135</span>
 <span id="136">136</span>
 <span id="137">137</span>
+<span id="138">138</span>
+<span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module for handling configuration files.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! # Config Format</span>
@@ -172,6 +181,15 @@
 <span class="doccomment">//! - the `bind` term is formed like this: `bind(&lt;context&gt;)`, where `&lt;context&gt;` represents the name</span>
 <span class="doccomment">//! of the context to which this binding applies. For example, if you want to bind a key to perform</span>
 <span class="doccomment">//! an action in normal mode, the bind term would be `bind(NormalMode)`.</span>
+<span class="doccomment">//!     - this type of `bind` term creates a layout-agnostic key bind. That is, if the current</span>
+<span class="doccomment">//!     layout is QWERTY, and you bind `S` to start `CommandMode`, no matter what keyboard layout</span>
+<span class="doccomment">//!     fim is currently in, you can press the key location where `S` is in QWERTY (e.g. `O` in Dvorak) to activate</span>
+<span class="doccomment">//!     `CommandMode`. This feature allows one to type in a different layout, while retaining</span>
+<span class="doccomment">//!     fim/vim QWERTY muscle memory.</span>
+<span class="doccomment">//!     - there is also a layout-specific bind term: `bind-layout(&lt;context&gt;)`. This only binds the</span>
+<span class="doccomment">//!     key in the current layout. For example: the line `set layout = Dvorak` followed by</span>
+<span class="doccomment">//!     `bind-layout(NormalMode) O CommandMode` would bind an `O` key press to start the</span>
+<span class="doccomment">//!     CommandMode context only when the current layout is Dvorak.</span>
 <span class="doccomment">//! - the key event term represents the key press that you are binding. See below.</span>
 <span class="doccomment">//! - the new context term is the name of the context that you want to change to. For example, if</span>
 <span class="doccomment">//! you wanted to enter command mode, the new context term would be `CommandMode`.</span>
@@ -249,7 +267,7 @@
         <span class="kw">for</span> (<span class="ident">line</span>, <span class="ident">line_no</span>) <span class="kw">in</span> <span class="ident">string</span>.<span class="ident">lines</span>().<span class="ident">zip</span>(<span class="number">1u16</span>..) {
             <span class="kw">if</span> <span class="ident">line</span>.<span class="ident">trim</span>().<span class="ident">len</span>() <span class="op">==</span> <span class="number">0</span> <span class="op">|</span><span class="op">|</span> <span class="ident">line</span>.<span class="ident">starts_with</span>(<span class="string">&#39;&quot;&#39;</span>) { <span class="kw">continue</span>; }
             <span class="kw">if</span> <span class="ident">line</span>.<span class="ident">starts_with</span>(<span class="string">&quot;bind&quot;</span>) {
-                <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">key_binds</span>.<span class="ident">add</span>(<span class="ident">line</span>);
+                <span class="kw">let</span> <span class="ident">result</span> <span class="op">=</span> <span class="ident">key_binds</span>.<span class="ident">add</span>(<span class="ident">line</span>, <span class="ident">opt</span>.<span class="ident">layout</span>.<span class="ident">clone</span>());
                 <span class="kw">if</span> <span class="ident">result</span>.<span class="ident">is_err</span>() {
                     <span class="kw">return</span> <span class="prelude-val">Err</span>(<span class="ident">ConfigParseError::bind</span>(<span class="ident">result</span>.<span class="ident">unwrap_err</span>(), <span class="ident">line_no</span>));
                 }

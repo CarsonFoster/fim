@@ -35,6 +35,15 @@
 //! - the `bind` term is formed like this: `bind(<context>)`, where `<context>` represents the name
 //! of the context to which this binding applies. For example, if you want to bind a key to perform
 //! an action in normal mode, the bind term would be `bind(NormalMode)`.
+//!     - this type of `bind` term creates a layout-agnostic key bind. That is, if the current
+//!     layout is QWERTY, and you bind `S` to start `CommandMode`, no matter what keyboard layout
+//!     fim is currently in, you can press the key location where `S` is in QWERTY (e.g. `O` in Dvorak) to activate
+//!     `CommandMode`. This feature allows one to type in a different layout, while retaining
+//!     fim/vim QWERTY muscle memory.
+//!     - there is also a layout-specific bind term: `bind-layout(<context>)`. This only binds the
+//!     key in the current layout. For example: the line `set layout = Dvorak` followed by
+//!     `bind-layout(NormalMode) O CommandMode` would bind an `O` key press to start the
+//!     CommandMode context only when the current layout is Dvorak.
 //! - the key event term represents the key press that you are binding. See below.
 //! - the new context term is the name of the context that you want to change to. For example, if
 //! you wanted to enter command mode, the new context term would be `CommandMode`.
