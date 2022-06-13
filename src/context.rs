@@ -139,7 +139,7 @@ impl Context for NormalMode {
         let KeyEvent{ code: c, modifiers: _ } = event;
         if c == KeyCode::Char(':') {
             ed.push_context(CommandMode::new()); 
-        } else if let Some(factory) = ed.key_binds().query("NormalMode", event) {
+        } else if let Some(factory) = ed.key_binds().query("NormalMode", event, ed.options().layout.clone()) {
             let context = factory.create();
             ed.push_boxed_context(context);
         }

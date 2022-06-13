@@ -112,7 +112,7 @@ impl Config {
         for (line, line_no) in string.lines().zip(1u16..) {
             if line.trim().len() == 0 || line.starts_with('"') { continue; }
             if line.starts_with("bind") {
-                let result = key_binds.add(line);
+                let result = key_binds.add(line, opt.layout.clone());
                 if result.is_err() {
                     return Err(ConfigParseError::bind(result.unwrap_err(), line_no));
                 }

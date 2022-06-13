@@ -1,6 +1,7 @@
 //! A module that contains the main editor logic.
 use crate::config::Config;
 use crate::config::keybinds::KeyBinds;
+use crate::config::options::Options;
 use crate::context::*;
 use crate::terminal::{Position, Terminal};
 use crate::window::Window;
@@ -171,6 +172,11 @@ impl<'a> Editor<'a> {
     /// Return a reference to the `KeyBinds` object.
     pub fn key_binds(&self) -> &KeyBinds {
         &self.config.key_binds
+    }
+
+    /// Return a reference to the `Options` object.
+    pub fn options(&self) -> &Options {
+        &self.config.opt
     }
 
     /// Push a command to the command history stack.

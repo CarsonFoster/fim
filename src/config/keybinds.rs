@@ -1,5 +1,6 @@
 //! A module for handling how keys are assigned to [`Context`]s.
 use super::config_error::BindParseError;
+use super::options::LayoutType;
 use crate::context::*;
 use std::collections::HashMap;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
@@ -62,7 +63,7 @@ lazy_static! {
 /// Struct that represents key press to context mapping.
 pub struct KeyBinds {
     #[doc(hidden)]
-    map: HashMap<String, HashMap<KeyEvent, Factory>>
+    map: HashMap<Option<LayoutType>, HashMap<String, HashMap<KeyEvent, Factory>>>
 }
 
 impl KeyBinds {
@@ -74,17 +75,25 @@ impl KeyBinds {
     /// Parses the passed line as a `bind` line and adds the resulting key binds to self.
     ///
     /// Replaces previous key binds.
-    pub fn add(&mut self, line: &str) -> Result<(), BindParseError> {
-        let (context, keypress, factory) = Self::parse_line(line)?;
-        self.map.entry(context).or_insert(HashMap::new()).insert(keypress, factory);
+    pub fn add(&mut self, line: &str, layout: LayoutType) -> Result<(), BindParseError> {
+        let (current_layout_only, context, keypress, factory) = Self::parse_line(line)?;
+        let layout_option = if current_layout_only { Some(layout) } else { None };
+        self.map.entry(layout_option).or_insert(HashMap::new())
+                .entry(context).or_insert(HashMap::new())
+                .insert(keypress, factory);
         Ok(())
     }
 
     /// Query the key binds for an associated context [`Factory`].
-    pub fn query(&self, context: &str, key: KeyEvent) -> Option<&Factory> {
+    /// 
+    /// Layout-specific key binds are always returned in favor over layout-agnostic key binds, if
+    /// possible.
+    pub fn query(&self, context: &str, key: KeyEvent, layout: LayoutType) -> Option<&Factory> {
         let code = if let KeyCode::Char(c) = key.code { KeyCode::Char(c.to_ascii_uppercase()) } else { key.code };
         let key = KeyEvent::new(code, key.modifiers);
-        self.map.get(context).map(|m| m.get(&key)).flatten()
+        self.map.get(&Some(layout)).map(|m| m.get(context).map(|m| m.get(&key))).flatten().flatten().or_else(||
+            self.map.get(&None).map(|m| m.get(context).map(|m| m.get(&key))).flatten().flatten()
+        )
     }
 
     #[doc(hidden)]
@@ -163,7 +172,8 @@ impl KeyBinds {
     }
 
     #[doc(hidden)]
-    pub fn parse_line(line: &str) -> Result<(String, KeyEvent, Factory), BindParseError> {
+    pub fn parse_line(line: &str) -> Result<(bool, String, KeyEvent, Factory), BindParseError> {
+        let mut current_layout_only = false;
         let mut iter = line.split(' ');
         let bind = iter.next();
         let key_event = iter.next();
@@ -175,14 +185,18 @@ impl KeyBinds {
         let key_event = key_event.unwrap();
         let new_context = new_context.unwrap();
         if bind.len() < 6 || bind.get(0..5) != Some("bind(") || bind.get(bind.len() - 1..) != Some(")") {
-            return Err(BindParseError::MalformedBindTerm);
+            if bind.len() < 13 || bind.get(0..12) != Some("bind-layout(") || bind.get(bind.len() - 1..) != Some(")") {
+                return Err(BindParseError::MalformedBindTerm);
+            } else {
+                current_layout_only = true;
+            }
         }
         if let Some(old_context) = bind.get(5..bind.len() - 1) {
             let key_event = Self::parse_key_event(key_event)?;
             let args = String::from(iter.fold(String::new(), |acc, x| acc + " " + x).trim());
            
             if let Some(factory) = context(new_context, args) {
-                Ok((old_context.to_string(), key_event, factory))
+                Ok((current_layout_only, old_context.to_string(), key_event, factory))
             } else {
                 Err(BindParseError::NoMatchingContext{ context: new_context.to_string() })
             }

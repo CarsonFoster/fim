@@ -83,7 +83,7 @@ pub enum LineNumbers {
 /// layouts, providing a string to identify it. 
 /// String option: possible values are `Qwerty`, `Dvorak`, `Colemak`, or any other string (for a
 /// custom layout).
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub enum LayoutType {
     /// The standard keyboard layout.
     Qwerty,
