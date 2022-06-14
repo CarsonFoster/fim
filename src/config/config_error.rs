@@ -20,16 +20,15 @@ pub enum BindParseError {
     UnicodeBoundaryErrorInKeyEvent,
 }
 
-#[doc(hidden)]
-impl BindParseError {
-    pub fn value(&self) -> String { 
+impl fmt::Display for BindParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { 
         match self {
-            Self::NoMatchingContext{ context } => format!("no matching context {} found", context),
-            Self::NotEnoughTerms => format!("not enough terms (expected at least 3)"),
-            Self::MalformedBindTerm => format!("incorrect syntax in bind term"),
-            Self::UnicodeBoundaryErrorInBind => format!("unexpected unicode character in bind term"),
-            Self::MalformedKeyEventTerm => format!("incorrect syntax in key event term"),
-            Self::UnicodeBoundaryErrorInKeyEvent => format!("unexpected unicode character in key event term"),
+            Self::NoMatchingContext{ context } => write!(f, "no matching context {} found", context),
+            Self::NotEnoughTerms => write!(f, "not enough terms (expected at least 3)"),
+            Self::MalformedBindTerm => write!(f, "incorrect syntax in bind term"),
+            Self::UnicodeBoundaryErrorInBind => write!(f, "unexpected unicode character in bind term"),
+            Self::MalformedKeyEventTerm => write!(f, "incorrect syntax in key event term"),
+            Self::UnicodeBoundaryErrorInKeyEvent => write!(f, "unexpected unicode character in key event term"),
         }
     }
 }
@@ -44,6 +43,12 @@ impl PartialEq for IOError {
     }
 }
 
+impl fmt::Display for IOError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
 /// Enum for containing errors that might occur in parsing custom layout specifications.
 #[derive(Debug, PartialEq)]
 pub enum LayoutParseError {
@@ -51,10 +56,10 @@ pub enum LayoutParseError {
     IOError{ error: IOError },
 }
 
-impl LayoutParseError {
-    pub fn value(&self) -> String {
+impl fmt::Display for LayoutParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::IOError{ error } => error.0.to_string()
+            Self::IOError{ error } => error.fmt(f)
         }
     }
 }
@@ -96,24 +101,16 @@ impl ConfigParseError {
     pub fn layout(error: LayoutParseError, line: u16) -> Self {
         Self::LayoutParseError{ error, line } 
     }
-
-    #[doc(hidden)]
-    pub fn value(&self) -> String {
-        match self {
-            Self::BindParseError{ error, line } => format!("error parsing bind statement on line {}: {}", line, error.value()),
-            Self::OptionParseError{ error, line } => format!("error parsing option statement on line {}: {}", line, error.value()),
-            Self::LayoutParseError{ error, line } => format!("error parsing layout document from line {}: {}", line, error.value()),
-            Self::NotAStatement{ line } => format!("could not determine statement type of line {}", line),
-            Self::IOError{ error } => error.0.to_string(),
-        }
-    }
 }
 
 impl fmt::Display for ConfigParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::IOError{ error } => error.0.fmt(f),
-            _ => write!(f, "error in parsing configuration: {}", self.value()),
+            Self::BindParseError{ error, line } => write!(f, "error parsing bind statement on line {}: {}", line, error),
+            Self::OptionParseError{ error, line } => write!(f, "error parsing option statement on line {}: {}", line, error),
+            Self::LayoutParseError{ error, line } => write!(f, "error parsing layout specification on line {} in spec: {}", line, error),
+            Self::NotAStatement{ line } => write!(f, "could not determine statement type of line {}", line),
+            Self::IOError{ error } => error.fmt(f),
         }
     }
 }

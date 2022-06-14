@@ -43,15 +43,14 @@ fn gen_error() -> TokenStream2 {
     };
 
     let impl_def = quote! {
-        #[doc(hidden)]
-        impl OptionParseError {
-            pub fn value(&self) -> String {
+        impl std::fmt::Display for OptionParseError {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                 match self {
-                    OptionParseError::NoSetPlusSpace => "did not find `set ` at beginning of string".to_string(),
-                    OptionParseError::NoEquals => "did not find `=` in string".to_string(),
-                    OptionParseError::NoValueAfterEquals => "did not find a value after `=` in string".to_string(),
-                    OptionParseError::NoMatchingOption{ option } => format!("no matching option in `Options` for {}", option),
-                    OptionParseError::ValueParseError{ msg } => format!("failed to parse value: {}", msg)
+                    OptionParseError::NoSetPlusSpace => write!(f, "did not find `set ` at beginning of string"),
+                    OptionParseError::NoEquals => write!(f, "did not find `=` in string"),
+                    OptionParseError::NoValueAfterEquals => write!(f, "did not find a value after `=` in string"),
+                    OptionParseError::NoMatchingOption{ option } => write!(f, "no matching option in `Options` for {}", option),
+                    OptionParseError::ValueParseError{ msg } => write!(f, "failed to parse value: {}", msg)
                 }
             }
         }
