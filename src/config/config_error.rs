@@ -51,6 +51,21 @@ pub enum LayoutParseError {
     IOError{ error: IOError },
 }
 
+impl LayoutParseError {
+    pub fn value(&self) -> String {
+        match self {
+            Self::IOError{ error } => error.0.to_string()
+        }
+    }
+}
+
+impl From<std::io::Error> for LayoutParseError {
+    fn from(error: std::io::Error) -> Self {
+        let error = IOError(error);
+        Self::IOError{ error }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 /// Enum for containing errors that might occur in parsing configurations.
 pub enum ConfigParseError {
@@ -58,6 +73,8 @@ pub enum ConfigParseError {
     BindParseError{ error: BindParseError, line: u16 },
     /// See [`OptionParseError`](super::options::OptionParseError).
     OptionParseError{ error: OptionParseError, line: u16 },
+    /// See [`LayoutParseError`].
+    LayoutParseError{ error: LayoutParseError, line: u16 },
     /// Could not determine the statement type of the line.
     NotAStatement{ line: u16 },
     /// IO error (e.g. cannot open the config file)
@@ -75,11 +92,17 @@ impl ConfigParseError {
         Self::OptionParseError{ error, line }
     }
 
+    /// Create a `ConfigParseError::LayoutParseError` from the inner `LayoutParseError`.
+    pub fn layout(error: LayoutParseError, line: u16) -> Self {
+        Self::LayoutParseError{ error, line } 
+    }
+
     #[doc(hidden)]
     pub fn value(&self) -> String {
         match self {
             Self::BindParseError{ error, line } => format!("error parsing bind statement on line {}: {}", line, error.value()),
             Self::OptionParseError{ error, line } => format!("error parsing option statement on line {}: {}", line, error.value()),
+            Self::LayoutParseError{ error, line } => format!("error parsing layout document from line {}: {}", line, error.value()),
             Self::NotAStatement{ line } => format!("could not determine statement type of line {}", line),
             Self::IOError{ error } => error.0.to_string(),
         }
