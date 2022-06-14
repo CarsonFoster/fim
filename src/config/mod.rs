@@ -118,7 +118,7 @@ impl Config {
         let mut opt = Options::default();
         let mut key_binds = KeyBinds::new();
         let string = read_to_string(file)?;
-        for (line, line_no) in string.lines().zip(1u16..) {
+        for (line, line_no) in string.lines().zip(1usize..) {
             if line.trim().len() == 0 || line.starts_with('"') { continue; }
             if line.starts_with("bind") {
                 let result = key_binds.add(line, opt.layout.clone());

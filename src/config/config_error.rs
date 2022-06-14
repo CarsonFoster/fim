@@ -90,30 +90,30 @@ impl From<std::io::Error> for LayoutParseError {
 /// Enum for containing errors that might occur in parsing configurations.
 pub enum ConfigParseError {
     /// See [`BindParseError`].
-    BindParseError{ error: BindParseError, line: u16 },
+    BindParseError{ error: BindParseError, line: usize },
     /// See [`OptionParseError`](super::options::OptionParseError).
-    OptionParseError{ error: OptionParseError, line: u16 },
+    OptionParseError{ error: OptionParseError, line: usize },
     /// See [`LayoutParseError`].
-    LayoutParseError{ error: LayoutParseError, line: u16 },
+    LayoutParseError{ error: LayoutParseError, line: usize },
     /// Could not determine the statement type of the line.
-    NotAStatement{ line: u16 },
+    NotAStatement{ line: usize },
     /// IO error (e.g. cannot open the config file)
     IOError{ error: IOError },
 }
 
 impl ConfigParseError {
     /// Create a `ConfigParseError::BindParseError` from the inner `BindParseError`.
-    pub fn bind(error: BindParseError, line: u16) -> Self {
+    pub fn bind(error: BindParseError, line: usize) -> Self {
         Self::BindParseError{ error, line }
     }
 
     /// Create a `ConfigParseError::OptionParseError` from the inner `OptionParseError`.
-    pub fn option(error: OptionParseError, line: u16) -> Self {
+    pub fn option(error: OptionParseError, line: usize) -> Self {
         Self::OptionParseError{ error, line }
     }
 
     /// Create a `ConfigParseError::LayoutParseError` from the inner `LayoutParseError`.
-    pub fn layout(error: LayoutParseError, line: u16) -> Self {
+    pub fn layout(error: LayoutParseError, line: usize) -> Self {
         Self::LayoutParseError{ error, line } 
     }
 }
