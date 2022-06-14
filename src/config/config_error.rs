@@ -34,7 +34,24 @@ impl BindParseError {
     }
 }
 
+/// Newtype on [`std::io::Error`] to give it PartialEq by kind.
 #[derive(Debug)]
+pub struct IOError(std::io::Error);
+
+impl PartialEq for IOError {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.kind() == other.0.kind()
+    }
+}
+
+/// Enum for containing errors that might occur in parsing custom layout specifications.
+#[derive(Debug, PartialEq)]
+pub enum LayoutParseError {
+    /// IO error (e.g. cannot open the layout file)
+    IOError{ error: IOError },
+}
+
+#[derive(Debug, PartialEq)]
 /// Enum for containing errors that might occur in parsing configurations.
 pub enum ConfigParseError {
     /// See [`BindParseError`].
@@ -44,7 +61,7 @@ pub enum ConfigParseError {
     /// Could not determine the statement type of the line.
     NotAStatement{ line: u16 },
     /// IO error (e.g. cannot open the config file)
-    IOError{ error: std::io::Error },
+    IOError{ error: IOError },
 }
 
 impl ConfigParseError {
@@ -64,21 +81,7 @@ impl ConfigParseError {
             Self::BindParseError{ error, line } => format!("error parsing bind statement on line {}: {}", line, error.value()),
             Self::OptionParseError{ error, line } => format!("error parsing option statement on line {}: {}", line, error.value()),
             Self::NotAStatement{ line } => format!("could not determine statement type of line {}", line),
-            Self::IOError{ error } => error.to_string(),
-        }
-    }
-}
-
-impl PartialEq for ConfigParseError {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) { 
-            (Self::BindParseError{ error, line }, Self::BindParseError{ error: other_error, line: other_line })
-                => line == other_line && error == other_error,
-            (Self::OptionParseError{ error, line }, Self::OptionParseError{ error: other_error, line: other_line })
-                => line == other_line && error == other_error,
-            (Self::IOError{ error }, Self::IOError{ error: other_error })
-                => error.kind() == other_error.kind(),
-            _ => false
+            Self::IOError{ error } => error.0.to_string(),
         }
     }
 }
@@ -86,7 +89,7 @@ impl PartialEq for ConfigParseError {
 impl fmt::Display for ConfigParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::IOError{ error } => error.fmt(f),
+            Self::IOError{ error } => error.0.fmt(f),
             _ => write!(f, "error in parsing configuration: {}", self.value()),
         }
     }
@@ -94,7 +97,7 @@ impl fmt::Display for ConfigParseError {
 
 impl From<std::io::Error> for ConfigParseError {
     fn from(e: std::io::Error) -> Self {
-        Self::IOError{ error: e }
+        Self::IOError{ error: IOError(e) }
     }
 }
 
