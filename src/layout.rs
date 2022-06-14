@@ -1,4 +1,26 @@
 //! A module for handling keyboard layouts.
+//! 
+//! # Custom Layout Specification Parsing
+//! In addition to the three built-in layouts [`Qwerty`], [`Dvorak`], and [`Colemak`], fim offers
+//! the ability for users to create their own custom keyboard layouts through 'custom layout
+//! specifications' ('layout spec' or just 'spec' for short), and use them in fim.
+//!
+//! A layout spec is its own file, and can have whatever extension you like, although `.fiml` is
+//! traditional.
+//!
+//! A spec is composed of two parts: the name line and the layout pairs. The name line must
+//! be the first line of the layout spec, and has the syntax `layout <name>`, where `<name>` is the
+//! name of the custom layout defined in that file.
+//!
+//! Each layout pair maps a printable ASCII character to another printable ASCII character, like
+//! so: `<char_qwerty> => <char_layout>`, where `<char_qwerty>` is the QWERTY character, and
+//! `<char_layout>` is the character you would like `<char_qwerty>` to map to. For example, if you
+//! wanted to map any press of the `1` key to `a`, for example, the layout pair would be `1 => a`.
+//! A spec can have any number of layout pairs, and pairs later in the file override pairs earlier
+//! in the file (I don't know why you would need that, but it is what it is).
+//! 
+//! If a QWERTY key is not mapped from in the spec, then whenever that key is pressed, you'll get
+//! that QWERTY character back.
 use crate::config::config_error::LayoutParseError;
 use crossterm::event::KeyCode;
 use std::collections::HashMap;
@@ -358,6 +380,7 @@ pub struct CustomLayout {
 }
 
 impl CustomLayout {
+    /// Create a new CustomLayout from a file.
     pub fn new(file: PathBuf) -> Result<Self, LayoutParseError> {
         let contents = read_to_string(file)?;
         let mut lines = contents.lines();
@@ -374,6 +397,7 @@ impl CustomLayout {
         } else { Err(LayoutParseError::NoFirstLine) }
     }
 
+    /// Return the name of the layout.
     pub fn name(&self) -> &str {
         self.name.as_str()
     }
