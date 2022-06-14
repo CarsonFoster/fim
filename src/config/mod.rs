@@ -102,6 +102,7 @@ pub mod config_error;
 pub mod keybinds;
 pub mod options;
 
+use crate::layout::CustomLayout;
 use self::config_error::ConfigParseError;
 use self::keybinds::KeyBinds;
 use self::options::Options;
@@ -110,32 +111,56 @@ use std::fs::read_to_string;
 
 pub struct Config {
     pub opt: Options,
-    pub key_binds: KeyBinds
+    pub key_binds: KeyBinds,
+    pub layouts: HashMap<String, CustomLayout>
 }
 
 impl Config {
     pub fn new(file: PathBuf) -> Result<Self, ConfigParseError> {
         let mut opt = Options::default();
         let mut key_binds = KeyBinds::new();
+        let mut layouts = HashMap::new();
         let string = read_to_string(file)?;
         for (line, line_no) in string.lines().zip(1usize..) {
-            if line.trim().len() == 0 || line.starts_with('"') { continue; }
-            if line.starts_with("bind") {
-                let result = key_binds.add(line, opt.layout.clone());
-                if result.is_err() {
-                    return Err(ConfigParseError::bind(result.unwrap_err(), line_no));
-                }
-            } else if line.starts_with("set") {
-                let result = opt.set_option(line);
-                if result.is_err() {
-                    return Err(ConfigParseError::option(result.unwrap_err(), line_no));
-                }
-            } else {
-                return Err(ConfigParseError::NotAStatement{ line: line_no });
-            }
+            Self::parse_line(line, line_no, &mut opt, &mut key_binds, &mut layouts)?;
         }
+        Ok(Config{ opt, key_binds, layouts })
+    }
 
-        Ok(Config{ opt, key_binds })
+    fn parse_line(line: &str, line_no: usize, opt: &mut Options, key_binds: &mut KeyBinds, layouts: &mut HashMap<String, CustomLayout>) -> Result<(), ConfigParseError> {
+        if line.trim().len() == 0 || line.starts_with('"') { return Ok(()); }
+        if line.starts_with("bind") {
+            let result = key_binds.add(line, opt.layout.clone());
+            if result.is_err() {
+                return Err(ConfigParseError::bind(result.unwrap_err(), line_no));
+            }
+        } else if line.starts_with("set") {
+            let result = opt.set_option(line);
+            if result.is_err() {
+                return Err(ConfigParseError::option(result.unwrap_err(), line_no));
+            }
+        } else if line.starts_with("include") {
+            Self::parse_include(line, line_no, opt, key_binds, layouts)?;
+        } else {
+            return Err(ConfigParseError::NotAStatement{ line: line_no });
+        }
+        Ok(())
+    }
+
+    fn parse_include(line: &str, line_no: usize, opt: &mut Options, key_binds: &mut KeyBinds, layouts: &mut HashMap<String, CustomLayout>) -> Result<(), ConfigParseError> {
+        if let Some(line) = line.strip_prefix("include ") {
+            if line.starts_with('\'') {
+                // TODO: support regular includes
+            } else if let Some(line) = line.strip_prefix("layout ") {
+                // TODO: support 'as <name>'
+                if let Some(line) = line.strip_prefix('\'').map(|l| l.strip_suffix('\'')).flatten() {
+                    let result = CustomLayout::new(line.parse::<PathBuf>().unwrap());
+                    if let Ok(layout) = result {
+                        layouts.insert(layout.name().to_string(), layout);
+                    } else { Err(ConfigParseError::layout(result.unwrap_err(), line_no)) }
+                } else { /* TODO */ }
+            } else { /* TODO */ }
+        } else { /* TODO */ }
     }
 }
 
