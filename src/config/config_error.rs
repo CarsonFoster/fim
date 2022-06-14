@@ -52,13 +52,28 @@ impl fmt::Display for IOError {
 /// Enum for containing errors that might occur in parsing custom layout specifications.
 #[derive(Debug, PartialEq)]
 pub enum LayoutParseError {
+    /// No first line to parse.
+    NoFirstLine,
+    /// The spec didn't start with a layout name.
+    NoLayoutName,
+    /// Non-ASCII character in layout pair.
+    NonAsciiCharacter{ line: usize },
+    /// No ` => ` found in layout pair.
+    MalformedLayoutPair{ line: usize },
+    /// Not mapping a character to a character.
+    NonCharacterMapping{ line: usize },
     /// IO error (e.g. cannot open the layout file)
-    IOError{ error: IOError },
+    IOError{ error: IOError }
 }
 
 impl fmt::Display for LayoutParseError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::NoFirstLine => write!(f, "no first line to parse"),
+            Self::NoLayoutName => write!(f, "no layout name found"),
+            Self::NonAsciiCharacter{ line } => write!(f, "non-ASCII character found in layout pair on line {}", line),
+            Self::MalformedLayoutPair{ line } => write!(f, "did not find ` => ` in layout pair on line {}", line),
+            Self::NonCharacterMapping{ line } => write!(f, "layout pair on line {} not mapping a character to a character", line),
             Self::IOError{ error } => error.fmt(f)
         }
     }
@@ -108,7 +123,7 @@ impl fmt::Display for ConfigParseError {
         match self {
             Self::BindParseError{ error, line } => write!(f, "error parsing bind statement on line {}: {}", line, error),
             Self::OptionParseError{ error, line } => write!(f, "error parsing option statement on line {}: {}", line, error),
-            Self::LayoutParseError{ error, line } => write!(f, "error parsing layout specification on line {} in spec: {}", line, error),
+            Self::LayoutParseError{ error, line } => write!(f, "error parsing layout spec (included on line {}): {}", line, error),
             Self::NotAStatement{ line } => write!(f, "could not determine statement type of line {}", line),
             Self::IOError{ error } => error.fmt(f),
         }

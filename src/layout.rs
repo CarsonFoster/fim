@@ -1,5 +1,9 @@
 //! A module for handling keyboard layouts.
+use crate::config::config_error::LayoutParseError;
 use crossterm::event::KeyCode;
+use std::collections::HashMap;
+use std::fs::read_to_string;
+use std::path::PathBuf;
 
 /// An interface for keyboard layouts.
 pub trait Layout {
@@ -340,13 +344,63 @@ impl Layout for Colemak {
     }
 }
 
-/// Skeleton struct that represents custom, user-defined keyboard layouts (from a file).....
-pub struct FromFile; 
+/// Struct that represents custom, user-defined keyboard layouts.
+/// 
+/// The actual semantic content of this struct is pulled from a layout file. See the [module-level
+/// documentation](crate::layout) for more information.
+pub struct CustomLayout {
+    #[doc(hidden)]
+    from_qwerty_map: HashMap<u8, u8>,
+    #[doc(hidden)]
+    to_qwerty_map: HashMap<u8, u8>,
+    #[doc(hidden)]
+    name: String
+}
 
-impl FromFile {
-    fn new(filename: &str) -> FromFile { 
-        FromFile        
+impl CustomLayout {
+    pub fn new(file: PathBuf) -> Result<Self, LayoutParseError> {
+        let contents = read_to_string(file)?;
+        let mut lines = contents.lines();
+        if let Some(first_line) = lines.next() {
+            let name = Self::parse_name(first_line)?;
+            let mut from_qwerty_map = HashMap::new();
+            let mut to_qwerty_map = HashMap::new();
+            for (line, line_num) in lines.zip(2usize..) {
+                let (qwerty, layout) = Self::parse_pair(line, line_num)?;
+                from_qwerty_map.insert(qwerty, layout);
+                to_qwerty_map.insert(layout, qwerty);
+            }
+            Ok(CustomLayout{ from_qwerty_map, to_qwerty_map, name: name.to_string() })
+        } else { Err(LayoutParseError::NoFirstLine) }
+    }
+
+    pub fn name(&self) -> &str {
+        self.name.as_str()
+    }
+
+    fn parse_name(line: &str) -> Result<&str, LayoutParseError> {
+        if let Some(name) = line.strip_prefix("layout ") {
+            Ok(name.trim())
+        } else { Err(LayoutParseError::NoLayoutName) }
+    }
+
+    fn parse_pair(line: &str, line_num: usize) -> Result<(u8, u8), LayoutParseError> {
+        if line.is_ascii() {
+            if let Some((qwerty_str, layout_str)) = line.trim_end().split_once(" => ") {
+                if qwerty_str.len() == 1 && layout_str.len() == 1 {
+                    Ok((qwerty_str.as_bytes()[0], layout_str.as_bytes()[0]))
+                } else { Err(LayoutParseError::NonCharacterMapping{ line: line_num }) }
+            } else { Err(LayoutParseError::MalformedLayoutPair{ line: line_num }) }
+        } else { Err(LayoutParseError::NonAsciiCharacter{ line: line_num }) }
     }
 }
 
+impl Layout for CustomLayout {
+    fn from_qwerty(&self, qwerty_press: u8) -> u8 {
+        self.from_qwerty_map.get(&qwerty_press).cloned().unwrap_or(qwerty_press)        
+    }
 
+    fn to_qwerty(&self, layout_press: u8) -> u8 {
+        self.to_qwerty_map.get(&layout_press).cloned().unwrap_or(layout_press)
+    }
+}
