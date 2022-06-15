@@ -103,9 +103,10 @@ pub mod keybinds;
 pub mod options;
 
 use crate::layout::CustomLayout;
-use self::config_error::ConfigParseError;
+use self::config_error::{ ConfigParseError, IncludeParseError };
 use self::keybinds::KeyBinds;
 use self::options::Options;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::fs::read_to_string;
 
@@ -151,21 +152,29 @@ impl Config {
         if let Some(line) = line.strip_prefix("include ") {
             if line.starts_with('\'') {
                 // TODO: support regular includes
+                Ok(())
             } else if let Some(line) = line.strip_prefix("layout ") {
-                // TODO: support 'as <name>'
-                if let Some(line) = line.strip_prefix('\'').map(|l| l.strip_suffix('\'')).flatten() {
-                    let result = CustomLayout::new(line.parse::<PathBuf>().unwrap());
+                if let Some((filename, rest)) = line.strip_prefix('\'').map(|l| l.split_once('\'')).flatten() {
+                    let result = CustomLayout::new(filename.parse::<PathBuf>().unwrap());
                     if let Ok(layout) = result {
-                        layouts.insert(layout.name().to_string(), layout);
-                    } else { Err(ConfigParseError::layout(result.unwrap_err(), line_no)) }
-                } else { /* TODO */ }
-            } else { /* TODO */ }
-        } else { /* TODO */ }
+                        let name = if rest.len() != 0 {
+                            if let Some(name) = rest.strip_prefix(" as ").map(|l| l.trim()) {
+                                name
+                            } else { return Err(ConfigParseError::include(IncludeParseError::MalformedAsClause, line_no)); }
+                        } else { layout.name() };
+                        layouts.insert(name.to_string(), layout);
+                        Ok(())
+                    } else {
+                        Err(ConfigParseError::layout(result.unwrap_err(), line_no)) 
+                    }
+                } else { Err(ConfigParseError::include(IncludeParseError::LayoutNoQuotedFile, line_no)) }
+            } else { Err(ConfigParseError::include(IncludeParseError::UnknownIncludeType, line_no)) }
+        } else { Err(ConfigParseError::include(IncludeParseError::MalformedInclude, line_no)) }
     }
 }
 
 impl Default for Config {
     fn default() -> Self {
-        Config{ opt: Options::default(), key_binds: KeyBinds::new() }
+        Config{ opt: Options::default(), key_binds: KeyBinds::new(), layouts: HashMap::new() }
     }
 }

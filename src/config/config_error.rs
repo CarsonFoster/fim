@@ -86,6 +86,30 @@ impl From<std::io::Error> for LayoutParseError {
     }
 }
 
+/// Enum for containing errors that might occur in parsing include statements.
+#[derive(Debug, PartialEq)]
+pub enum IncludeParseError {
+    /// No `include ` found at beginning of line.
+    MalformedInclude,
+    /// Neither a layout include nor config include.
+    UnknownIncludeType,
+    /// Found no single-quoted file name in layout include.
+    LayoutNoQuotedFile,
+    /// No ` as ` found in non-empty string after final single quote in layout include.
+    MalformedAsClause,
+}
+
+impl fmt::Display for IncludeParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::MalformedInclude => write!(f, "no `include ` found"),
+            Self::UnknownIncludeType => write!(f, "neither a layout include nor a config include"),
+            Self::LayoutNoQuotedFile => write!(f, "in layout include, found no single-quoted file name"),
+            Self::MalformedAsClause => write!(f, "in layout include, found no ` as ` in non-empty string after final single quote"),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 /// Enum for containing errors that might occur in parsing configurations.
 pub enum ConfigParseError {
@@ -95,6 +119,8 @@ pub enum ConfigParseError {
     OptionParseError{ error: OptionParseError, line: usize },
     /// See [`LayoutParseError`].
     LayoutParseError{ error: LayoutParseError, line: usize },
+    /// See [`IncludeParseError`].
+    IncludeParseError{ error: IncludeParseError, line: usize },
     /// Could not determine the statement type of the line.
     NotAStatement{ line: usize },
     /// IO error (e.g. cannot open the config file)
@@ -116,6 +142,11 @@ impl ConfigParseError {
     pub fn layout(error: LayoutParseError, line: usize) -> Self {
         Self::LayoutParseError{ error, line } 
     }
+
+    /// Create a `ConfigParseError::IncludeParseError` from the inner `IncludeParseError`.
+    pub fn include(error: IncludeParseError, line: usize) -> Self {
+        Self::IncludeParseError{ error, line }
+    }
 }
 
 impl fmt::Display for ConfigParseError {
@@ -124,6 +155,7 @@ impl fmt::Display for ConfigParseError {
             Self::BindParseError{ error, line } => write!(f, "error parsing bind statement on line {}: {}", line, error),
             Self::OptionParseError{ error, line } => write!(f, "error parsing option statement on line {}: {}", line, error),
             Self::LayoutParseError{ error, line } => write!(f, "error parsing layout spec (included on line {}): {}", line, error),
+            Self::IncludeParseError{ error, line } => write!(f, "error parsing include statement on line {}: {}", line, error),
             Self::NotAStatement{ line } => write!(f, "could not determine statement type of line {}", line),
             Self::IOError{ error } => error.fmt(f),
         }

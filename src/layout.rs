@@ -370,6 +370,7 @@ impl Layout for Colemak {
 /// 
 /// The actual semantic content of this struct is pulled from a layout file. See the [module-level
 /// documentation](crate::layout) for more information.
+#[derive(Debug)]
 pub struct CustomLayout {
     #[doc(hidden)]
     from_qwerty_map: HashMap<u8, u8>,
