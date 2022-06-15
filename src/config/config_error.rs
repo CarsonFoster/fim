@@ -123,6 +123,8 @@ pub enum ConfigParseError {
     IncludeParseError{ error: IncludeParseError, line: usize },
     /// Could not determine the statement type of the line.
     NotAStatement{ line: usize },
+    /// Can not set layout to unknown custom layout
+    NoMatchingLayout{ line: usize },
     /// IO error (e.g. cannot open the config file)
     IOError{ error: IOError },
 }
@@ -157,6 +159,7 @@ impl fmt::Display for ConfigParseError {
             Self::LayoutParseError{ error, line } => write!(f, "error parsing layout spec (included on line {}): {}", line, error),
             Self::IncludeParseError{ error, line } => write!(f, "error parsing include statement on line {}: {}", line, error),
             Self::NotAStatement{ line } => write!(f, "could not determine statement type of line {}", line),
+            Self::NoMatchingLayout{ line } => write!(f, "could not find an included custom layout matching line {}", line),
             Self::IOError{ error } => error.fmt(f),
         }
     }

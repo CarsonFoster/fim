@@ -105,7 +105,7 @@ pub mod options;
 use crate::layout::CustomLayout;
 use self::config_error::{ ConfigParseError, IncludeParseError };
 use self::keybinds::KeyBinds;
-use self::options::Options;
+use self::options::{ LayoutType, Options };
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::fs::read_to_string;
@@ -139,6 +139,11 @@ impl Config {
             let result = opt.set_option(line);
             if result.is_err() {
                 return Err(ConfigParseError::option(result.unwrap_err(), line_no));
+            }
+            if let LayoutType::Custom{ name } = &opt.layout {
+                if !layouts.contains_key(name.as_str()) {
+                    return Err(ConfigParseError::NoMatchingLayout{ line: line_no });
+                }
             }
         } else if line.starts_with("include") {
             Self::parse_include(line, line_no, opt, key_binds, layouts)?;
