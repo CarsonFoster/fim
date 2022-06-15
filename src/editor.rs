@@ -1,12 +1,14 @@
 //! A module that contains the main editor logic.
 use crate::config::Config;
 use crate::config::keybinds::KeyBinds;
-use crate::config::options::Options;
+use crate::config::options::{LayoutType, Options};
 use crate::context::*;
+use crate::layout::{Colemak, Dvorak, Layout, Qwerty};
 use crate::terminal::{Position, Terminal};
 use crate::window::Window;
 use crossterm::{
     Result,
+    event::KeyEvent,
     terminal::{
         Clear,
         ClearType,
@@ -78,6 +80,13 @@ impl<'a> Editor<'a> {
 
     fn process_keypress(&mut self) -> Result<()> {
         let event = self.terminal.read_key()?;
+        let key_code = (match &self.config.opt.layout {
+            LayoutType::Qwerty => &Qwerty as &dyn Layout,
+            LayoutType::Dvorak => &Dvorak as &dyn Layout,
+            LayoutType::Colemak => &Colemak as &dyn Layout,
+            LayoutType::Custom{ name } => self.config.layouts.get(name.as_str()).unwrap() as &dyn Layout
+        }).from_qwerty_keycode(event.code);
+        let event = KeyEvent::new(key_code, event.modifiers);
         if let Some(mut context) = self.context_stack.pop() {
             self.has_been_setup_stack.pop().unwrap();
             let mut setup;

@@ -129,6 +129,7 @@ impl Config {
     }
 
     fn parse_line(line: &str, line_no: usize, opt: &mut Options, key_binds: &mut KeyBinds, layouts: &mut HashMap<String, CustomLayout>) -> Result<(), ConfigParseError> {
+        // TODO: end of line comments
         if line.trim().len() == 0 || line.starts_with('"') { return Ok(()); }
         if line.starts_with("bind") {
             let result = key_binds.add(line, opt.layout.clone());
