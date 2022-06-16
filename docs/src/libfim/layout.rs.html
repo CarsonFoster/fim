@@ -428,6 +428,7 @@
 <span id="428">428</span>
 <span id="429">429</span>
 <span id="430">430</span>
+<span id="431">431</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module for handling keyboard layouts.</span>
 <span class="doccomment">//! </span>
 <span class="doccomment">//! # Custom Layout Specification Parsing</span>
@@ -800,6 +801,7 @@
 <span class="doccomment">/// </span>
 <span class="doccomment">/// The actual semantic content of this struct is pulled from a layout file. See the [module-level</span>
 <span class="doccomment">/// documentation](crate::layout) for more information.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">CustomLayout</span> {
     <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
     <span class="ident">from_qwerty_map</span>: <span class="ident">HashMap</span><span class="op">&lt;</span><span class="ident">u8</span>, <span class="ident">u8</span><span class="op">&gt;</span>,

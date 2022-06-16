@@ -137,6 +137,41 @@
 <span id="137">137</span>
 <span id="138">138</span>
 <span id="139">139</span>
+<span id="140">140</span>
+<span id="141">141</span>
+<span id="142">142</span>
+<span id="143">143</span>
+<span id="144">144</span>
+<span id="145">145</span>
+<span id="146">146</span>
+<span id="147">147</span>
+<span id="148">148</span>
+<span id="149">149</span>
+<span id="150">150</span>
+<span id="151">151</span>
+<span id="152">152</span>
+<span id="153">153</span>
+<span id="154">154</span>
+<span id="155">155</span>
+<span id="156">156</span>
+<span id="157">157</span>
+<span id="158">158</span>
+<span id="159">159</span>
+<span id="160">160</span>
+<span id="161">161</span>
+<span id="162">162</span>
+<span id="163">163</span>
+<span id="164">164</span>
+<span id="165">165</span>
+<span id="166">166</span>
+<span id="167">167</span>
+<span id="168">168</span>
+<span id="169">169</span>
+<span id="170">170</span>
+<span id="171">171</span>
+<span id="172">172</span>
+<span id="173">173</span>
+<span id="174">174</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module that provides the error types for configuration parsing.</span>
 
 <span class="kw">pub</span> <span class="kw">use</span> <span class="ident"><span class="kw">super</span>::options::OptionParseError</span>;
@@ -225,6 +260,30 @@
     }
 }
 
+<span class="doccomment">/// Enum for containing errors that might occur in parsing include statements.</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
+<span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">IncludeParseError</span> {
+    <span class="doccomment">/// No `include ` found at beginning of line.</span>
+    <span class="ident">MalformedInclude</span>,
+    <span class="doccomment">/// Neither a layout include nor config include.</span>
+    <span class="ident">UnknownIncludeType</span>,
+    <span class="doccomment">/// Found no single-quoted file name in layout include.</span>
+    <span class="ident">LayoutNoQuotedFile</span>,
+    <span class="doccomment">/// No ` as ` found in non-empty string after final single quote in layout include.</span>
+    <span class="ident">MalformedAsClause</span>,
+}
+
+<span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">IncludeParseError</span> {
+    <span class="kw">fn</span> <span class="ident">fmt</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">f</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">fmt::Formatter</span><span class="op">&lt;</span><span class="lifetime">&#39;_</span><span class="op">&gt;</span>) -&gt; <span class="ident">fmt::Result</span> {
+        <span class="kw">match</span> <span class="self">self</span> {
+            <span class="ident"><span class="self">Self</span>::MalformedInclude</span> =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;no `include ` found&quot;</span>),
+            <span class="ident"><span class="self">Self</span>::UnknownIncludeType</span> =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;neither a layout include nor a config include&quot;</span>),
+            <span class="ident"><span class="self">Self</span>::LayoutNoQuotedFile</span> =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;in layout include, found no single-quoted file name&quot;</span>),
+            <span class="ident"><span class="self">Self</span>::MalformedAsClause</span> =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;in layout include, found no ` as ` in non-empty string after final single quote&quot;</span>),
+        }
+    }
+}
+
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Debug</span>, <span class="ident">PartialEq</span>)]</span>
 <span class="doccomment">/// Enum for containing errors that might occur in parsing configurations.</span>
 <span class="kw">pub</span> <span class="kw">enum</span> <span class="ident">ConfigParseError</span> {
@@ -234,8 +293,12 @@
     <span class="ident">OptionParseError</span>{ <span class="ident">error</span>: <span class="ident">OptionParseError</span>, <span class="ident">line</span>: <span class="ident">usize</span> },
     <span class="doccomment">/// See [`LayoutParseError`].</span>
     <span class="ident">LayoutParseError</span>{ <span class="ident">error</span>: <span class="ident">LayoutParseError</span>, <span class="ident">line</span>: <span class="ident">usize</span> },
+    <span class="doccomment">/// See [`IncludeParseError`].</span>
+    <span class="ident">IncludeParseError</span>{ <span class="ident">error</span>: <span class="ident">IncludeParseError</span>, <span class="ident">line</span>: <span class="ident">usize</span> },
     <span class="doccomment">/// Could not determine the statement type of the line.</span>
     <span class="ident">NotAStatement</span>{ <span class="ident">line</span>: <span class="ident">usize</span> },
+    <span class="doccomment">/// Can not set layout to unknown custom layout</span>
+    <span class="ident">NoMatchingLayout</span>{ <span class="ident">line</span>: <span class="ident">usize</span> },
     <span class="doccomment">/// IO error (e.g. cannot open the config file)</span>
     <span class="ident">IOError</span>{ <span class="ident">error</span>: <span class="ident">IOError</span> },
 }
@@ -255,6 +318,11 @@
     <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">layout</span>(<span class="ident">error</span>: <span class="ident">LayoutParseError</span>, <span class="ident">line</span>: <span class="ident">usize</span>) -&gt; <span class="self">Self</span> {
         <span class="ident"><span class="self">Self</span>::LayoutParseError</span>{ <span class="ident">error</span>, <span class="ident">line</span> } 
     }
+
+    <span class="doccomment">/// Create a `ConfigParseError::IncludeParseError` from the inner `IncludeParseError`.</span>
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">include</span>(<span class="ident">error</span>: <span class="ident">IncludeParseError</span>, <span class="ident">line</span>: <span class="ident">usize</span>) -&gt; <span class="self">Self</span> {
+        <span class="ident"><span class="self">Self</span>::IncludeParseError</span>{ <span class="ident">error</span>, <span class="ident">line</span> }
+    }
 }
 
 <span class="kw">impl</span> <span class="ident">fmt::Display</span> <span class="kw">for</span> <span class="ident">ConfigParseError</span> {
@@ -263,7 +331,9 @@
             <span class="ident"><span class="self">Self</span>::BindParseError</span>{ <span class="ident">error</span>, <span class="ident">line</span> } =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;error parsing bind statement on line {}: {}&quot;</span>, <span class="ident">line</span>, <span class="ident">error</span>),
             <span class="ident"><span class="self">Self</span>::OptionParseError</span>{ <span class="ident">error</span>, <span class="ident">line</span> } =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;error parsing option statement on line {}: {}&quot;</span>, <span class="ident">line</span>, <span class="ident">error</span>),
             <span class="ident"><span class="self">Self</span>::LayoutParseError</span>{ <span class="ident">error</span>, <span class="ident">line</span> } =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;error parsing layout spec (included on line {}): {}&quot;</span>, <span class="ident">line</span>, <span class="ident">error</span>),
+            <span class="ident"><span class="self">Self</span>::IncludeParseError</span>{ <span class="ident">error</span>, <span class="ident">line</span> } =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;error parsing include statement on line {}: {}&quot;</span>, <span class="ident">line</span>, <span class="ident">error</span>),
             <span class="ident"><span class="self">Self</span>::NotAStatement</span>{ <span class="ident">line</span> } =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;could not determine statement type of line {}&quot;</span>, <span class="ident">line</span>),
+            <span class="ident"><span class="self">Self</span>::NoMatchingLayout</span>{ <span class="ident">line</span> } =&gt; <span class="macro">write!</span>(<span class="ident">f</span>, <span class="string">&quot;could not find an included custom layout matching line {}&quot;</span>, <span class="ident">line</span>),
             <span class="ident"><span class="self">Self</span>::IOError</span>{ <span class="ident">error</span> } =&gt; <span class="ident">error</span>.<span class="ident">fmt</span>(<span class="ident">f</span>),
         }
     }
