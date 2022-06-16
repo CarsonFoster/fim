@@ -136,10 +136,7 @@ impl Context for Action {
 pub struct NormalMode;
 impl Context for NormalMode {
     fn forward(&mut self, ed: &mut Editor, event: KeyEvent) -> Result<Option<ContextMessage>> {
-        let KeyEvent{ code: c, modifiers: _ } = event;
-        if c == KeyCode::Char(':') {
-            ed.push_context(CommandMode::new()); 
-        } else if let Some(factory) = ed.config().query_binds("NormalMode", event) {
+        if let Some(factory) = ed.config().query_binds("NormalMode", event) {
             let context = factory.create();
             ed.push_boxed_context(context);
         }
