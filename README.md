@@ -16,15 +16,16 @@ Most of the work on fim so far has been internal, architecture/structuring relat
 - [x] the ability to open and display files
   - [x] line numbers: relative (default), absolute, and none
   - [x] line wrapping fully implemented
-- [ ] the ability to read config files
+- [x] the ability to read config files
   - [x] bind key combinations to Contexts (note that this is different than normal vim mapping, which maps key presses to other key presses)
-  - [ ] read options from the same config file
+  - [x] read options from the same config file
+  - [x] include user-defined keyboard layouts
 - [ ] common vim normal mode commands
   - [ ] basic movement
     - [x] left, up, down, right (hjkl)
 - [x] built-in QWERTY, Dvorak, and Colemak layouts
-  - [ ] fully integrated with other fim systems
-  - [ ] way of reading user-defined layouts
+  - [x] fully integrated with other fim systems
+  - [x] way of reading user-defined layouts
 
 # Documentation
 See [here](https://carsonfoster.github.io/fim/) for fim's documentation, if you're curious about how fim is structured internally.
