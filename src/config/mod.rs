@@ -102,21 +102,28 @@ pub mod config_error;
 pub mod keybinds;
 pub mod options;
 
-use crate::layout::CustomLayout;
+use crate::context::Factory;
+use crate::layout::{ Colemak, CustomLayout, Dvorak, Layout, Qwerty };
 use self::config_error::{ ConfigParseError, IncludeParseError };
 use self::keybinds::KeyBinds;
 use self::options::{ LayoutType, Options };
+use crossterm::event::KeyEvent;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::fs::read_to_string;
 
+/// Struct to hold configuration details of fim.
 pub struct Config {
+    /// `Options` object.
     pub opt: Options,
+    /// `KeyBinds` object.
     pub key_binds: KeyBinds,
+    /// Map between layout name and the `CustomLayout` object.
     pub layouts: HashMap<String, CustomLayout>
 }
 
 impl Config {
+    /// Parse the given config file.
     pub fn new(file: PathBuf) -> Result<Self, ConfigParseError> {
         let mut opt = Options::default();
         let mut key_binds = KeyBinds::new();
@@ -128,11 +135,49 @@ impl Config {
         Ok(Config{ opt, key_binds, layouts })
     }
 
+    /// Shortcut to calling `self.key_binds.query` with the appropriate arguments.
+    pub fn query_binds(&self, context: &str, key: KeyEvent) -> Option<&Factory> {
+        self.key_binds.query(context, key, self.opt.layout.clone(), &self.layouts)
+    }
+
+    /// Return the trait object reference of the current layout, as according to `opt`.
+    pub fn current_layout(&self) -> &dyn Layout {
+        Self::layout(&self.opt.layout, &self.layouts)
+    }
+
+    /// Convert a `LayoutType` into a `Layout` trait object reference.
+    ///
+    /// # Panics
+    /// Panics if `layout` is a `LayoutType::Custom` and its `name` field is not a key in `map`.
+    pub fn layout<'a, 'b>(layout: &'a LayoutType, map: &'b HashMap<String, CustomLayout>) -> &'b dyn Layout {
+        match layout {
+            LayoutType::Dvorak => &Dvorak as &dyn Layout,
+            LayoutType::Colemak => &Colemak as &dyn Layout,
+            LayoutType::Qwerty => &Qwerty as &dyn Layout,
+            LayoutType::Custom{ name } => map.get(name.as_str()).unwrap() as &dyn Layout
+        }
+    }
+
+    /// Translate a QWERTY `KeyEvent` into a `KeyEvent` from the current layout.
+    pub fn to_current_layout_event(&self, e: KeyEvent) -> KeyEvent {
+        let key_code = self.current_layout().from_qwerty_keycode(e.code);
+        KeyEvent::new(key_code, e.modifiers)
+    }
+
+    /// Convert a `KeyEvent` from a given layout into a QWERTY `KeyEvent`.
+    ///
+    /// # Panics
+    /// Panics if `layout` is a `LayoutType::Custom` and its `name` field is not a key in `map`.
+    pub fn to_qwerty_event(e: KeyEvent, layout: &LayoutType, map: &HashMap<String, CustomLayout>) -> KeyEvent {
+        let key_code = Self::layout(layout, map).to_qwerty_keycode(e.code);
+        KeyEvent::new(key_code, e.modifiers)
+    }
+
     fn parse_line(line: &str, line_no: usize, opt: &mut Options, key_binds: &mut KeyBinds, layouts: &mut HashMap<String, CustomLayout>) -> Result<(), ConfigParseError> {
         // TODO: end of line comments
         if line.trim().len() == 0 || line.starts_with('"') { return Ok(()); }
         if line.starts_with("bind") {
-            let result = key_binds.add(line, opt.layout.clone());
+            let result = key_binds.add(line, opt.layout.clone(), layouts);
             if result.is_err() {
                 return Err(ConfigParseError::bind(result.unwrap_err(), line_no));
             }
