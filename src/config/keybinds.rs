@@ -1,7 +1,9 @@
 //! A module for handling how keys are assigned to [`Context`]s.
+use super::Config;
 use super::config_error::BindParseError;
 use super::options::LayoutType;
 use crate::context::*;
+use crate::layout::CustomLayout;
 use std::collections::HashMap;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 
@@ -75,8 +77,9 @@ impl KeyBinds {
     /// Parses the passed line as a `bind` line and adds the resulting key binds to self.
     ///
     /// Replaces previous key binds.
-    pub fn add(&mut self, line: &str, layout: LayoutType) -> Result<(), BindParseError> {
+    pub fn add(&mut self, line: &str, layout: LayoutType, layout_map: &HashMap<String, CustomLayout>) -> Result<(), BindParseError> {
         let (current_layout_only, context, keypress, factory) = Self::parse_line(line)?;
+        let keypress = Config::to_qwerty_event(keypress, &layout, layout_map); // translate to QWERTY
         let layout_option = if current_layout_only { Some(layout) } else { None };
         self.map.entry(layout_option).or_insert(HashMap::new())
                 .entry(context).or_insert(HashMap::new())
@@ -88,7 +91,8 @@ impl KeyBinds {
     /// 
     /// Layout-specific key binds are always returned in favor over layout-agnostic key binds, if
     /// possible.
-    pub fn query(&self, context: &str, key: KeyEvent, layout: LayoutType) -> Option<&Factory> {
+    pub fn query(&self, context: &str, key: KeyEvent, layout: LayoutType, layout_map: &HashMap<String, CustomLayout>) -> Option<&Factory> {
+        let key = Config::to_qwerty_event(key, &layout, layout_map); // translate to QWERTY
         let code = if let KeyCode::Char(c) = key.code { KeyCode::Char(c.to_ascii_uppercase()) } else { key.code };
         let key = KeyEvent::new(code, key.modifiers);
         self.map.get(&Some(layout)).map(|m| m.get(context).map(|m| m.get(&key))).flatten().flatten().or_else(||
