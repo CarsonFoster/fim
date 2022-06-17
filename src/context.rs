@@ -11,7 +11,7 @@
 //! beneath it on the context stack (the [`Context`] that becomes the active context after this one
 //! is popped). [`Context`]s also have a 'setup' function that is called once, at the time that
 //! [`Context`] becomes the active [`Context`].
-use crate::editor::Editor;
+use crate::editor::{CmdLineFlags, Editor};
 use std::cmp::min;
 use crossterm::{
     Result,
@@ -100,6 +100,7 @@ pub fn context(name: &str, args: String) -> Option<Factory> {
         "NormalMode" => Some(Factory::new(|| NormalMode)),
         "CommandMode" => Some(Factory::new(|| CommandMode::new())),
         "Action" => Some(Factory::new(move || Action::new(String::from(&args)))),
+        "InsertMode" => Some(Factory::new(|| InsertMode)),
         _ => None
     }
 }
@@ -190,7 +191,7 @@ impl CommandMode {
     fn q_draw(&self, ed: &mut Editor) -> Result<()> {
         let width: usize = ed.terminal().size().width.into();
         let end = min(self.begin + width - 1, self.str.len());
-        ed.q_draw_cmd_line([":", &self.str[self.begin..end]], false)
+        ed.q_draw_cmd_line([":", &self.str[self.begin..end]], CmdLineFlags::empty())
     }
 
     fn delete(&mut self, ed: &mut Editor) -> Result<()> {
@@ -212,7 +213,7 @@ impl CommandMode {
 
 impl Context for CommandMode {
     fn setup(&mut self, ed: &mut Editor) -> Result<bool> {
-        ed.draw_cmd_line([":"])?;
+        ed.q_draw_cmd_line([":"], CmdLineFlags::Flush | CmdLineFlags::SaveCursor)?;
         Ok(false)
     }
 
@@ -226,6 +227,7 @@ impl Context for CommandMode {
                     "q" => ed.quit(),
                     _ => (),
                 }
+                ed.q_draw_cmd_line([], CmdLineFlags::Flush | CmdLineFlags::RestoreCursor)?;
                 ed.push_command(String::from(&self.str));
                 return Ok(Some(ContextMessage::Unit))
             },
@@ -323,6 +325,38 @@ impl Context for CommandMode {
                 ed.terminal().flush()?;
             },
             _ => (),
+        }
+        Ok(None)
+    }
+}
+
+pub struct InsertMode;
+
+impl Context for InsertMode {
+    fn setup(&mut self, ed: &mut Editor) -> Result<bool> {
+        ed.q_draw_cmd_line(["-- INSERT --"], CmdLineFlags::all())?;
+        Ok(false)
+    }
+
+    fn forward(&mut self, ed: &mut Editor, key: KeyEvent) -> Result<Option<ContextMessage>> {
+        let code = key.code;
+        match code {
+            KeyCode::Backspace => (),
+            KeyCode::Enter => (),
+            KeyCode::Left => (),
+            KeyCode::Right => (),
+            KeyCode::Up => (),
+            KeyCode::Down => (),
+            KeyCode::Home => (),
+            KeyCode::End => (),
+            KeyCode::Tab => (),
+            KeyCode::Delete => (),
+            KeyCode::Esc => {
+                ed.q_draw_cmd_line([], CmdLineFlags::all())?;
+                return Ok(Some(ContextMessage::Unit));
+            },
+            KeyCode::Char(c) => (),
+            _ => ()
         }
         Ok(None)
     }

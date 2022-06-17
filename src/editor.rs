@@ -5,6 +5,7 @@ use crate::config::options::Options;
 use crate::context::*;
 use crate::terminal::{Position, Terminal};
 use crate::window::Window;
+use bitflags::bitflags;
 use crossterm::{
     Result,
     terminal::{
@@ -142,27 +143,26 @@ impl<'a> Editor<'a> {
         self.push_context_stack.push(context);
     }
 
-    /// Draw the command line.
-    ///
-    /// (This refers to the last line in the terminal that you type ed commands or ":q" into in
-    /// vim. I have no idea what it's really called, so I refer to it as the command line).
-    /// 
-    /// See also: [`Self::q_draw_cmd_line()`].
-    pub fn draw_cmd_line<const N: usize>(&mut self, text: [&str; N]) -> Result<()> {
-        self.q_draw_cmd_line(text, true)
-    }
-
     /// Queue the necessary
     /// [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html)s to draw the command line.
     /// 
+    /// Flushes the `Command` only if `flush` is `true`. If `save_cursor` is `true`, saves the
+    /// cursor before the draw. If `reset_cursor` is `true`, after the draw
+    /// the cursor will be placed where it was previously. Otherwise, it will remain on the command
+    /// line after the drawn text.
     /// See also: [`Self::draw_cmd_line()`].
-    pub fn q_draw_cmd_line<const N: usize>(&mut self, text: [&str; N], flush: bool) -> Result<()> {
+    pub fn q_draw_cmd_line<const N: usize>(&mut self, text: [&str; N], flags: CmdLineFlags) -> Result<()> {
+        if flags.contains(CmdLineFlags::SaveCursor) { self.terminal.save_cursor(); }
         let height = self.terminal.size().height;
         self.terminal.cursor_to(0, height - 1).q_move_cursor()?.q(Clear(ClearType::CurrentLine))?;
         for text_bit in text {
             self.terminal.q(Print(text_bit))?;
         }
-        if flush { self.terminal.flush() } else { Ok(()) }
+        if flags.contains(CmdLineFlags::RestoreCursor) {
+            self.terminal.restore_cursor();
+            self.terminal.q_move_cursor()?;
+        }
+        if flags.contains(CmdLineFlags::Flush) { self.terminal.flush() } else { Ok(()) }
     }
 
     /// Return a reference to the terminal.
@@ -200,5 +200,13 @@ impl<'a> Editor<'a> {
 impl<'a> Drop for Editor<'a> {
     fn drop(&mut self) {
         self.terminal.leave_alternate_screen().expect("Failed to leave alternate screen");
+    }
+}
+
+bitflags! {
+    pub struct CmdLineFlags: u8 {
+        const Flush         = 0b001;
+        const SaveCursor    = 0b010;
+        const RestoreCursor = 0b100;
     }
 }
