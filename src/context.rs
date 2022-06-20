@@ -213,7 +213,7 @@ impl CommandMode {
 
 impl Context for CommandMode {
     fn setup(&mut self, ed: &mut Editor) -> Result<bool> {
-        ed.q_draw_cmd_line([":"], CmdLineFlags::Flush | CmdLineFlags::SaveCursor)?;
+        ed.q_draw_cmd_line([":"], CmdLineFlags::FLUSH | CmdLineFlags::SAVECURSOR)?;
         Ok(false)
     }
 
@@ -227,7 +227,7 @@ impl Context for CommandMode {
                     "q" => ed.quit(),
                     _ => (),
                 }
-                ed.q_draw_cmd_line([], CmdLineFlags::Flush | CmdLineFlags::RestoreCursor)?;
+                ed.q_draw_cmd_line([], CmdLineFlags::FLUSH | CmdLineFlags::RESTORECURSOR)?;
                 ed.push_command(String::from(&self.str));
                 return Ok(Some(ContextMessage::Unit))
             },

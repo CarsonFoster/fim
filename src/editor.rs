@@ -152,17 +152,17 @@ impl<'a> Editor<'a> {
     /// line after the drawn text.
     /// See also: [`Self::draw_cmd_line()`].
     pub fn q_draw_cmd_line<const N: usize>(&mut self, text: [&str; N], flags: CmdLineFlags) -> Result<()> {
-        if flags.contains(CmdLineFlags::SaveCursor) { self.terminal.save_cursor(); }
+        if flags.contains(CmdLineFlags::SAVECURSOR) { self.terminal.save_cursor(); }
         let height = self.terminal.size().height;
         self.terminal.cursor_to(0, height - 1).q_move_cursor()?.q(Clear(ClearType::CurrentLine))?;
         for text_bit in text {
             self.terminal.q(Print(text_bit))?;
         }
-        if flags.contains(CmdLineFlags::RestoreCursor) {
+        if flags.contains(CmdLineFlags::RESTORECURSOR) {
             self.terminal.restore_cursor();
             self.terminal.q_move_cursor()?;
         }
-        if flags.contains(CmdLineFlags::Flush) { self.terminal.flush() } else { Ok(()) }
+        if flags.contains(CmdLineFlags::FLUSH) { self.terminal.flush() } else { Ok(()) }
     }
 
     /// Return a reference to the terminal.
@@ -205,8 +205,8 @@ impl<'a> Drop for Editor<'a> {
 
 bitflags! {
     pub struct CmdLineFlags: u8 {
-        const Flush         = 0b001;
-        const SaveCursor    = 0b010;
-        const RestoreCursor = 0b100;
+        const FLUSH         = 0b001;
+        const SAVECURSOR    = 0b010;
+        const RESTORECURSOR = 0b100;
     }
 }
