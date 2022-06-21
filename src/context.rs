@@ -343,8 +343,6 @@ impl Context for InsertMode {
         match code {
             KeyCode::Backspace => (),
             KeyCode::Enter => (),
-            KeyCode::Home => (),
-            KeyCode::End => (),
             KeyCode::Tab => (),
             KeyCode::Delete => (),
             KeyCode::Esc => {

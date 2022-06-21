@@ -122,6 +122,8 @@ impl<'a> Editor<'a> {
             "move_right" => current_window.move_right(term)?,
             "move_up" => current_window.move_up(term)?,
             "move_down" => current_window.move_down(term)?,
+            "home" => current_window.home(term)?,
+            "end" => current_window.end(term)?,
             _ => (),
         }
 

@@ -9,3 +9,5 @@ bind(InsertMode) <Left> Action move_left
 bind(InsertMode) <Right> Action move_right
 bind(InsertMode) <Up> Action move_up
 bind(InsertMode) <Down> Action move_down
+bind(InsertMode) <Home> Action home
+bind(InsertMode) <End> Action end

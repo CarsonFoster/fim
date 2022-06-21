@@ -186,6 +186,25 @@ impl Window {
         }
         Ok(())
     }
+
+    /// Move the cursor to the beginning of the current line.
+    pub fn home(&mut self, term: &mut Terminal) -> Result<()> {
+        if self.doc.is_none() { return Ok(()) }
+        self.pos_in_doc.x = 0;
+        self.target_x = self.pos_in_doc.x;
+        self.q_move(term)?;
+        term.flush()
+    }
+
+    /// Move the cursor to the end of the current line.
+    pub fn end(&mut self, term: &mut Terminal) -> Result<()> {
+        if self.doc.is_none() { return Ok(()) }
+        let last = self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().length - 1;
+        self.pos_in_doc.x = last;
+        self.target_x = self.pos_in_doc.x;
+        self.q_move(term)?;
+        term.flush()
+    }
     
     // NOTE: when you implement splitting, make sure that all split windows have
     // documents, and that you change the existing window to have a new blank document
