@@ -343,10 +343,6 @@ impl Context for InsertMode {
         match code {
             KeyCode::Backspace => (),
             KeyCode::Enter => (),
-            KeyCode::Left => (),
-            KeyCode::Right => (),
-            KeyCode::Up => (),
-            KeyCode::Down => (),
             KeyCode::Home => (),
             KeyCode::End => (),
             KeyCode::Tab => (),
@@ -356,7 +352,12 @@ impl Context for InsertMode {
                 return Ok(Some(ContextMessage::Unit));
             },
             KeyCode::Char(c) => (),
-            _ => ()
+            _ => {
+                if let Some(factory) = ed.config().query_binds("InsertMode", key) {
+                    let context = factory.create();
+                    ed.push_boxed_context(context);
+                }
+            }
         }
         Ok(None)
     }
