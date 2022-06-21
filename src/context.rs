@@ -341,6 +341,7 @@ impl Context for InsertMode {
     fn forward(&mut self, ed: &mut Editor, key: KeyEvent) -> Result<Option<ContextMessage>> {
         let code = key.code;
         match code {
+            // TODO: reusable code for these and character insertion
             KeyCode::Backspace => (),
             KeyCode::Enter => (),
             KeyCode::Tab => (),
@@ -349,7 +350,7 @@ impl Context for InsertMode {
                 ed.q_draw_cmd_line([], CmdLineFlags::all())?;
                 return Ok(Some(ContextMessage::Unit));
             },
-            KeyCode::Char(c) => (),
+            KeyCode::Char(c) => (), // TODO: make sure no binds get consumed/inserted
             _ => {
                 if let Some(factory) = ed.config().query_binds("InsertMode", key) {
                     let context = factory.create();
