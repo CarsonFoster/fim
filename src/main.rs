@@ -8,7 +8,12 @@ pub use libfim::{config, context, delta, document, editor, layout, terminal, win
 use libfim::config::Config;
 use libfim::editor::Editor;
 use clap::Parser;
+use std::fs;
+use std::io::{stderr, Write};
+use std::panic;
 use std::path::PathBuf;
+
+const LOG_FILE: &str = "fim_crash.log";
 
 #[doc(hidden)]
 #[derive(Parser)]
@@ -26,6 +31,23 @@ struct Args {
 
 #[doc(hidden)]
 fn main() {
+    panic::set_hook(Box::new(|info| {
+        let payload = if let Some(p) = info.payload().downcast_ref::<String>() {
+            p.as_str()
+        } else if let Some(p) = info.payload().downcast_ref::<&str>() {
+            p
+        } else {
+            "non-string payload"
+        };
+        let message = if let Some(loc) = info.location() {
+            format!("{}:{}, column {} | payload: {}\n", loc.file(), loc.line(), loc.column(), payload)
+        } else {
+            format!("payload: {} (no location info)\n", payload)
+        };
+        if fs::write(LOG_FILE, message.clone()).is_err() {
+            write!(stderr(), "{}", message).ok();
+        }
+    }));
     let mut args = Args::parse();
     let config = if let Some(config) = args.config_file {
         let filename = config.as_os_str().to_string_lossy().to_string();
