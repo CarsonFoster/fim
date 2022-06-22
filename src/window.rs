@@ -206,6 +206,44 @@ impl Window {
         term.flush()
     }
     
+    /// Inserts a 'tab' according to the current tab options at the current position in the
+    /// document.
+    pub fn tab(&mut self, term: &mut Terminal) -> Result<()> {
+        // TODO
+        Ok(())
+    }
+
+    /// Simulates an 'Enter' press.
+    ///
+    /// Inserts a new line immediately below the current line, then takes the characters from the
+    /// current character to the end of the line (inclusive) and moves them to the new line. (This
+    /// is the regular 'Enter' behavior you should be used to.)
+    pub fn enter(&mut self, term: &mut Terminal) -> Result<()> {
+        // TODO
+        Ok(())
+    }
+
+    /// Deletes the character under the cursor.
+    pub fn delete(&mut self, term: &mut Terminal) -> Result<()> {
+        // TODO
+        Ok(())
+    }
+
+    /// Deletes the character preceding the cursor.
+    ///
+    /// If the cursor is at the beginning of the line, the current line is appended to the end of
+    /// the line immediately above it.
+    pub fn backspace(&mut self, term: &mut Terminal) -> Result<()> {
+        // TODO
+        Ok(())
+    }
+
+    /// Insert a character at the current position.
+    pub fn insert(&mut self, c: char, term: &mut Terminal) -> Result<()> {
+        // TODO
+        Ok(())
+    }
+
     // NOTE: when you implement splitting, make sure that all split windows have
     // documents, and that you change the existing window to have a new blank document
     // if it doesn't have a document, so that the invariants for draw_welcome_screen are

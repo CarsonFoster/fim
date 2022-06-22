@@ -11,3 +11,5 @@ bind(InsertMode) <Up> Action move_up
 bind(InsertMode) <Down> Action move_down
 bind(InsertMode) <Home> Action home
 bind(InsertMode) <End> Action end
+bind(InsertMode) <Del> Action delete
+bind(InsertMode) <BS> Action backspace

@@ -124,6 +124,8 @@ impl<'a> Editor<'a> {
             "move_down" => current_window.move_down(term)?,
             "home" => current_window.home(term)?,
             "end" => current_window.end(term)?,
+            "delete" => current_window.delete(term)?,
+            "backspace" => current_window.backspace(term)?,
             _ => (),
         }
 
