@@ -45,6 +45,11 @@ impl Document {
         self.lines.get(idx)
     }
 
+    /// Get a mutable line at the given (zero-based) index.
+    pub fn line_mut(&mut self, idx: usize) -> Option<&mut Line> {
+        self.lines.get_mut(idx)
+    }
+
     /// Retrieve an iterator into the lines of this document, starting from the given (zero-based)
     /// index, inclusive.
     pub fn iter_from(&self, line_idx: usize) -> Option<Iter<Line>> {

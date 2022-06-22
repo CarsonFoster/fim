@@ -339,8 +339,7 @@ impl Context for InsertMode {
     }
 
     fn forward(&mut self, ed: &mut Editor, key: KeyEvent) -> Result<Option<ContextMessage>> {
-        // matches built-in binds first, then checks for user binds, and then checks for chars,
-        // etc.
+        // matches built-in binds first, then checks for user binds, and then checks for chars
         let code = key.code;
         match code {
             KeyCode::Enter => (),

@@ -240,6 +240,8 @@ impl Window {
 
     /// Insert a character at the current position.
     pub fn insert(&mut self, c: char, term: &mut Terminal) -> Result<()> {
+        if self.doc.is_none() { return Ok(()); }
+        let line = self.doc.as_mut().unwrap().line_mut(self.pos_in_doc.y).unwrap();
         // TODO
         Ok(())
     }
@@ -342,18 +344,10 @@ impl Window {
         }
     }
 
-    /*fn update_line_numbers(&self, term: &mut Terminal) -> Result<()> {
-        if let LineNumbers::Off = self.opt.line_numbering { return Ok(()); }
-        term.q(Hide)?.save_cursor();
-        self.q_clear(ClearType::LineNumbers, term)?;
-        for line in 0..self.raw_window_size.height {
-            let Position{ x, y } = self.raw_to_term(0, line);
-            term.cursor_to(x, y).q_move_cursor()?.q(Print(self.line_number(line)))?;
-        }
-        term.restore_cursor();
-        term.q_move_cursor()?.q(Show)?.flush()?;
-        Ok(())
-    }*/
+    fn check_wrapping(&mut self, &mut Terminal) -> Result<()> {
+
+    }
+
 
     fn update_line_numbers(&self, term: &mut Terminal) -> Result<()> {
         if let LineNumbers::Off = self.opt.line_numbering { return Ok(()); }
