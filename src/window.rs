@@ -10,6 +10,7 @@ use crossterm::{
     style::{Print, StyledContent, Stylize},
 };
 use std::cmp::{max, min};
+use std::collections::HashMap;
 use std::iter::{once, repeat};
 use std::path::PathBuf;
 use unicode_segmentation::UnicodeSegmentation;
@@ -38,10 +39,11 @@ enum WindowLineType {
 }
 
 #[non_exhaustive]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Eq, Hash, PartialEq)]
 enum ClearType {
    All,
    LineNumbers,
+   Text,
 }
 
 #[derive(Copy, Clone)]
@@ -82,6 +84,8 @@ pub struct Window {
     target_x: usize, // target x-value (used for moving up and down in documents)
     #[doc(hidden)]
     line_properties: Vec<WindowLineProperties>,
+    #[doc(hidden)]
+    clear_lines: HashMap<ClearType, String>,
 }
 
 impl Window {
@@ -90,7 +94,7 @@ impl Window {
         let size = term.size();
         assert!(size.height > 1 && size.width > 1);
         let size = Size{ width: size.width, height: size.height - 1 };
-        Window{ doc: None, first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: size.width - 1, target_x: 0, opt, line_properties: Vec::new() }
+        Window{ doc: None, first_line: 0, pos_in_doc: DocPosition::default(), raw_window_pos: Position::default(), raw_window_size: size, text_start: 0, text_width: size.width - 1, target_x: 0, opt, line_properties: Vec::new(), clear_lines: HashMap::new() }
     }
 
     /// Create a new, full-terminal Window with the contents of the given file.
@@ -102,7 +106,7 @@ impl Window {
         let document = Document::new(filename)?;
         let (text_start, text_width) = Self::compute_text_attrs(&opt, &size, document.num_lines());
         let line_properties = Self::setup_line_properties(&document, text_width);
-        Ok(Window{ doc: Some(document), first_line: 0, pos_in_doc, raw_window_pos: Position::default(), raw_window_size: size, text_start, text_width, target_x: 0, opt, line_properties })
+        Ok(Window{ doc: Some(document), first_line: 0, pos_in_doc, raw_window_pos: Position::default(), raw_window_size: size, text_start, text_width, target_x: 0, opt, line_properties, clear_lines: Self::make_clear_lines(size, text_start, text_width) })
     }
 
     /// Update the window's options.
@@ -239,11 +243,22 @@ impl Window {
     }
 
     /// Insert a character at the current position.
-    pub fn insert(&mut self, c: char, term: &mut Terminal) -> Result<()> {
-        if self.doc.is_none() { return Ok(()); }
+    /// 
+    /// The character must be a graphic ASCII character or a space. Sorry Unicode.
+    /// Returns Ok(true) if the character was inserted, and Ok(false) if it wasn't, but there were
+    /// no errors.
+    pub fn insert(&mut self, c: char, term: &mut Terminal) -> Result<bool> {
+        if self.doc.is_none() || !(c.is_ascii_graphic() || c == ' ') { return Ok(false); }
         let line = self.doc.as_mut().unwrap().line_mut(self.pos_in_doc.y).unwrap();
-        // TODO
-        Ok(())
+        if let Some((byte_idx, _)) = line.text.grapheme_indices(true).nth(self.pos_in_doc.x) {
+            line.text.insert(byte_idx, c);
+            line.length += 1;
+            self.line_properties[self.pos_in_doc.y] = self.update_render(term)?;
+            Ok(true)
+        } else {
+            Ok(false)
+        }
+        // TODO: set target_x?
     }
 
     // NOTE: when you implement splitting, make sure that all split windows have
@@ -287,15 +302,22 @@ impl Window {
         Ok(())
     }
 
+    fn calc_line_properties(length: usize, text_width: u16) -> WindowLineProperties {
+        let rem = (length % text_width as usize) as u16;
+        let lines = div_ceil(length, text_width);
+        WindowLineProperties{ lines, graphemes: rem }
+    }
+
     fn setup_line_properties(doc: &Document, text_width: u16) -> Vec<WindowLineProperties> {
-        let mut line_properties = Vec::with_capacity(doc.num_lines()); 
-        for line in doc {
-            let rem = (line.length % text_width as usize) as u16;
-            let lines = div_ceil(line.length, text_width);
-            let props = WindowLineProperties{ lines, graphemes: rem };
-            line_properties.push(props);
-        }
-        line_properties
+        doc.into_iter().map(|l| Self::calc_line_properties(l.length, text_width)).collect::<Vec<WindowLineProperties>>()
+    }
+
+    fn make_clear_lines(size: Size, text_start: u16, text_width: u16) -> HashMap<ClearType, String> {
+        let mut map = HashMap::new();
+        map.insert(ClearType::All, " ".repeat(size.width as usize));
+        map.insert(ClearType::LineNumbers, " ".repeat(text_start as usize));
+        map.insert(ClearType::Text, " ".repeat(text_width as usize));
+        map
     }
 
     fn window_to_doc(&self, line: u16) -> WindowLineType {
@@ -344,15 +366,32 @@ impl Window {
         }
     }
 
-    fn check_wrapping(&mut self, &mut Terminal) -> Result<()> {
-
+    // checks if line `self.pos_in_doc.y` has changed line wrapping
+    // if it has, rerenders the whole screen
+    // otherwise, rerenders the line
+    // returns the new line props
+    fn update_render(&self, term: &mut Terminal) -> Result<WindowLineProperties> {
+        let line = self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap();
+        let props = Self::calc_line_properties(line.length, self.text_width);
+        if props.lines != self.line_properties[self.pos_in_doc.y].lines {
+            self.render(term)?;
+        } else {
+            term.q(Hide)?;
+            let line_number: u16 = (self.pos_in_doc.y - self.first_line) as u16;
+            self.q_clear(ClearType::Text, line_number, term)?;
+            let Position{ x, y } = self.to_term(0, line_number);
+            term.save_cursor();
+            term.cursor_to(x, y).q_move_cursor()?.q(Print(line.text.as_str()))?;
+            term.restore_cursor();
+            term.q_move_cursor()?.q(Show)?.flush()?;
+        }
+        Ok(props)
     }
-
 
     fn update_line_numbers(&self, term: &mut Terminal) -> Result<()> {
         if let LineNumbers::Off = self.opt.line_numbering { return Ok(()); }
         term.q(Hide)?.save_cursor();
-        self.q_clear(ClearType::LineNumbers, term)?;
+        self.q_clear(ClearType::LineNumbers, 0, term)?;
         let mut window_line: u16 = 0;
         let mut doc_line: usize = self.first_line;
         let line_count = self.doc.as_ref().unwrap().num_lines();
@@ -372,17 +411,21 @@ impl Window {
         term.q_move_cursor()?.q(Show)?.flush()
     }
 
-    fn q_clear(&self, clear_type: ClearType, term: &mut Terminal) -> Result<()> {
+    fn q_clear(&self, clear_type: ClearType, line: u16, term: &mut Terminal) -> Result<()> {
         // does not change cursor visibility
-        let clear_line = " ".repeat(self.raw_window_size.width as usize);
-        let clear_line_numbers = " ".repeat(self.text_start as usize);
         term.save_cursor();
-        for line in 0..self.raw_window_size.height {
-            let Position{ x, y } = self.raw_to_term(0, line);
-            term.cursor_to(x, y).q_move_cursor()?.q(Print(match clear_type {
-                ClearType::All => &clear_line,
-                ClearType::LineNumbers => &clear_line_numbers,
-            }))?;
+        let clear_line = self.clear_lines.get(&clear_type).expect("clear type not in map");
+        match clear_type {
+            ClearType::Text => {
+                let Position{ x, y } = self.to_term(0, line);
+                term.cursor_to(x, y).q_move_cursor()?.q(Print(clear_line))?;
+            },
+            _ => {
+                for line in 0..self.raw_window_size.height {
+                    let Position{ x, y } = self.raw_to_term(0, line);
+                    term.cursor_to(x, y).q_move_cursor()?.q(Print(clear_line))?;
+                }
+            }
         }
         term.restore_cursor();
         term.q_move_cursor()?;
@@ -411,7 +454,7 @@ impl Window {
             let text_width = self.text_width as usize;
 
             term.q(Hide)?.save_cursor();
-            self.q_clear(ClearType::All, term)?;
+            self.q_clear(ClearType::All, 0, term)?;
             doc.iter_from(self.first_line).unwrap() // we assert that first_line is a valid index
                .flat_map(|l| {
                     let mut graphemes = l.text.as_str().grapheme_indices(true);
@@ -482,7 +525,7 @@ impl Window {
         };
         let mut message_line: u16 = 0;
         term.q(Hide)?.save_cursor();
-        self.q_clear(ClearType::All, term)?;
+        self.q_clear(ClearType::All, 0, term)?;
         for i in 0..self.raw_window_size.height {
             let Position{ x, y } = self.raw_to_term(0, i);
             term.cursor_to(x, y).q_move_cursor()?;
