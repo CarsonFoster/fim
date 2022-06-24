@@ -354,7 +354,7 @@ impl Context for InsertMode {
                     ed.push_boxed_context(context);
                 } else {
                     match code {
-                        KeyCode::Char(c) => (),
+                        KeyCode::Char(c) => ed.on_current_window(|w, t| w.insert(c, t)).map(|_| ())?,
                         _ => ()
                     }
                 }
