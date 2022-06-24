@@ -198,6 +198,14 @@ impl<'a> Editor<'a> {
     pub fn command_stack(&self) -> &Vec<String> {
         &self.command_stack
     }
+
+    /// Execute a closure taking mutable `Window` and `Terminal` references on the current window.
+    pub fn on_current_window<F>(&mut self, f: F) -> Result<()> 
+    where
+        F: FnOnce(&mut Window, &mut Terminal) -> Result<()> 
+    {
+        f(&mut self.windows[self.current_window], &mut self.terminal) 
+    }
 }
 
 #[doc(hidden)]
