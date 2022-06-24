@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Delta","Struct representing a change to a file open in fim."],["Differential","Struct representing all of the changes to a file open in fim."]]});

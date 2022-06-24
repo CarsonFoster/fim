@@ -1,1 +1,1 @@
-initSidebarItems({"struct":[["Editor","Struct that represents the fim editor."]]});
+initSidebarItems({"struct":[["CmdLineFlags","Flags to pass to [`Editor::q_draw_cmd_line()`]."],["Editor","Struct that represents the fim editor."]]});

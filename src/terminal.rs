@@ -23,14 +23,18 @@ use crossterm::{
 /// Struct that represents a 2D terminal size.
 #[derive(Copy, Clone)]
 pub struct Size {
+    /// Length, horizontally.
     pub width: u16,
+    /// Length, vertically.
     pub height: u16,
 }
 
 /// Struct that represents a 2D position on the terminal.
 #[derive(Copy, Clone, Default)]
 pub struct Position {
+    /// Position, horizontally (this is actually a column number).
     pub x: u16,
+    /// Position, vertically (this is actually a row number).
     pub y: u16,
 }
 

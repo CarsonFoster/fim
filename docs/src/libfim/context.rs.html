@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;context.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>context.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../libfim/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;context.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>context.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a class="sidebar-logo" href="../../libfim/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.png" alt="logo"></div>
+        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../libfim/index.html"><img class="rust-logo" src="../../rust-logo.png" alt="logo"></a><nav class="sub"><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -330,6 +332,42 @@
 <span id="330">330</span>
 <span id="331">331</span>
 <span id="332">332</span>
+<span id="333">333</span>
+<span id="334">334</span>
+<span id="335">335</span>
+<span id="336">336</span>
+<span id="337">337</span>
+<span id="338">338</span>
+<span id="339">339</span>
+<span id="340">340</span>
+<span id="341">341</span>
+<span id="342">342</span>
+<span id="343">343</span>
+<span id="344">344</span>
+<span id="345">345</span>
+<span id="346">346</span>
+<span id="347">347</span>
+<span id="348">348</span>
+<span id="349">349</span>
+<span id="350">350</span>
+<span id="351">351</span>
+<span id="352">352</span>
+<span id="353">353</span>
+<span id="354">354</span>
+<span id="355">355</span>
+<span id="356">356</span>
+<span id="357">357</span>
+<span id="358">358</span>
+<span id="359">359</span>
+<span id="360">360</span>
+<span id="361">361</span>
+<span id="362">362</span>
+<span id="363">363</span>
+<span id="364">364</span>
+<span id="365">365</span>
+<span id="366">366</span>
+<span id="367">367</span>
+<span id="368">368</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module that contains the logic for &#39;Contexts&#39;.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! [`Context`]s essentially represent fim&#39;s different modes and commands. Only one [`Context`] is active</span>
@@ -343,7 +381,7 @@
 <span class="doccomment">//! beneath it on the context stack (the [`Context`] that becomes the active context after this one</span>
 <span class="doccomment">//! is popped). [`Context`]s also have a &#39;setup&#39; function that is called once, at the time that</span>
 <span class="doccomment">//! [`Context`] becomes the active [`Context`].</span>
-<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::editor::Editor</span>;
+<span class="kw">use</span> <span class="ident"><span class="kw">crate</span>::editor</span>::{<span class="ident">CmdLineFlags</span>, <span class="ident">Editor</span>};
 <span class="kw">use</span> <span class="ident">std::cmp::min</span>;
 <span class="kw">use</span> <span class="ident">crossterm</span>::{
     <span class="prelude-ty">Result</span>,
@@ -374,7 +412,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Can cause the Context to &#39;return&#39; and be popped off the context stack, if this function</span>
     <span class="doccomment">/// returns Ok(true). If this function returns Ok(false), the Context has not &#39;returned&#39;.</span>
-    <span class="kw">fn</span> <span class="ident">setup</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">_ed</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Editor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">setup</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_ed</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Editor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
     }
 
@@ -382,7 +420,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Can cause the Context to &#39;return&#39;, if this function returns `Ok(Some(c))`, where `c` is a</span>
     <span class="doccomment">/// [`ContextMessage`].</span>
-    <span class="kw">fn</span> <span class="ident">forward</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">_ed</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Editor</span>, <span class="ident">_event</span>: <span class="ident">KeyEvent</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ContextMessage</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">forward</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_ed</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Editor</span>, <span class="ident">_event</span>: <span class="ident">KeyEvent</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ContextMessage</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
     }
 
@@ -390,7 +428,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// Can cause the Context to &#39;return&#39;, if this function returns `Ok(Some(c))` where `c` is a</span>
     <span class="doccomment">/// [`ContextMessage`].</span>
-    <span class="kw">fn</span> <span class="ident">receive</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">_ed</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Editor</span>, <span class="ident">_arg</span>: <span class="ident">ContextMessage</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ContextMessage</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">receive</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">_ed</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Editor</span>, <span class="ident">_arg</span>: <span class="ident">ContextMessage</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ContextMessage</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
     }
 }
@@ -432,6 +470,7 @@
         <span class="string">&quot;NormalMode&quot;</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Factory::new</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">NormalMode</span>)),
         <span class="string">&quot;CommandMode&quot;</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Factory::new</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">CommandMode::new</span>())),
         <span class="string">&quot;Action&quot;</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Factory::new</span>(<span class="kw">move</span> <span class="op">|</span><span class="op">|</span> <span class="ident">Action::new</span>(<span class="ident">String::from</span>(<span class="kw-2">&amp;</span><span class="ident">args</span>)))),
+        <span class="string">&quot;InsertMode&quot;</span> =&gt; <span class="prelude-val">Some</span>(<span class="ident">Factory::new</span>(<span class="op">|</span><span class="op">|</span> <span class="ident">InsertMode</span>)),
         <span class="kw">_</span> =&gt; <span class="prelude-val">None</span>
     }
 }
@@ -455,7 +494,7 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Context</span> <span class="kw">for</span> <span class="ident">Action</span> {
-    <span class="kw">fn</span> <span class="ident">setup</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Editor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">setup</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Editor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
         <span class="ident">ed</span>.<span class="ident">action</span>(<span class="self">self</span>.<span class="ident">action</span>.<span class="ident">as_str</span>())<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="bool-val">true</span>)
     }
@@ -467,11 +506,8 @@
 <span class="doccomment">/// always one instance of this struct at the bottom of the context stack.</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">NormalMode</span>;
 <span class="kw">impl</span> <span class="ident">Context</span> <span class="kw">for</span> <span class="ident">NormalMode</span> {
-    <span class="kw">fn</span> <span class="ident">forward</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Editor</span>, <span class="ident">event</span>: <span class="ident">KeyEvent</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ContextMessage</span><span class="op">&gt;</span><span class="op">&gt;</span> {
-        <span class="kw">let</span> <span class="ident">KeyEvent</span>{ <span class="ident">code</span>: <span class="ident">c</span>, <span class="ident">modifiers</span>: <span class="kw">_</span> } <span class="op">=</span> <span class="ident">event</span>;
-        <span class="kw">if</span> <span class="ident">c</span> <span class="op">==</span> <span class="ident">KeyCode::Char</span>(<span class="string">&#39;:&#39;</span>) {
-            <span class="ident">ed</span>.<span class="ident">push_context</span>(<span class="ident">CommandMode::new</span>()); 
-        } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">factory</span>) <span class="op">=</span> <span class="ident">ed</span>.<span class="ident">config</span>().<span class="ident">query_binds</span>(<span class="string">&quot;NormalMode&quot;</span>, <span class="ident">event</span>) {
+    <span class="kw">fn</span> <span class="ident">forward</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Editor</span>, <span class="ident">event</span>: <span class="ident">KeyEvent</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ContextMessage</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">factory</span>) <span class="op">=</span> <span class="ident">ed</span>.<span class="ident">config</span>().<span class="ident">query_binds</span>(<span class="string">&quot;NormalMode&quot;</span>, <span class="ident">event</span>) {
             <span class="kw">let</span> <span class="ident">context</span> <span class="op">=</span> <span class="ident">factory</span>.<span class="ident">create</span>();
             <span class="ident">ed</span>.<span class="ident">push_boxed_context</span>(<span class="ident">context</span>);
         }
@@ -516,19 +552,19 @@
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">q_move</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Editor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">q_move</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Editor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">height</span> <span class="op">=</span> <span class="ident">ed</span>.<span class="ident">terminal</span>().<span class="ident">size</span>().<span class="ident">height</span>;
         <span class="ident">ed</span>.<span class="ident">terminal</span>().<span class="ident">cursor_to</span>(<span class="self">self</span>.<span class="ident">terminal_x</span>(), <span class="ident">height</span> <span class="op">-</span> <span class="number">1</span>).<span class="ident">q_move_cursor</span>()<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">fn</span> <span class="ident">q_draw</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Editor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">q_draw</span>(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Editor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">width</span>: <span class="ident">usize</span> <span class="op">=</span> <span class="ident">ed</span>.<span class="ident">terminal</span>().<span class="ident">size</span>().<span class="ident">width</span>.<span class="ident">into</span>();
         <span class="kw">let</span> <span class="ident">end</span> <span class="op">=</span> <span class="ident">min</span>(<span class="self">self</span>.<span class="ident">begin</span> <span class="op">+</span> <span class="ident">width</span> <span class="op">-</span> <span class="number">1</span>, <span class="self">self</span>.<span class="ident">str</span>.<span class="ident">len</span>());
-        <span class="ident">ed</span>.<span class="ident">q_draw_cmd_line</span>([<span class="string">&quot;:&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">str</span>[<span class="self">self</span>.<span class="ident">begin</span>..<span class="ident">end</span>]], <span class="bool-val">false</span>)
+        <span class="ident">ed</span>.<span class="ident">q_draw_cmd_line</span>([<span class="string">&quot;:&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">str</span>[<span class="self">self</span>.<span class="ident">begin</span>..<span class="ident">end</span>]], <span class="ident">CmdLineFlags::empty</span>())
     }
 
-    <span class="kw">fn</span> <span class="ident">delete</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Editor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">delete</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Editor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">str</span>.<span class="ident">remove</span>(<span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">into</span>()); 
         <span class="comment">// TODO: adjust begin after delete?</span>
         <span class="self">self</span>.<span class="ident">q_draw</span>(<span class="ident">ed</span>)<span class="question-mark">?</span>;
@@ -546,12 +582,12 @@
 }
 
 <span class="kw">impl</span> <span class="ident">Context</span> <span class="kw">for</span> <span class="ident">CommandMode</span> {
-    <span class="kw">fn</span> <span class="ident">setup</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Editor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
-        <span class="ident">ed</span>.<span class="ident">draw_cmd_line</span>([<span class="string">&quot;:&quot;</span>])<span class="question-mark">?</span>;
+    <span class="kw">fn</span> <span class="ident">setup</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Editor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
+        <span class="ident">ed</span>.<span class="ident">q_draw_cmd_line</span>([<span class="string">&quot;:&quot;</span>], <span class="ident">CmdLineFlags::FLUSH</span> <span class="op">|</span> <span class="ident">CmdLineFlags::SAVECURSOR</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
     }
 
-    <span class="kw">fn</span> <span class="ident">forward</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="ident">Editor</span>, <span class="ident">event</span>: <span class="ident">KeyEvent</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ContextMessage</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+    <span class="kw">fn</span> <span class="ident">forward</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Editor</span>, <span class="ident">event</span>: <span class="ident">KeyEvent</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ContextMessage</span><span class="op">&gt;</span><span class="op">&gt;</span> {
         <span class="kw">let</span> <span class="ident">KeyEvent</span>{ <span class="ident">code</span>: <span class="ident">c</span>, <span class="ident">modifiers</span>: <span class="kw">_</span> } <span class="op">=</span> <span class="ident">event</span>;
         <span class="kw">let</span> <span class="ident">size</span> <span class="op">=</span> <span class="ident">ed</span>.<span class="ident">terminal</span>().<span class="ident">size</span>();
         <span class="kw">match</span> <span class="ident">c</span> {
@@ -561,6 +597,7 @@
                     <span class="string">&quot;q&quot;</span> =&gt; <span class="ident">ed</span>.<span class="ident">quit</span>(),
                     <span class="kw">_</span> =&gt; (),
                 }
+                <span class="ident">ed</span>.<span class="ident">q_draw_cmd_line</span>([], <span class="ident">CmdLineFlags::FLUSH</span> <span class="op">|</span> <span class="ident">CmdLineFlags::RESTORECURSOR</span>)<span class="question-mark">?</span>;
                 <span class="ident">ed</span>.<span class="ident">push_command</span>(<span class="ident">String::from</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">str</span>));
                 <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">ContextMessage::Unit</span>))
             },
@@ -662,7 +699,43 @@
         <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
     }
 }
+
+<span class="doccomment">/// Struct that represents fim&#39;s InsertMode context.</span>
+<span class="doccomment">///</span>
+<span class="doccomment">/// Analogous to vim&#39;s insert mode. (You can insert characters freely in this mode)</span>
+<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">InsertMode</span>;
+
+<span class="kw">impl</span> <span class="ident">Context</span> <span class="kw">for</span> <span class="ident">InsertMode</span> {
+    <span class="kw">fn</span> <span class="ident">setup</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Editor</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="ident">bool</span><span class="op">&gt;</span> {
+        <span class="ident">ed</span>.<span class="ident">q_draw_cmd_line</span>([<span class="string">&quot;-- INSERT --&quot;</span>], <span class="ident">CmdLineFlags::all</span>())<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="bool-val">false</span>)
+    }
+
+    <span class="kw">fn</span> <span class="ident">forward</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">ed</span>: <span class="kw-2">&amp;mut</span> <span class="ident">Editor</span>, <span class="ident">key</span>: <span class="ident">KeyEvent</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="prelude-ty">Option</span><span class="op">&lt;</span><span class="ident">ContextMessage</span><span class="op">&gt;</span><span class="op">&gt;</span> {
+        <span class="comment">// matches built-in binds first, then checks for user binds, and then checks for chars</span>
+        <span class="kw">let</span> <span class="ident">code</span> <span class="op">=</span> <span class="ident">key</span>.<span class="ident">code</span>;
+        <span class="kw">match</span> <span class="ident">code</span> {
+            <span class="ident">KeyCode::Enter</span> =&gt; (),
+            <span class="ident">KeyCode::Tab</span> =&gt; (),
+            <span class="ident">KeyCode::Esc</span> =&gt; {
+                <span class="ident">ed</span>.<span class="ident">q_draw_cmd_line</span>([], <span class="ident">CmdLineFlags::all</span>())<span class="question-mark">?</span>;
+                <span class="kw">return</span> <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(<span class="ident">ContextMessage::Unit</span>));
+            },
+            <span class="kw">_</span> =&gt; {
+                <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">factory</span>) <span class="op">=</span> <span class="ident">ed</span>.<span class="ident">config</span>().<span class="ident">query_binds</span>(<span class="string">&quot;InsertMode&quot;</span>, <span class="ident">key</span>) {
+                    <span class="kw">let</span> <span class="ident">context</span> <span class="op">=</span> <span class="ident">factory</span>.<span class="ident">create</span>();
+                    <span class="ident">ed</span>.<span class="ident">push_boxed_context</span>(<span class="ident">context</span>);
+                } <span class="kw">else</span> {
+                    <span class="kw">match</span> <span class="ident">code</span> {
+                        <span class="ident">KeyCode::Char</span>(<span class="ident">c</span>) =&gt; <span class="ident">ed</span>.<span class="ident">on_current_window</span>(<span class="op">|</span><span class="ident">w</span>, <span class="ident">t</span><span class="op">|</span> <span class="ident">w</span>.<span class="ident">insert</span>(<span class="ident">c</span>, <span class="ident">t</span>)).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> ())<span class="question-mark">?</span>,
+                        <span class="kw">_</span> =&gt; ()
+                    }
+                }
+            }
+        }
+        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
+    }
+}
 </code></pre></div>
-</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="libfim" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
-    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script>
+</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="libfim" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.59.0" ></div>
 </body></html>

@@ -7,7 +7,10 @@ use std::fmt;
 /// Enum for containing errors that might occur in parsing bind lines.
 pub enum BindParseError {
     /// User wants to map a key to a non-existent context.
-    NoMatchingContext{ context: String }, 
+    NoMatchingContext{
+        /// The non-existent context the user provided.
+        context: String
+    }, 
     /// Not enough terms in a `bind` line.
     NotEnoughTerms,
     /// The `bind` term isn't formed correctly.
@@ -57,13 +60,25 @@ pub enum LayoutParseError {
     /// The spec didn't start with a layout name.
     NoLayoutName,
     /// Non-ASCII character in layout pair.
-    NonAsciiCharacter{ line: usize },
+    NonAsciiCharacter{
+        /// The offending line in the layout spec.
+        line: usize
+    },
     /// No ` => ` found in layout pair.
-    MalformedLayoutPair{ line: usize },
+    MalformedLayoutPair{
+        /// The offending line in the layout spec.
+        line: usize
+    },
     /// Not mapping a character to a character.
-    NonCharacterMapping{ line: usize },
+    NonCharacterMapping{
+        /// The offending line in the layout spec.
+        line: usize
+    },
     /// IO error (e.g. cannot open the layout file)
-    IOError{ error: IOError }
+    IOError{
+        /// The wrapped IO error.
+        error: IOError
+    }
 }
 
 impl fmt::Display for LayoutParseError {
@@ -114,19 +129,48 @@ impl fmt::Display for IncludeParseError {
 /// Enum for containing errors that might occur in parsing configurations.
 pub enum ConfigParseError {
     /// See [`BindParseError`].
-    BindParseError{ error: BindParseError, line: usize },
+    BindParseError{
+        /// The wrapped `BindParseError`.
+        error: BindParseError,
+        /// The offending line in the config file.
+        line: usize
+    },
     /// See [`OptionParseError`](super::options::OptionParseError).
-    OptionParseError{ error: OptionParseError, line: usize },
+    OptionParseError{
+        /// The wrapped `OptionParseError`.
+        error: OptionParseError,
+        /// The offending line in the config file.
+        line: usize
+    },
     /// See [`LayoutParseError`].
-    LayoutParseError{ error: LayoutParseError, line: usize },
+    LayoutParseError{
+        /// The wrapped `LayoutParseError`.
+        error: LayoutParseError,
+        /// The offending line in the config file.
+        line: usize
+    },
     /// See [`IncludeParseError`].
-    IncludeParseError{ error: IncludeParseError, line: usize },
+    IncludeParseError{
+        /// The wrapped `IncludeParseError`.
+        error: IncludeParseError,
+        /// The offending line in the config file.
+        line: usize
+    },
     /// Could not determine the statement type of the line.
-    NotAStatement{ line: usize },
+    NotAStatement{
+        /// The offending line in the config file.
+        line: usize
+    },
     /// Can not set layout to unknown custom layout
-    NoMatchingLayout{ line: usize },
+    NoMatchingLayout{
+        /// The offending line in the config file.
+        line: usize
+    },
     /// IO error (e.g. cannot open the config file)
-    IOError{ error: IOError },
+    IOError{
+        /// The wrapped IO error.
+        error: IOError
+    },
 }
 
 impl ConfigParseError {

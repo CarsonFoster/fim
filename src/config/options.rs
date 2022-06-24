@@ -93,6 +93,7 @@ pub enum LayoutType {
     Colemak,
     /// A user-defined keyboard layout.
     Custom {
+        /// The name of the custom keyboard layout.
         name: String
     }
 }

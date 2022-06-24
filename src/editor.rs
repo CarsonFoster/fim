@@ -154,7 +154,6 @@ impl<'a> Editor<'a> {
     /// cursor before the draw. If `reset_cursor` is `true`, after the draw
     /// the cursor will be placed where it was previously. Otherwise, it will remain on the command
     /// line after the drawn text.
-    /// See also: [`Self::draw_cmd_line()`].
     pub fn q_draw_cmd_line<const N: usize>(&mut self, text: [&str; N], flags: CmdLineFlags) -> Result<()> {
         if flags.contains(CmdLineFlags::SAVECURSOR) { self.terminal.save_cursor(); }
         let height = self.terminal.size().height;
@@ -216,9 +215,13 @@ impl<'a> Drop for Editor<'a> {
 }
 
 bitflags! {
+    /// Flags to pass to [`Editor::q_draw_cmd_line()`].
     pub struct CmdLineFlags: u8 {
+        /// Flush the changes to the command line.
         const FLUSH         = 0b001;
+        /// Save the cursor position before making changes to the command line.
         const SAVECURSOR    = 0b010;
+        /// Restore the cursor position after making changes to the command line.
         const RESTORECURSOR = 0b100;
     }
 }

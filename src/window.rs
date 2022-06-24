@@ -27,7 +27,9 @@ lazy_static! {
 /// fields instead of u16 fields, so we can't reuse [`crate::terminal::Position`].
 #[derive(Copy, Clone, Default)]
 pub struct DocPosition {
+    /// Position, horizontally (this is actually a column number).
     pub x: usize,
+    /// Position, vertically (this is actually a row number).
     pub y: usize
 }
 

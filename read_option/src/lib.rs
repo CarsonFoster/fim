@@ -36,9 +36,15 @@ fn gen_error() -> TokenStream2 {
             /// Did not find an option value after an `=`.
             NoValueAfterEquals,
             /// Did not find a matching option in the [`Options`] object.
-            NoMatchingOption{ option: String },
+            NoMatchingOption{
+                /// The option that the user requested.
+                option: String
+            },
             /// Could not parse the value into the appropriate type.
-            ValueParseError{ msg: String },
+            ValueParseError{
+                /// The message from the parser.
+                msg: String
+            },
         }
     };
 

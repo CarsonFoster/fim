@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;terminal.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>terminal.rs - source</title><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled ><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"><style type="text/css">#crate-search{background-image:url("../../down-arrow.svg");}</style></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a href='../../libfim/index.html'><div class='logo-container rust-logo'><img src='../../rust-logo.png' alt='logo'></div></a></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav><section id="main" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src&#x2F;terminal.rs`."><meta name="keywords" content="rust, rustlang, rust-lang"><title>terminal.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Regular.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../FiraSans-Medium.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Regular.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceSerif4-Bold.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../SourceCodePro-Semibold.ttf.woff2"><link rel="stylesheet" type="text/css" href="../../normalize.css"><link rel="stylesheet" type="text/css" href="../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../ayu.css" disabled><link rel="stylesheet" type="text/css" href="../../dark.css" disabled><link rel="stylesheet" type="text/css" href="../../light.css" id="themeStyle"><script id="default-settings" ></script><script src="../../storage.js"></script><script src="../../crates.js"></script><script defer src="../../main.js"></script><script defer src="../../source-script.js"></script><script defer src="../../source-files.js"></script>
+    <noscript><link rel="stylesheet" href="../../noscript.css"></noscript><link rel="alternate icon" type="image/png" href="../../favicon-16x16.png"><link rel="alternate icon" type="image/png" href="../../favicon-32x32.png"><link rel="icon" type="image/svg+xml" href="../../favicon.svg"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu" role="button">&#9776;</div><a class="sidebar-logo" href="../../libfim/index.html"><div class="logo-container"><img class="rust-logo" src="../../rust-logo.png" alt="logo"></div>
+        </a></nav><main><div class="width-limiter"><div class="sub-container"><a class="sub-logo-container" href="../../libfim/index.html"><img class="rust-logo" src="../../rust-logo.png" alt="logo"></a><nav class="sub"><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu" title="themes"><img width="18" height="18" alt="Pick another theme!" src="../../brush.svg"></button><div id="theme-choices" role="menu"></div></div><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" id="help-button" title="help">?</button><a id="settings-menu" href="../../settings.html" title="settings"><img width="18" height="18" alt="Change settings" src="../../wheel.svg"></a></div></form></nav></div><section id="main-content" class="content"><div class="example-wrap"><pre class="line-numbers"><span id="1">  1</span>
 <span id="2">  2</span>
 <span id="3">  3</span>
 <span id="4">  4</span>
@@ -200,6 +202,10 @@
 <span id="200">200</span>
 <span id="201">201</span>
 <span id="202">202</span>
+<span id="203">203</span>
+<span id="204">204</span>
+<span id="205">205</span>
+<span id="206">206</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module for dealing with the terminal device.</span>
 <span class="kw">use</span> <span class="ident">std::io</span>::{<span class="ident">Stdout</span>, <span class="ident">Write</span>, <span class="ident">stdout</span>};
 <span class="kw">use</span> <span class="ident">crossterm</span>::{
@@ -225,14 +231,18 @@
 <span class="doccomment">/// Struct that represents a 2D terminal size.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Size</span> {
+    <span class="doccomment">/// Length, horizontally.</span>
     <span class="kw">pub</span> <span class="ident">width</span>: <span class="ident">u16</span>,
+    <span class="doccomment">/// Length, vertically.</span>
     <span class="kw">pub</span> <span class="ident">height</span>: <span class="ident">u16</span>,
 }
 
 <span class="doccomment">/// Struct that represents a 2D position on the terminal.</span>
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">Default</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Position</span> {
+    <span class="doccomment">/// Position, horizontally (this is actually a column number).</span>
     <span class="kw">pub</span> <span class="ident">x</span>: <span class="ident">u16</span>,
+    <span class="doccomment">/// Position, vertically (this is actually a row number).</span>
     <span class="kw">pub</span> <span class="ident">y</span>: <span class="ident">u16</span>,
 }
 
@@ -265,13 +275,13 @@
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">set_x</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">u16</span>) {
+    <span class="kw">fn</span> <span class="ident">set_x</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">u16</span>) {
         <span class="kw">if</span> <span class="ident">x</span> <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">size</span>.<span class="ident">width</span> {
             <span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">x</span> <span class="op">=</span> <span class="ident">x</span>;
         }
     }
 
-    <span class="kw">fn</span> <span class="ident">set_y</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">y</span>: <span class="ident">u16</span>) {
+    <span class="kw">fn</span> <span class="ident">set_y</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">y</span>: <span class="ident">u16</span>) {
         <span class="kw">if</span> <span class="ident">y</span> <span class="op">&lt;</span> <span class="self">self</span>.<span class="ident">size</span>.<span class="ident">height</span> {
             <span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">y</span> <span class="op">=</span> <span class="ident">y</span>;
         }
@@ -288,12 +298,12 @@
     }
 
     <span class="doccomment">/// Save the position of the cursor.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">save_cursor</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">save_cursor</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
         <span class="self">self</span>.<span class="ident">cursor_stack</span>.<span class="ident">push</span>(<span class="self">self</span>.<span class="ident">cursor_pos</span>);
     }
 
     <span class="doccomment">/// Restore the position of the cursor.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">restore_cursor</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">restore_cursor</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
         <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">pos</span>) <span class="op">=</span> <span class="self">self</span>.<span class="ident">cursor_stack</span>.<span class="ident">pop</span>() {
             <span class="self">self</span>.<span class="ident">cursor_pos</span> <span class="op">=</span> <span class="ident">pos</span>;
         }
@@ -304,12 +314,12 @@
     <span class="doccomment">/// This executes, instead of queues, a</span>
     <span class="doccomment">/// [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html). See</span>
     <span class="doccomment">/// [here](https://docs.rs/crossterm/latest/crossterm/index.html#command-api).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">move_cursor</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> { 
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">move_cursor</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> { 
         <span class="macro">execute!</span>(<span class="self">self</span>.<span class="ident">stdout</span>, <span class="ident">MoveTo</span>(<span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">x</span>, <span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">y</span>))
     }
 
     <span class="doccomment">/// Queues the cursor move.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">q_move_cursor</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">q_move_cursor</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="self">Self</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">stdout</span>.<span class="ident">queue</span>(<span class="ident">MoveTo</span>(<span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">x</span>, <span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">y</span>))<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">self</span>)
     }
@@ -318,7 +328,7 @@
     <span class="doccomment">///</span>
     <span class="doccomment">/// This executes, instead of queues, a [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html). See</span>
     <span class="doccomment">/// [here](https://docs.rs/crossterm/latest/crossterm/index.html#command-api).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">move_cursor_to</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">u16</span>, <span class="ident">y</span>: <span class="ident">u16</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">move_cursor_to</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">u16</span>, <span class="ident">y</span>: <span class="ident">u16</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">cursor_to</span>(<span class="ident">x</span>, <span class="ident">y</span>);
         <span class="self">self</span>.<span class="ident">move_cursor</span>()
     }
@@ -326,7 +336,7 @@
     <span class="doccomment">/// Set the cursor position to a location.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This does not queue or execute any [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html)s.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cursor_to</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">u16</span>, <span class="ident">y</span>: <span class="ident">u16</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cursor_to</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">x</span>: <span class="ident">u16</span>, <span class="ident">y</span>: <span class="ident">u16</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">set_x</span>(<span class="ident">x</span>);
         <span class="self">self</span>.<span class="ident">set_y</span>(<span class="ident">y</span>);
         <span class="self">self</span>
@@ -335,7 +345,7 @@
     <span class="doccomment">/// Move the cursor left some amount, if able.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This does not queue or execute any [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html)s.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cursor_left_by</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">d_x</span>: <span class="ident">u16</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cursor_left_by</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">d_x</span>: <span class="ident">u16</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">cursor_to</span>(<span class="ident"><span class="self">Self</span>::saturating_sub</span>(<span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">x</span>, <span class="ident">d_x</span>), <span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">y</span>);
         <span class="self">self</span>
     }
@@ -343,7 +353,7 @@
     <span class="doccomment">/// Move the cursor right some amount, if able.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This does not queue or execute any [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html)s.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cursor_right_by</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">d_x</span>: <span class="ident">u16</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cursor_right_by</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">d_x</span>: <span class="ident">u16</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">cursor_to</span>(<span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">x</span>.<span class="ident">saturating_add</span>(<span class="ident">d_x</span>), <span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">y</span>);
         <span class="self">self</span>
     }
@@ -351,7 +361,7 @@
     <span class="doccomment">/// Move the cursor up some amount, if able.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This does not queue or execute any [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html)s.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cursor_up_by</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">d_y</span>: <span class="ident">u16</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cursor_up_by</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">d_y</span>: <span class="ident">u16</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">cursor_to</span>(<span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">x</span>, <span class="ident"><span class="self">Self</span>::saturating_sub</span>(<span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">y</span>, <span class="ident">d_y</span>));
         <span class="self">self</span>
     }
@@ -359,29 +369,29 @@
     <span class="doccomment">/// Move the cursor down some amount, if able.</span>
     <span class="doccomment">///</span>
     <span class="doccomment">/// This does not queue or execute any [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html)s.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cursor_down_by</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">d_y</span>: <span class="ident">u16</span>) -&gt; <span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">cursor_down_by</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">d_y</span>: <span class="ident">u16</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
         <span class="self">self</span>.<span class="ident">cursor_to</span>(<span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">x</span>, <span class="self">self</span>.<span class="ident">cursor_pos</span>.<span class="ident">y</span>.<span class="ident">saturating_add</span>(<span class="ident">d_y</span>));
         <span class="self">self</span>
     }
 
     <span class="doccomment">/// Enter the alternate screen.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enter_alternate_screen</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">enter_alternate_screen</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="macro">execute!</span>(<span class="self">self</span>.<span class="ident">stdout</span>, <span class="ident">EnterAlternateScreen</span>)
     }
 
     <span class="doccomment">/// Exit the alternate screen.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">leave_alternate_screen</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">leave_alternate_screen</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="macro">execute!</span>(<span class="self">self</span>.<span class="ident">stdout</span>, <span class="ident">LeaveAlternateScreen</span>)
     }
 
     <span class="doccomment">/// Queue a [`Command`](https://docs.rs/crossterm/latest/crossterm/trait.Command.html).</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">q</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>, <span class="ident">cmd</span>: <span class="kw">impl</span> <span class="ident">Command</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">Self</span><span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">q</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">cmd</span>: <span class="kw">impl</span> <span class="ident">Command</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span><span class="kw-2">&amp;mut</span> <span class="self">Self</span><span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">stdout</span>.<span class="ident">queue</span>(<span class="ident">cmd</span>)<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(<span class="self">self</span>)
     }
 
     <span class="doccomment">/// Flush the queued commands to standard output.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">flush</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
+    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">flush</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span><span class="op">&lt;</span>()<span class="op">&gt;</span> {
         <span class="self">self</span>.<span class="ident">stdout</span>.<span class="ident">flush</span>()
     }
 
@@ -398,11 +408,10 @@
 
 <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
 <span class="kw">impl</span> <span class="ident">Drop</span> <span class="kw">for</span> <span class="ident">Terminal</span> {
-    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;</span><span class="kw-2">mut</span> <span class="self">self</span>) {
+    <span class="kw">fn</span> <span class="ident">drop</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>) {
         <span class="ident">terminal::disable_raw_mode</span>().<span class="ident">expect</span>(<span class="string">&quot;Failed to disable raw mode.&quot;</span>);
     }
 }
 </code></pre></div>
-</section><section id="search" class="content hidden"></section><div id="rustdoc-vars" data-root-path="../../" data-current-crate="libfim" data-search-index-js="../../search-index.js" data-search-js="../../search.js"></div>
-    <script src="../../main.js"></script><script src="../../source-script.js"></script><script src="../../source-files.js"></script>
+</section><section id="search" class="content hidden"></section></div></main><div id="rustdoc-vars" data-root-path="../../" data-current-crate="libfim" data-themes="ayu,dark,light" data-resource-suffix="" data-rustdoc-version="1.59.0" ></div>
 </body></html>

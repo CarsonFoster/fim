@@ -1,4 +1,5 @@
 #![warn(missing_docs)]
+//! There's nothing in the crate root really, this is just an organizer for all of the modules.
 
 #[macro_use]
 extern crate lazy_static;

@@ -330,6 +330,9 @@ impl Context for CommandMode {
     }
 }
 
+/// Struct that represents fim's InsertMode context.
+///
+/// Analogous to vim's insert mode. (You can insert characters freely in this mode)
 pub struct InsertMode;
 
 impl Context for InsertMode {
