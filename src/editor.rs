@@ -200,9 +200,9 @@ impl<'a> Editor<'a> {
     }
 
     /// Execute a closure taking mutable `Window` and `Terminal` references on the current window.
-    pub fn on_current_window<F>(&mut self, f: F) -> Result<()> 
+    pub fn on_current_window<F, R>(&mut self, f: F) -> Result<R> 
     where
-        F: FnOnce(&mut Window, &mut Terminal) -> Result<()> 
+        F: FnOnce(&mut Window, &mut Terminal) -> Result<R> 
     {
         f(&mut self.windows[self.current_window], &mut self.terminal) 
     }
