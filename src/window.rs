@@ -64,6 +64,13 @@ impl WindowLineProperties {
     }
 }
 
+#[derive(Copy, Clone)]
+enum LineType<'a> {
+    Content(&'a str),
+    Continued(&'a str),
+    Tilde
+}
+
 /// Struct that represents a fim window.
 pub struct Window {
     #[doc(hidden)]
@@ -373,17 +380,18 @@ impl Window {
     // updates the line properties
     fn update_render(&mut self, term: &mut Terminal) -> Result<()> {
         let line = self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap();
-        let old_props = self.line_properties[self.pos_in_doc.y];
+        let old_lines = self.line_properties[self.pos_in_doc.y].lines;
         self.line_properties[self.pos_in_doc.y] = Self::calc_line_properties(line.length, self.text_width);
-        if old_props.lines != self.line_properties[self.pos_in_doc.y].lines {
+        let new_lines = self.line_properties[self.pos_in_doc.y].lines;
+        if old_lines != new_lines {
             self.render(term)?;
         } else {
             // TODO: line wrapping
+            term.save_cursor();
             term.q(Hide)?;
             let line_number: u16 = (self.pos_in_doc.y - self.first_line) as u16;
             self.q_clear(ClearType::Text, line_number, term)?;
             let Position{ x, y } = self.to_term(0, line_number);
-            term.save_cursor();
             term.cursor_to(x, y).q_move_cursor()?.q(Print(line.text.as_str()))?;
             term.restore_cursor();
             term.q_move_cursor()?.q(Show)?.flush()?;
@@ -445,39 +453,39 @@ impl Window {
         (line_number_chars, text_width)
     }
 
+    fn split_lines<'a, 'b, I>(&'a self, lines: I) -> impl Iterator<Item = LineType<'b>>
+    where
+        I: IntoIterator<Item = &'b str>,
+    {
+        let text_width = self.text_width as usize;
+        lines.into_iter().flat_map(move |l| {
+            let mut graphemes = l.grapheme_indices(true);
+            let output: Box<dyn Iterator<Item = LineType>> = if let Some((idx, _)) = graphemes.nth(text_width) {
+                let mut indices = vec![idx];
+                while let Some((idx, _)) = graphemes.nth(text_width - 1) {
+                    indices.push(idx);
+                }
+                let mut pieces: Vec<&str> = Vec::new();
+                let first = &l[..indices[0]];
+                for i in 0..(indices.len() - 1) {
+                    pieces.push(&l[indices[i]..indices[i + 1]]);
+                }
+                pieces.push(&l[*indices.last().unwrap()..]);
+                Box::new(once(LineType::Content(first)).chain(pieces.into_iter().map(|p| LineType::Continued(p))))
+            } else {
+                Box::new(once(LineType::Content(l)))
+            };
+            output
+        })
+    }
+
     fn draw_document(&self, term: &mut Terminal) -> Result<()> {
         if let Some(doc) = self.doc.as_ref() {
-            #[derive(Copy, Clone)]
-            enum LineType<'a> {
-                Content(&'a str),
-                Continued(&'a str),
-                Tilde
-            }
-
             let text_width = self.text_width as usize;
 
             term.q(Hide)?.save_cursor();
             self.q_clear(ClearType::All, 0, term)?;
-            doc.iter_from(self.first_line).unwrap() // we assert that first_line is a valid index
-               .flat_map(|l| {
-                    let mut graphemes = l.text.as_str().grapheme_indices(true);
-                    let output: Box<dyn Iterator<Item = LineType>> = if let Some((idx, _)) = graphemes.nth(text_width) {
-                        let mut indices = vec![idx]; 
-                        while let Some((idx, _)) = graphemes.nth(text_width - 1) {
-                            indices.push(idx);
-                        }
-                        let mut pieces: Vec<&str> = Vec::new();
-                        let first = &l.text[..indices[0]];
-                        for i in 0..(indices.len() - 1) {
-                            pieces.push(&l.text[indices[i]..indices[i + 1]]);
-                        }
-                        pieces.push(&l.text[*indices.last().unwrap()..]);
-                        Box::new(once(LineType::Content(first)).chain(pieces.into_iter().map(|p| LineType::Continued(p))))
-                    } else {
-                        Box::new(once(LineType::Content(l.text.as_str())))
-                    };
-                    output
-                })
+            self.split_lines(doc.iter_from(self.first_line).unwrap().map(|l| l.text.as_str()))
                .chain(repeat(LineType::Tilde))
                .enumerate()
                .take(self.raw_window_size.height.into())
