@@ -386,13 +386,23 @@ impl Window {
         if old_lines != new_lines {
             self.render(term)?;
         } else {
-            // TODO: line wrapping
             term.save_cursor();
             term.q(Hide)?;
             let line_number: u16 = (self.pos_in_doc.y - self.first_line) as u16;
-            self.q_clear(ClearType::Text, line_number, term)?;
-            let Position{ x, y } = self.to_term(0, line_number);
-            term.cursor_to(x, y).q_move_cursor()?.q(Print(line.text.as_str()))?;
+            let iter = self.split_lines(once(line.text.as_str()))
+                           .zip(0u16..)
+                           .take((self.raw_window_size.height - line_number).into());
+            for (line_type, i) in iter {
+                let line = match line_type {
+                    LineType::Content(a) => a,
+                    LineType::Continued(a) => a,
+                    _ => panic!("found line type that isn't content or continued (this should never happen)")
+                };
+                let line_number = line_number + i;
+                self.q_clear(ClearType::Text, line_number, term)?;
+                let Position{ x, y } = self.to_term(0, line_number);
+                term.cursor_to(x, y).q_move_cursor()?.q(Print(line))?;
+            }
             term.restore_cursor();
             term.q_move_cursor()?.q(Show)?.flush()?;
         }
@@ -481,8 +491,6 @@ impl Window {
 
     fn draw_document(&self, term: &mut Terminal) -> Result<()> {
         if let Some(doc) = self.doc.as_ref() {
-            let text_width = self.text_width as usize;
-
             term.q(Hide)?.save_cursor();
             self.q_clear(ClearType::All, 0, term)?;
             self.split_lines(doc.iter_from(self.first_line).unwrap().map(|l| l.text.as_str()))
