@@ -355,14 +355,11 @@ impl Context for InsertMode {
                 if let Some(factory) = ed.config().query_binds("InsertMode", key) {
                     let context = factory.create();
                     ed.push_boxed_context(context);
-                } else {
-                    match code {
-                        KeyCode::Char(c) => ed.on_current_window(|w, t| {
-                            w.insert(c, t)?;
-                            w.move_right(t)
-                        })?,
-                        _ => ()
-                    }
+                } else if let KeyCode::Char(c) = code {
+                    ed.on_current_window(|w, t| {
+                        w.insert(c, t)?;
+                        w.move_right(t)
+                    })?;
                 }
             }
         }
