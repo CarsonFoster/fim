@@ -255,12 +255,11 @@ impl Window {
         if let Some((byte_idx, _)) = line.text.grapheme_indices(true).nth(self.pos_in_doc.x) {
             line.text.insert(byte_idx, c);
             line.length += 1;
-            self.line_properties[self.pos_in_doc.y] = self.update_render(term)?;
+            self.update_render(term)?;
             Ok(true)
         } else {
             Ok(false)
         }
-        // TODO: set target_x?
     }
 
     // NOTE: when you implement splitting, make sure that all split windows have
@@ -371,13 +370,15 @@ impl Window {
     // checks if line `self.pos_in_doc.y` has changed line wrapping
     // if it has, rerenders the whole screen
     // otherwise, rerenders the line
-    // returns the new line props
-    fn update_render(&self, term: &mut Terminal) -> Result<WindowLineProperties> {
+    // updates the line properties
+    fn update_render(&mut self, term: &mut Terminal) -> Result<()> {
         let line = self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap();
-        let props = Self::calc_line_properties(line.length, self.text_width);
-        if props.lines != self.line_properties[self.pos_in_doc.y].lines {
+        let old_props = self.line_properties[self.pos_in_doc.y];
+        self.line_properties[self.pos_in_doc.y] = Self::calc_line_properties(line.length, self.text_width);
+        if old_props.lines != self.line_properties[self.pos_in_doc.y].lines {
             self.render(term)?;
         } else {
+            // TODO: line wrapping
             term.q(Hide)?;
             let line_number: u16 = (self.pos_in_doc.y - self.first_line) as u16;
             self.q_clear(ClearType::Text, line_number, term)?;
@@ -387,7 +388,7 @@ impl Window {
             term.restore_cursor();
             term.q_move_cursor()?.q(Show)?.flush()?;
         }
-        Ok(props)
+        Ok(())
     }
 
     fn update_line_numbers(&self, term: &mut Terminal) -> Result<()> {
