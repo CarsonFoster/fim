@@ -16,7 +16,7 @@ fn impl_option_bool(ast: &DeriveInput) -> TokenStream {
             if fields.unnamed.len() == 1 {
                 let field = fields.unnamed.first().unwrap(); 
                 match &field.ty {
-                    Type::Path(type_path) if type_path.path.is_ident("bool") => return gen_from_str(name),
+                    Type::Path(type_path) if type_path.path.is_ident("bool") => return gen_impls(name),
                     _ => ()
                 }
             }
@@ -25,13 +25,25 @@ fn impl_option_bool(ast: &DeriveInput) -> TokenStream {
     panic!("the OptionBool derive macro only works on structs with one unnamed, bool field");
 }
 
-fn gen_from_str(name: &Ident) -> TokenStream {
+fn gen_impls(name: &Ident) -> TokenStream {
     let gen = quote! {
         impl ::std::str::FromStr for #name {
             type Err = ::std::str::ParseBoolError;
             fn from_str(s: &str) -> ::std::result::Result<Self, Self::Err> {
                 let b: bool = s.parse()?;
                 Ok(#name(b))
+            }
+        }
+
+        impl ::std::convert::From<#name> for bool {
+            fn from(t: #name) -> Self {
+                t.0
+            }
+        }
+
+        impl ::std::convert::From<bool> for #name {
+            fn from(t: bool) -> Self {
+                #name(t)
             }
         }
     };
