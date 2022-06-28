@@ -4,6 +4,7 @@ bind(NormalMode) j Action move_down
 bind(NormalMode) k Action move_up
 bind(NormalMode) : CommandMode
 bind(NormalMode) i InsertMode
+bind(NormalMode) x Action delete
 
 bind(InsertMode) <Left> Action move_left
 bind(InsertMode) <Right> Action move_right

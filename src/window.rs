@@ -11,7 +11,7 @@ use crossterm::{
 };
 use std::cmp::{max, min};
 use std::collections::HashMap;
-use std::iter::{once, repeat};
+use std::iter::{once, empty, repeat};
 use std::path::PathBuf;
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -238,8 +238,22 @@ impl Window {
 
     /// Deletes the character under the cursor.
     pub fn delete(&mut self, term: &mut Terminal) -> Result<()> {
-        // TODO
-        Ok(())
+        if self.doc.is_none() { return Ok(()); }
+        let mut line = self.doc.as_mut().unwrap().line_mut(self.pos_in_doc.y).unwrap();
+        let new_text = line.text.graphemes(true)
+                           .enumerate()
+                           .flat_map(|(i, x)| {
+                               let output: Box<dyn Iterator<Item = &str>> = if i == self.pos_in_doc.x {
+                                   Box::new(empty())
+                               } else {
+                                   Box::new(once(x))
+                               };
+                               output
+                           })
+                           .collect::<String>();
+        line.text = new_text;
+        line.length -= 1;
+        self.update_render(term)
     }
 
     /// Deletes the character preceding the cursor.
