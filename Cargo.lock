@@ -114,6 +114,7 @@ dependencies = [
  "crossterm",
  "lazy_static",
  "option_bool",
+ "option_factory",
  "option_number",
  "option_string",
  "read_option",
@@ -217,6 +218,15 @@ dependencies = [
 name = "option_bool"
 version = "0.1.0"
 dependencies = [
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "option_factory"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
  "quote",
  "syn",
 ]

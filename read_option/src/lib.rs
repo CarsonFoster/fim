@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
-use syn::{ parse, punctuated::Punctuated, spanned::Spanned, token::Comma, Data, DeriveInput, Field, Fields };
+use syn::{parse, punctuated::Punctuated, spanned::Spanned, token::Comma, Data, DeriveInput, Field, Fields};
 use quote::{format_ident, quote, quote_spanned};
 
 static ERROR_MSG: &str = "the ReadOption derive macro only works with structs named Options with named fields that implement FromStr";

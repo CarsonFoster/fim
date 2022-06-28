@@ -4,10 +4,11 @@
 //! the user through configuration files or in-fim commands (eventually, not right now).
 
 use read_option::ReadOption;
+use option_factory::OptionFactory;
 use option_string::OptionString;
 
 /// Struct that represent the collection of internal configuration options.
-#[derive(Clone, ReadOption)]
+#[derive(Clone, OptionFactory, ReadOption)]
 pub struct Options {
     /// Type of line numbering to use; string (enum) option
     pub line_numbering: LineNumbers,
@@ -19,43 +20,6 @@ pub struct Options {
 impl Default for Options {
     fn default() -> Self {
         Options{ line_numbering: LineNumbers::Relative, layout: LayoutType::Qwerty }
-    }
-}
-
-/// Struct that creates an [`Options`] object.
-pub struct OptionFactory {
-    #[doc(hidden)]
-    opt: Options,
-}
-
-impl OptionFactory {
-    /// Create a new [`OptionFactory`].
-    ///
-    /// The `Options` object begins with its default value.
-    pub fn new() -> Self {
-        OptionFactory{ opt: Options::default() }
-    }
-     
-    /// Consume the `OptionFactory` and return the created `Options` object.
-    pub fn options(self) -> Options {
-        self.opt
-    }
-
-    /// Return a reference to the `Options` object in the process of being created.
-    pub fn peek(&self) -> &Options {
-        &self.opt
-    }
-
-    /// Set the `line_numbering` field of the `Options` object.
-    pub fn set_line_numbering(&mut self, numbering: LineNumbers) -> &mut Self {
-        self.opt.line_numbering = numbering; 
-        self
-    }
-
-    /// Set the `layout` field of the `Options` object.
-    pub fn set_layout(&mut self, layout: LayoutType) -> &mut Self {
-        self.opt.layout = layout;
-        self
     }
 }
 

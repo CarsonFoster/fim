@@ -6,9 +6,10 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-option_string = { path = "./option_string" }
 option_bool = { path = "./option_bool" }
+option_factory = { path = "./option_factory" }
 option_number = { path = "./option_number" }
+option_string = { path = "./option_string" }
 read_option = { path = "./read_option" }
 
 bincode = "1.3.3"
