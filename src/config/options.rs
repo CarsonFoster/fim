@@ -5,6 +5,7 @@
 
 use read_option::ReadOption;
 use option_factory::OptionFactory;
+use option_number::OptionNumber;
 use option_string::OptionString;
 
 /// Struct that represent the collection of internal configuration options.
@@ -14,19 +15,25 @@ pub struct Options {
     pub line_numbering: LineNumbers,
     /// Keyboard layout to use; string option
     pub layout: LayoutType,
+    /// How to interpret new and existing tabs: as tab characters or as spaces.
+    pub tab_type: TabType,
+    /// Number of spaces to use for a tab (only when using spaces for tabs).
+    pub tab_spaces: TabSpaces,
+    /// Width of tab character (only when using tab for tabs).
+    pub tab_width: TabWidth,
 }
 
 /// The defaults are relative line numbering and the QWERTY layout.
 impl Default for Options {
     fn default() -> Self {
-        Options{ line_numbering: LineNumbers::Relative, layout: LayoutType::Qwerty }
+        Options{ line_numbering: LineNumbers::Relative, layout: LayoutType::Qwerty, tab_type: TabType::Spaces, tab_spaces: 4.into(), tab_width: 4.into() }
     }
 }
 
-#[derive(Copy, Clone, OptionString)]
 /// Enum that represents the different types of line numbers fim can use.
 ///
 /// String (enum) option: possible values are `Off`, `On`, and `Relative`.
+#[derive(Copy, Clone, OptionString)]
 pub enum LineNumbers {
     /// No line numbering.
     Off,
@@ -73,3 +80,39 @@ impl std::str::FromStr for LayoutType {
         })
     }
 }
+
+/// Enum that represents the way fim should interpret tabs.
+///
+/// String (enum) option: possible values are `Tab` and `Spaces`.
+#[derive(Copy, Clone, OptionString)]
+pub enum TabType {
+    /// Use a tab character for new and existing tabs.
+    Tab,
+    /// Use spaces for new and existing tabs.
+    Spaces
+}
+
+/// Struct that represents the width of a tab character.
+///
+/// This only applies when `tab_type` is `Tab`.
+/// For example, you could have tab characters be 4 characters long:
+/// ```no_run
+/// fn main() {
+///     println!("Hello, world!");
+/// }
+/// ```
+/// 
+/// Or 8 characters long:
+/// ```no_run
+/// fn main() {
+///         println!("Hello, world!");
+/// }
+/// ```
+#[derive(Copy, Clone, OptionNumber)]
+pub struct TabWidth(i32);
+
+/// Struct that represents the number of spaces to use for a tab character.
+///
+/// This only applies when `tab_type` is `Spaces`.
+#[derive(Copy, Clone, OptionNumber)]
+pub struct TabSpaces(i32);
