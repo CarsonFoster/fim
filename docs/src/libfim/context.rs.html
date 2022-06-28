@@ -725,11 +725,11 @@
                 <span class="kw">if</span> <span class="kw">let</span> <span class="prelude-val">Some</span>(<span class="ident">factory</span>) <span class="op">=</span> <span class="ident">ed</span>.<span class="ident">config</span>().<span class="ident">query_binds</span>(<span class="string">&quot;InsertMode&quot;</span>, <span class="ident">key</span>) {
                     <span class="kw">let</span> <span class="ident">context</span> <span class="op">=</span> <span class="ident">factory</span>.<span class="ident">create</span>();
                     <span class="ident">ed</span>.<span class="ident">push_boxed_context</span>(<span class="ident">context</span>);
-                } <span class="kw">else</span> {
-                    <span class="kw">match</span> <span class="ident">code</span> {
-                        <span class="ident">KeyCode::Char</span>(<span class="ident">c</span>) =&gt; <span class="ident">ed</span>.<span class="ident">on_current_window</span>(<span class="op">|</span><span class="ident">w</span>, <span class="ident">t</span><span class="op">|</span> <span class="ident">w</span>.<span class="ident">insert</span>(<span class="ident">c</span>, <span class="ident">t</span>)).<span class="ident">map</span>(<span class="op">|</span><span class="kw">_</span><span class="op">|</span> ())<span class="question-mark">?</span>,
-                        <span class="kw">_</span> =&gt; ()
-                    }
+                } <span class="kw">else</span> <span class="kw">if</span> <span class="kw">let</span> <span class="ident">KeyCode::Char</span>(<span class="ident">c</span>) <span class="op">=</span> <span class="ident">code</span> {
+                    <span class="ident">ed</span>.<span class="ident">on_current_window</span>(<span class="op">|</span><span class="ident">w</span>, <span class="ident">t</span><span class="op">|</span> {
+                        <span class="ident">w</span>.<span class="ident">insert</span>(<span class="ident">c</span>, <span class="ident">t</span>)<span class="question-mark">?</span>;
+                        <span class="ident">w</span>.<span class="ident">move_right</span>(<span class="ident">t</span>)
+                    })<span class="question-mark">?</span>;
                 }
             }
         }

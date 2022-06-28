@@ -111,16 +111,20 @@
 <span id="109">109</span>
 <span id="110">110</span>
 <span id="111">111</span>
+<span id="112">112</span>
+<span id="113">113</span>
+<span id="114">114</span>
 </pre><pre class="rust"><code><span class="doccomment">//! A module for handling internal configuration options.</span>
 <span class="doccomment">//!</span>
 <span class="doccomment">//! There are three different types of options: boolean, numeric, and string. These can be set by</span>
 <span class="doccomment">//! the user through configuration files or in-fim commands (eventually, not right now).</span>
 
 <span class="kw">use</span> <span class="ident">read_option::ReadOption</span>;
+<span class="kw">use</span> <span class="ident">option_factory::OptionFactory</span>;
 <span class="kw">use</span> <span class="ident">option_string::OptionString</span>;
 
 <span class="doccomment">/// Struct that represent the collection of internal configuration options.</span>
-<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">ReadOption</span>)]</span>
+<span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Clone</span>, <span class="ident">OptionFactory</span>, <span class="ident">ReadOption</span>)]</span>
 <span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">Options</span> {
     <span class="doccomment">/// Type of line numbering to use; string (enum) option</span>
     <span class="kw">pub</span> <span class="ident">line_numbering</span>: <span class="ident">LineNumbers</span>,
@@ -135,42 +139,44 @@
     }
 }
 
-<span class="doccomment">/// Struct that creates an [`Options`] object.</span>
-<span class="kw">pub</span> <span class="kw">struct</span> <span class="ident">OptionFactory</span> {
-    <span class="attribute">#[<span class="ident">doc</span>(<span class="ident">hidden</span>)]</span>
-    <span class="ident">opt</span>: <span class="ident">Options</span>,
+<span class="comment">/*
+/// Struct that creates an [`Options`] object.
+pub struct OptionFactory {
+    #[doc(hidden)]
+    opt: Options,
 }
 
-<span class="kw">impl</span> <span class="ident">OptionFactory</span> {
-    <span class="doccomment">/// Create a new [`OptionFactory`].</span>
-    <span class="doccomment">///</span>
-    <span class="doccomment">/// The `Options` object begins with its default value.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">new</span>() -&gt; <span class="self">Self</span> {
-        <span class="ident">OptionFactory</span>{ <span class="ident">opt</span>: <span class="ident">Options::default</span>() }
+impl OptionFactory {
+    /// Create a new [`OptionFactory`].
+    ///
+    /// The `Options` object begins with its default value.
+    pub fn new() -&gt; Self {
+        OptionFactory{ opt: Options::default() }
     }
      
-    <span class="doccomment">/// Consume the `OptionFactory` and return the created `Options` object.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">options</span>(<span class="self">self</span>) -&gt; <span class="ident">Options</span> {
-        <span class="self">self</span>.<span class="ident">opt</span>
+    /// Consume the `OptionFactory` and return the created `Options` object.
+    pub fn options(self) -&gt; Options {
+        self.opt
     }
 
-    <span class="doccomment">/// Return a reference to the `Options` object in the process of being created.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">peek</span>(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="ident">Options</span> {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="ident">opt</span>
+    /// Return a reference to the `Options` object in the process of being created.
+    pub fn peek(&amp;self) -&gt; &amp;Options {
+        &amp;self.opt
     }
 
-    <span class="doccomment">/// Set the `line_numbering` field of the `Options` object.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_line_numbering</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">numbering</span>: <span class="ident">LineNumbers</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">opt</span>.<span class="ident">line_numbering</span> <span class="op">=</span> <span class="ident">numbering</span>; 
-        <span class="self">self</span>
+    /// Set the `line_numbering` field of the `Options` object.
+    pub fn set_line_numbering(&amp;mut self, numbering: LineNumbers) -&gt; &amp;mut Self {
+        self.opt.line_numbering = numbering; 
+        self
     }
 
-    <span class="doccomment">/// Set the `layout` field of the `Options` object.</span>
-    <span class="kw">pub</span> <span class="kw">fn</span> <span class="ident">set_layout</span>(<span class="kw-2">&amp;mut</span> <span class="self">self</span>, <span class="ident">layout</span>: <span class="ident">LayoutType</span>) -&gt; <span class="kw-2">&amp;mut</span> <span class="self">Self</span> {
-        <span class="self">self</span>.<span class="ident">opt</span>.<span class="ident">layout</span> <span class="op">=</span> <span class="ident">layout</span>;
-        <span class="self">self</span>
+    /// Set the `layout` field of the `Options` object.
+    pub fn set_layout(&amp;mut self, layout: LayoutType) -&gt; &amp;mut Self {
+        self.opt.layout = layout;
+        self
     }
 }
+*/</span>
 
 <span class="attribute">#[<span class="ident">derive</span>(<span class="ident">Copy</span>, <span class="ident">Clone</span>, <span class="ident">OptionString</span>)]</span>
 <span class="doccomment">/// Enum that represents the different types of line numbers fim can use.</span>
