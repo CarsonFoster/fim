@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
+use proc_macro2::TokenStream as TokenStream2;
 use syn::{parse, Data, DeriveInput, Fields, Ident, Type};
-use quote::quote;
+use quote::{format_ident, quote, quote_spanned};
 
 #[proc_macro_derive(OptionNumber)]
 pub fn option_number(item: TokenStream) -> TokenStream {
@@ -25,12 +26,24 @@ fn impl_option_number(ast: &DeriveInput) -> TokenStream {
     panic!("the OptionNumber derive macro only works on structs with one unnamed, i32 field");
 }
 
+fn gen_assert(name: &Ident) -> TokenStream2 {
+    let span = name.span(); 
+    let assert_name = format_ident!("_AssertVerifiable{}", name);
+    quote_spanned! {span=>
+        struct #assert_name where #name: Verifiable; 
+    }
+}
+
 fn gen_impls(name: &Ident) -> TokenStream {
+    let assert = gen_assert(name);
     let gen = quote! {
+        #assert
+
         impl ::std::str::FromStr for #name {
-            type Err = ::std::num::ParseIntError;
+            type Err = NumberParseError;
             fn from_str(s: &str) -> ::std::result::Result<Self, Self::Err> {
                 let i: i32 = s.parse()?;
+                Self::verify(i)?;
                 Ok(#name(i))
             }
         }

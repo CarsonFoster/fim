@@ -7,6 +7,7 @@ use read_option::ReadOption;
 use option_factory::OptionFactory;
 use option_number::OptionNumber;
 use option_string::OptionString;
+use std::num::ParseIntError;
 
 /// Struct that represent the collection of internal configuration options.
 #[derive(Clone, OptionFactory, ReadOption)]
@@ -27,6 +28,37 @@ pub struct Options {
 impl Default for Options {
     fn default() -> Self {
         Options{ line_numbering: LineNumbers::Relative, layout: LayoutType::Qwerty, tab_type: TabType::Spaces, tab_spaces: 4.into(), tab_width: 4.into() }
+    }
+}
+
+/// Trait that represents a predicate to determine if a parsed `i32` is valid for this number
+/// option.
+pub trait Verifiable {
+    /// Returns `Ok(())` if the passed `i32` is valid, and `Err(<str>)` otherwise, where `<str>` is
+    /// a `String` error message.
+    fn verify(_: i32) -> Result<(), String>;
+}
+
+/// Enum for containing errors that might occur in parsing number options.
+#[derive(Debug, PartialEq)]
+pub enum NumberParseError {
+    /// The string couldn't be parsed into an integer.
+    ParseIntError(ParseIntError),
+    /// The integer did not pass verification.
+    ///
+    /// Contains the message from [`Verifiable::verify()`].
+    VerificationFailed(String)
+}
+
+impl From<ParseIntError> for NumberParseError {
+    fn from(e: ParseIntError) -> Self {
+        Self::ParseIntError(e)
+    }
+}
+
+impl From<String> for NumberParseError {
+    fn from(e: String) -> Self {
+        Self::VerificationFailed(e)
     }
 }
 
@@ -111,8 +143,20 @@ pub enum TabType {
 #[derive(Copy, Clone, OptionNumber)]
 pub struct TabWidth(i32);
 
+impl Verifiable for TabWidth {
+    fn verify(x: i32) -> Result<(), String> {
+        if x > 0 { Ok(()) } else { Err("number must be positive (i.e. not negative or zero)".to_owned()) }
+    }
+}
+
 /// Struct that represents the number of spaces to use for a tab character.
 ///
 /// This only applies when `tab_type` is `Spaces`.
 #[derive(Copy, Clone, OptionNumber)]
 pub struct TabSpaces(i32);
+
+impl Verifiable for TabSpaces {
+    fn verify(x: i32) -> Result<(), String> {
+        if x > 0 { Ok(()) } else { Err("number must be positive (i.e. not negative or zero)".to_owned()) }
+    }
+}

@@ -3,8 +3,8 @@
 pub use super::options::OptionParseError;
 use std::fmt;
 
-#[derive(Debug, PartialEq)]
 /// Enum for containing errors that might occur in parsing bind lines.
+#[derive(Debug, PartialEq)]
 pub enum BindParseError {
     /// User wants to map a key to a non-existent context.
     NoMatchingContext{

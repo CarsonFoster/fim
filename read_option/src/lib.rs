@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
-use syn::{parse, punctuated::Punctuated, spanned::Spanned, token::Comma, Data, DeriveInput, Field, Fields};
+use syn::{parse, punctuated::Punctuated, spanned::Spanned, token::Comma, Data, DeriveInput, Field, Fields, Ident};
 use quote::{format_ident, quote, quote_spanned};
 
 static ERROR_MSG: &str = "the ReadOption derive macro only works with structs named Options with named fields that implement FromStr";
@@ -79,9 +79,13 @@ fn gen_error() -> TokenStream2 {
     };
 
     let from_int_err = quote! {
-        impl ::std::convert::From<::std::num::ParseIntError> for OptionParseError {
-            fn from(pie: ::std::num::ParseIntError) -> Self {
-                Self::ValueParseError{ msg: format!("{}", pie) }
+        impl ::std::convert::From<NumberParseError> for OptionParseError {
+            fn from(npe: NumberParseError) -> Self {
+                Self::ValueParseError{ msg: match npe {
+                        NumberParseError::ParseIntError(pie) => format!("{}", pie),
+                        NumberParseError::VerificationFailed(s) => s
+                    }
+                }
             }
         }
     };
@@ -165,16 +169,21 @@ fn gen_read_option(fields: &Punctuated<Field, Comma>) -> TokenStream {
     let mut matches_read = Vec::new();
     let mut matches_set = Vec::new();
     let mut asserts = Vec::new();
+    let mut counter = 0;
     for field in fields.iter() {
         let ident = field.ident.as_ref().expect(ERROR_MSG);
         let ty = &field.ty;
 
-        let assert_from_str_name = format_ident!("_AssertFromStr_{}", ident);
-        let assert_error_name = format_ident!("_AssertFromFromStrError_{}", ident);
+        let assert_from_str_name = Ident::new(
+            format!("_AssertFromStr{}{}", counter, ident.to_string().replace('_', "")).as_str(),
+            ident.span()
+        ); 
+        let assert_error_name = Ident::new(
+            format!("_AssertFromFromStrError{}{}", counter, ident.to_string().replace('_', "")).as_str(),
+            ident.span()
+        );
         asserts.push(quote_spanned! {ty.span()=>
-            #[allow(non_camel_case_types)] 
             struct #assert_from_str_name where #ty: ::std::str::FromStr; 
-            #[allow(non_camel_case_types)]
             struct #assert_error_name where OptionParseError: ::std::convert::From<<#ty as ::std::str::FromStr>::Err>;
         });
 
@@ -194,6 +203,8 @@ fn gen_read_option(fields: &Punctuated<Field, Comma>) -> TokenStream {
                 Ok(())
             },
         });
+
+        counter += 1;
     }
 
     let error_enum = gen_error();
