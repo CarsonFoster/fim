@@ -10,13 +10,13 @@ use unicode_segmentation::UnicodeSegmentation;
 pub struct Line {
     /// The content of the line.
     pub text: String,
-    /// The number of graphemes in the line
-    pub length: usize,
+    /// The number of graphemes in the line.
+    pub graphemes: usize,
 }
 
 impl From<&str> for Line {
     fn from(text: &str) -> Self {
-        Line{ text: text.to_string(), length: text.graphemes(true).count() }
+        Line{ text: text.to_string(), graphemes: text.graphemes(true).count() }
     }
 }
 
@@ -27,6 +27,8 @@ pub struct Document {
     #[doc(hidden)]
     lines: Vec<Line>,
 }
+
+// TODO: transform incoming tabs according to options??
 
 impl Document {
     /// Create a new Document from a file.

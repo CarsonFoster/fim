@@ -51,7 +51,7 @@ enum ClearType {
 #[derive(Copy, Clone)]
 struct WindowLineProperties {
     pub lines: usize,    // number of window lines the Line takes up
-    pub graphemes: u16 // number of graphemes on the last window line (all others must have raw_window_size.width graphemes)
+    pub cells: usize    // number of terminal cells/columns the Line takes up
 }
 
 impl WindowLineProperties {
