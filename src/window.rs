@@ -51,7 +51,7 @@ enum ClearType {
 #[derive(Copy, Clone)]
 struct WindowLineProperties {
     pub lines: usize,    // number of window lines the Line takes up
-    pub cells: usize    // number of terminal cells/columns the Line takes up
+    pub cells: usize    // number of terminal cells/columns the Line takes up, we assume cells >= graphemes
 }
 
 impl WindowLineProperties {
@@ -134,6 +134,7 @@ impl Window {
 
     /// Move the cursor one character left, if possible.
     pub fn move_left(&mut self, term: &mut Terminal) -> Result<()> {
+        // TODO: multicell characters
         if self.doc.is_none() { return Ok(()) }
         if self.pos_in_doc.x > 0 {
             self.pos_in_doc.x -= 1;
@@ -146,8 +147,9 @@ impl Window {
 
     /// Move the cursor one character right, if possible.
     pub fn move_right(&mut self, term: &mut Terminal) -> Result<()> {
+        // TODO: multicell characters
         if self.doc.is_none() { return Ok(()) }
-        if self.pos_in_doc.x + 1 < self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().text.len() {
+        if self.pos_in_doc.x + 1 < self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().graphemes {
             self.pos_in_doc.x += 1;
             self.target_x = self.pos_in_doc.x;
             self.q_move(term)?;
@@ -164,7 +166,7 @@ impl Window {
         if self.doc.is_none() { return Ok(()) }
         if self.pos_in_doc.y > 0 {
             self.pos_in_doc.y -= 1;
-            self.pos_in_doc.x = min(self.target_x, self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().length);
+            self.pos_in_doc.x = min(self.target_x, self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().graphemes);
 
             if self.pos_in_doc.y + 1 == self.first_line {
                 self.first_line -= 1;
@@ -186,7 +188,7 @@ impl Window {
         if self.doc.is_none() { return Ok(()) }
         if self.pos_in_doc.y + 1 < self.doc.as_ref().unwrap().num_lines() {
             self.pos_in_doc.y += 1;
-            self.pos_in_doc.x = min(self.target_x, self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().length);
+            self.pos_in_doc.x = min(self.target_x, self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().graphemes);
 
             if self.pos_in_doc.y == self.first_line + self.raw_window_size.height as usize {
                 self.first_line += 1;
@@ -212,7 +214,7 @@ impl Window {
     /// Move the cursor to the end of the current line.
     pub fn end(&mut self, term: &mut Terminal) -> Result<()> {
         if self.doc.is_none() { return Ok(()) }
-        let last = self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().length - 1;
+        let last = self.doc.as_ref().unwrap().line(self.pos_in_doc.y).unwrap().graphemes - 1;
         self.pos_in_doc.x = last;
         self.target_x = self.pos_in_doc.x;
         self.q_move(term)?;
@@ -236,7 +238,7 @@ impl Window {
         Ok(())
     }
 
-    /// Deletes the character under the cursor.
+    /// Deletes the grapheme under the cursor.
     pub fn delete(&mut self, term: &mut Terminal) -> Result<()> {
         if self.doc.is_none() { return Ok(()); }
         let mut line = self.doc.as_mut().unwrap().line_mut(self.pos_in_doc.y).unwrap();
@@ -252,7 +254,7 @@ impl Window {
                            })
                            .collect::<String>();
         line.text = new_text;
-        line.length -= 1;
+        line.graphemes -= 1;
         self.update_render(term)
     }
 
@@ -275,7 +277,7 @@ impl Window {
         let line = self.doc.as_mut().unwrap().line_mut(self.pos_in_doc.y).unwrap();
         if let Some((byte_idx, _)) = line.text.grapheme_indices(true).nth(self.pos_in_doc.x) {
             line.text.insert(byte_idx, c);
-            line.length += 1;
+            line.graphemes += 1;
             self.update_render(term)?;
             Ok(true)
         } else {
@@ -325,6 +327,7 @@ impl Window {
     }
 
     fn calc_line_properties(length: usize, text_width: u16) -> WindowLineProperties {
+        // TODO: revamp for multicell characters
         let rem = (length % text_width as usize) as u16;
         let lines = div_ceil(length, text_width);
         WindowLineProperties{ lines, graphemes: rem }
