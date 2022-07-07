@@ -9,6 +9,7 @@ pub mod context;
 pub mod delta;
 pub mod document;
 pub mod editor;
+pub mod grapheme_string;
 pub mod layout;
 pub mod terminal;
 pub mod window;

@@ -19,6 +19,7 @@ crossterm = "0.23.1"
 lazy_static = "1.4.0"
 serde = { version = "1.0", features = ["derive"] }
 unicode-segmentation = "1.7.1"
+unicode-width = "0.1.9"
 
 [[bin]]
 name = "fim"
