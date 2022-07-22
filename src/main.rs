@@ -4,7 +4,7 @@
 //!
 //! (vimscript or its analogue won't be included for a long time, sorry)
 
-pub use libfim::{config, context, delta, document, editor, grapheme_string, layout, terminal, window};
+pub use libfim::{config, context, delta, editor, grapheme_string, layout, terminal, window};
 use libfim::config::Config;
 use libfim::editor::Editor;
 use clap::Parser;
