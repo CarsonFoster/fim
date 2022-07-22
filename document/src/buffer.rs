@@ -11,6 +11,22 @@ struct UnicodeRange {
     pub graphemes: Vec<u16>
 }
 
+/// Struct that holds part of a document.
+///
+/// Each `Buffer` object contains, at most, 2^16 - 1 bytes (so that it can be indexed by a u16).
+/// They offer efficient, grapheme-based operations. A Rust `char`
+/// [represents a Unicode codepoint, which might not be a 'user-perceived character' (grapheme)](https://doc.rust-lang.org/stable/std/primitive.char.html#representation).
+/// This is particularly important for terminals, since a terminal works on a strict grid of
+/// graphemes (although this is complicated by the fact that not all graphemes are one terminal 'column' or 'cell' in width).
+/// Extra memory is therefore needed to keep track of graphemes.
+///
+/// `Buffer`s are optimized for large sections of contiguous ASCII or contiguous non-ASCII Unicode graphemes.
+/// With entirely ASCII text, there is a negligible memory overhead. With entirely non-ASCII
+/// Unicode grapheme text, `Buffer`s take up approximately 1.7x the size of the file (i.e. a 0.7x
+/// overhead), according to my (non-rigorous) tests. However, the pathological case leads to a `Buffer` with 
+/// 10x overhead (so the total size would be 11x the size of the file). For the vast majority of
+/// texts you'll come across, `Buffer`s will work perfectly fine with small relative overhead in
+/// exchange for grapheme-based operations.
 pub struct Buffer {
     #[doc(hidden)]
     buf: String,
@@ -21,6 +37,9 @@ pub struct Buffer {
 }
 
 impl Buffer {
+    /// Create a new `Buffer` from a `String`.
+    ///
+    /// No copying is done; the `String` is moved.
     pub fn new(buf: String) -> Self {
         assert!(buf.len() <= u16::MAX.into());
         let length = buf.len() as u16;
