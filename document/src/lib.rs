@@ -2,6 +2,8 @@
 
 pub mod buffer;
 
+use crate::buffer::Buffer;
+
 #[cfg(test)]
 mod tests {
     #[test]

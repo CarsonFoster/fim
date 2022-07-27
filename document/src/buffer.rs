@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+use std::ops::{Bound, RangeBounds};
 use unicode_segmentation::GraphemeCursor;
 
 struct AsciiRange {
@@ -33,7 +35,9 @@ pub struct Buffer {
     #[doc(hidden)]
     ascii: Vec<AsciiRange>,
     #[doc(hidden)]
-    unicode: Vec<UnicodeRange> 
+    unicode: Vec<UnicodeRange>,
+    #[doc(hidden)]
+    cached_idx: Option<u16>
 }
 
 impl Buffer {
@@ -101,6 +105,94 @@ impl Buffer {
             idx = next_start;
         }
 
-        Buffer{ buf, ascii, unicode }
+        Buffer{ buf, ascii, unicode, cached_idx: None }
+    }
+}
+
+impl Buffer {
+    pub fn get(&mut self, bounds: impl RangeBounds<u16>) -> &str {
+        enum Index {
+            Ascii(u16),
+            Unicode(u16)
+        }
+
+        fn cmp_ascii(idx: u16, range: &AsciiRange, _range_idx: u16) -> Ordering {
+            if idx < range.grapheme_start {
+                Ordering::Less
+            } else if idx >= range.grapheme_start + range.length {
+                Ordering::Greater
+            } else {
+                Ordering::Equal
+            }
+        }
+
+        fn cmp_unicode(idx: u16, range: &UnicodeRange, range_idx: u16) -> Ordering {
+            let length = range.graphemes.len() as u16;
+            let grapheme_start = range.offset + range_idx;
+            if idx < grapheme_start {
+                Ordering::Less
+            } else if idx >= grapheme_start + length {
+                Ordering::Greater
+            } else {
+                Ordering::Equal
+            }
+        }
+
+        fn half(lo: u16, hi: u16) -> u16 {
+            ((hi as u32 + lo as u32) >> 1) as u16
+        }
+
+        let index = if !self.ascii.is_empty() && self.ascii[0].byte_start == 0 {
+            // ascii starts, ascii indexes are even
+            |idx| if idx & 1 > 0 { Index::Unicode(idx >> 1) } else { Index::Ascii(idx >> 1) }
+        } else {
+            // unicode starts, unicode indexes are even
+            |idx| if idx & 1 > 0 { Index::Ascii(idx >> 1) } else { Index::Unicode(idx >> 1) }
+        };
+
+        let binary_search = |needle: u16, lo: Option<u16>, mid: Option<u16>, hi: Option<u16>| {
+            let mut lo = lo.unwrap_or(0u16);
+            let mut hi = hi.unwrap_or_else(|| self.ascii.len() as u16 + self.unicode.len() as u16);
+            let mut mid = mid.unwrap_or_else(|| half(lo, hi));
+            while lo < hi {
+                let ord = match index(mid) {
+                    Index::Ascii(idx) => cmp_ascii(needle, &self.ascii[idx as usize], idx),
+                    Index::Unicode(idx) => cmp_unicode(needle, &self.unicode[idx as usize], idx)
+                };
+                match ord {
+                    Ordering::Less => hi = mid,
+                    Ordering::Equal => {
+                        return match index(mid) {
+                            Index::Ascii(idx) => {
+                                let range = &self.ascii[idx as usize];
+                                range.byte_start + needle - range.grapheme_start
+                            },
+                            Index::Unicode(idx) => {
+                                let range = &self.unicode[idx as usize];
+                                let grapheme_start = range.offset + idx;
+                                range.graphemes[(needle - grapheme_start) as usize]
+                            }
+                        };
+                    },
+                    Ordering::Greater => lo = mid + 1
+                };
+                mid = half(lo, hi);
+            }
+            panic!("binary search failed -- invariant violated in Buffer::get");
+        };
+
+        let start = binary_search(match bounds.start_bound() {
+            Bound::Included(i) => *i,
+            Bound::Excluded(i) => *i + 1u16,
+            Bound::Unbounded => 0u16
+        }, None, self.cached_idx, None);
+
+        let end = binary_search(match bounds.end_bound() {
+            Bound::Included(i) => *i + 1u16,
+            Bound::Excluded(i) => *i,
+            Bound::Unbounded => self.buf.len() as u16
+        }, Some(start), Some(start), None);
+
+        &self.buf[start as usize..end as usize]
     }
 }
