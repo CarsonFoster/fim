@@ -109,6 +109,7 @@ impl Buffer {
     }
 
     pub fn get(&mut self, bounds: impl RangeBounds<u16>) -> &str {
+        if self.buf.len() == 0 { return ""; }
         enum Index {
             Ascii(u16),
             Unicode(u16)
@@ -186,12 +187,12 @@ impl Buffer {
         }, None, self.cached_idx, None);
 
         let (end_chunk, end) = binary_search(match bounds.end_bound() {
-            Bound::Included(i) => *i + 1u16,
-            Bound::Excluded(i) => *i,
-            Bound::Unbounded => self.buf.len() as u16
+            Bound::Included(i) => *i,
+            Bound::Excluded(i) => *i - 1,
+            Bound::Unbounded => (self.buf.len() - 1) as u16
         }, Some(start_chunk), Some(start_chunk), None);
 
         self.cached_idx = Some(end_chunk);
-        &self.buf[start as usize..end as usize]
+        &self.buf[start as usize..=end as usize]
     }
 }
