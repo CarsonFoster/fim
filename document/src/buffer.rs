@@ -107,9 +107,7 @@ impl Buffer {
 
         Buffer{ buf, ascii, unicode, cached_idx: None }
     }
-}
 
-impl Buffer {
     pub fn get(&mut self, bounds: impl RangeBounds<u16>) -> &str {
         enum Index {
             Ascii(u16),
@@ -162,7 +160,7 @@ impl Buffer {
                 match ord {
                     Ordering::Less => hi = mid,
                     Ordering::Equal => {
-                        return match index(mid) {
+                        return (mid, match index(mid) {
                             Index::Ascii(idx) => {
                                 let range = &self.ascii[idx as usize];
                                 range.byte_start + needle - range.grapheme_start
@@ -172,7 +170,7 @@ impl Buffer {
                                 let grapheme_start = range.offset + idx;
                                 range.graphemes[(needle - grapheme_start) as usize]
                             }
-                        };
+                        });
                     },
                     Ordering::Greater => lo = mid + 1
                 };
@@ -181,18 +179,19 @@ impl Buffer {
             panic!("binary search failed -- invariant violated in Buffer::get");
         };
 
-        let start = binary_search(match bounds.start_bound() {
+        let (start_chunk, start) = binary_search(match bounds.start_bound() {
             Bound::Included(i) => *i,
             Bound::Excluded(i) => *i + 1u16,
             Bound::Unbounded => 0u16
         }, None, self.cached_idx, None);
 
-        let end = binary_search(match bounds.end_bound() {
+        let (end_chunk, end) = binary_search(match bounds.end_bound() {
             Bound::Included(i) => *i + 1u16,
             Bound::Excluded(i) => *i,
             Bound::Unbounded => self.buf.len() as u16
-        }, Some(start), Some(start), None);
+        }, Some(start_chunk), Some(start_chunk), None);
 
+        self.cached_idx = Some(end_chunk);
         &self.buf[start as usize..end as usize]
     }
 }
