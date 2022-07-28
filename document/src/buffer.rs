@@ -75,17 +75,17 @@ impl Buffer {
                         num_graphemes += idx - i;
                     } else {
                         // one ascii char
-                        if Some(num_graphemes) == unicode.last().map(|r| r.grapheme_start) {
-                            unicode.last_mut().unwrap().graphemes.push(idx);
+                        if Some(num_graphemes) == unicode.last().map(|r| r.grapheme_start + r.graphemes.len() as u16) {
+                            unicode.last_mut().unwrap().graphemes.push(i);
                         } else {
-                            unicode.push(UnicodeRange{ grapheme_start: num_graphemes, graphemes: vec![idx] });
+                            unicode.push(UnicodeRange{ grapheme_start: num_graphemes, graphemes: vec![i] });
                         }
                         num_graphemes += 1;
                     }
                     saved_ascii_idx = None;
                 }
                 if idx == length { break; }
-                if Some(num_graphemes) == unicode.last().map(|r| r.grapheme_start) {
+                if Some(num_graphemes) == unicode.last().map(|r| r.grapheme_start + r.graphemes.len() as u16) {
                     unicode.last_mut().unwrap().graphemes.push(idx);
                 } else {
                     unicode.push(UnicodeRange{ grapheme_start: num_graphemes, graphemes: vec![idx] });
@@ -99,7 +99,7 @@ impl Buffer {
     }
 
     pub fn get(&mut self, bounds: impl RangeBounds<u16>) -> &str {
-        if self.buf.len() == 0 || Bound::Excluded(&0) == bounds.end_bound() { return ""; }
+        if self.buf.len() == 0 { return ""; }
         enum Index {
             Ascii(u16),
             Unicode(u16)
@@ -139,6 +139,9 @@ impl Buffer {
         };
 
         let binary_search = |needle: u16, lo: Option<u16>, mid: Option<u16>, hi: Option<u16>| {
+            if needle == self.num_graphemes {
+                return (self.ascii.len() as u16 + self.unicode.len() as u16, self.buf.len() as u16);
+            }
             let mut lo = lo.unwrap_or(0u16);
             let mut hi = hi.unwrap_or_else(|| self.ascii.len() as u16 + self.unicode.len() as u16);
             let mut mid = mid.unwrap_or_else(|| half(lo, hi));
@@ -175,12 +178,12 @@ impl Buffer {
         }, None, self.cached_idx, None);
 
         let (end_chunk, end) = binary_search(match bounds.end_bound() {
-            Bound::Included(i) => *i,
-            Bound::Excluded(i) => *i - 1,
-            Bound::Unbounded => (self.buf.len() - 1) as u16
+            Bound::Included(i) => *i + 1,
+            Bound::Excluded(i) => *i,
+            Bound::Unbounded => self.num_graphemes
         }, Some(start_chunk), Some(start_chunk), None);
 
         self.cached_idx = Some(end_chunk);
-        &self.buf[start as usize..=end as usize]
+        &self.buf[start as usize..end as usize]
     }
 }
