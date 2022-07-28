@@ -9,7 +9,7 @@ struct AsciiRange {
 }
 
 struct UnicodeRange {
-    pub offset: u16,
+    pub grapheme_start: u16,
     pub graphemes: Vec<u16>
 }
 
@@ -37,6 +37,8 @@ pub struct Buffer {
     #[doc(hidden)]
     unicode: Vec<UnicodeRange>,
     #[doc(hidden)]
+    num_graphemes: u16,
+    #[doc(hidden)]
     cached_idx: Option<u16>
 }
 
@@ -48,16 +50,7 @@ impl Buffer {
         assert!(buf.len() <= u16::MAX.into());
         let length = buf.len() as u16;
         let b = buf.as_str();
-        let mut ascii_length = 0;
-        let mut unicode_length = 0;
-
-        fn offset(ascii: bool, ascii_length: u16, unicode_length: u16) -> u16 {
-            if ascii {
-                unicode_length + ascii_length
-            } else {
-                ascii_length
-            }
-        }
+        let mut num_graphemes = 0;
 
         let mut ascii = Vec::new();
         let mut unicode: Vec<UnicodeRange> = Vec::new();
@@ -78,44 +71,41 @@ impl Buffer {
                 if let Some(i) = saved_ascii_idx {
                     if idx >= i + 2 {
                         // at least two ascii characters
-                        let grapheme_start = offset(true, ascii_length, unicode_length);
-                        ascii_length += idx - i;
-                        ascii.push(AsciiRange{ length: idx - i, byte_start: i, grapheme_start });
+                        ascii.push(AsciiRange{ length: idx - i, byte_start: i, grapheme_start: num_graphemes });
+                        num_graphemes += idx - i;
                     } else {
                         // one ascii char
-                        let offset = offset(false, ascii_length, unicode_length);
-                        unicode_length += 1;
-                        if Some(offset) == unicode.last().map(|r| r.offset) {
+                        if Some(num_graphemes) == unicode.last().map(|r| r.grapheme_start) {
                             unicode.last_mut().unwrap().graphemes.push(idx);
                         } else {
-                            unicode.push(UnicodeRange{ offset, graphemes: vec![idx] });
+                            unicode.push(UnicodeRange{ grapheme_start: num_graphemes, graphemes: vec![idx] });
                         }
+                        num_graphemes += 1;
                     }
                     saved_ascii_idx = None;
                 }
                 if idx == length { break; }
-                let offset = offset(false, ascii_length, unicode_length);
-                unicode_length += 1;
-                if Some(offset) == unicode.last().map(|r| r.offset) {
+                if Some(num_graphemes) == unicode.last().map(|r| r.grapheme_start) {
                     unicode.last_mut().unwrap().graphemes.push(idx);
                 } else {
-                    unicode.push(UnicodeRange{ offset, graphemes: vec![idx] });
+                    unicode.push(UnicodeRange{ grapheme_start: num_graphemes, graphemes: vec![idx] });
                 }
+                num_graphemes += 1;
             }
             idx = next_start;
         }
 
-        Buffer{ buf, ascii, unicode, cached_idx: None }
+        Buffer{ num_graphemes, buf, ascii, unicode, cached_idx: None }
     }
 
     pub fn get(&mut self, bounds: impl RangeBounds<u16>) -> &str {
-        if self.buf.len() == 0 { return ""; }
+        if self.buf.len() == 0 || Bound::Excluded(&0) == bounds.end_bound() { return ""; }
         enum Index {
             Ascii(u16),
             Unicode(u16)
         }
 
-        fn cmp_ascii(idx: u16, range: &AsciiRange, _range_idx: u16) -> Ordering {
+        fn cmp_ascii(idx: u16, range: &AsciiRange) -> Ordering {
             if idx < range.grapheme_start {
                 Ordering::Less
             } else if idx >= range.grapheme_start + range.length {
@@ -125,12 +115,11 @@ impl Buffer {
             }
         }
 
-        fn cmp_unicode(idx: u16, range: &UnicodeRange, range_idx: u16) -> Ordering {
+        fn cmp_unicode(idx: u16, range: &UnicodeRange) -> Ordering {
             let length = range.graphemes.len() as u16;
-            let grapheme_start = range.offset + range_idx;
-            if idx < grapheme_start {
+            if idx < range.grapheme_start {
                 Ordering::Less
-            } else if idx >= grapheme_start + length {
+            } else if idx >= range.grapheme_start + length {
                 Ordering::Greater
             } else {
                 Ordering::Equal
@@ -155,8 +144,8 @@ impl Buffer {
             let mut mid = mid.unwrap_or_else(|| half(lo, hi));
             while lo < hi {
                 let ord = match index(mid) {
-                    Index::Ascii(idx) => cmp_ascii(needle, &self.ascii[idx as usize], idx),
-                    Index::Unicode(idx) => cmp_unicode(needle, &self.unicode[idx as usize], idx)
+                    Index::Ascii(idx) => cmp_ascii(needle, &self.ascii[idx as usize]),
+                    Index::Unicode(idx) => cmp_unicode(needle, &self.unicode[idx as usize])
                 };
                 match ord {
                     Ordering::Less => hi = mid,
@@ -168,8 +157,7 @@ impl Buffer {
                             },
                             Index::Unicode(idx) => {
                                 let range = &self.unicode[idx as usize];
-                                let grapheme_start = range.offset + idx;
-                                range.graphemes[(needle - grapheme_start) as usize]
+                                range.graphemes[(needle - range.grapheme_start) as usize]
                             }
                         });
                     },
