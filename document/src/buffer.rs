@@ -140,7 +140,7 @@ impl Buffer {
 
         let binary_search = |needle: u16, lo: Option<u16>, mid: Option<u16>, hi: Option<u16>| {
             if needle == self.num_graphemes {
-                return (self.ascii.len() as u16 + self.unicode.len() as u16, self.buf.len() as u16);
+                return (half(0, self.ascii.len() as u16 + self.unicode.len() as u16), self.buf.len() as u16);
             }
             let mut lo = lo.unwrap_or(0u16);
             let mut hi = hi.unwrap_or_else(|| self.ascii.len() as u16 + self.unicode.len() as u16);
