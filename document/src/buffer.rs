@@ -39,7 +39,9 @@ pub struct Buffer {
     #[doc(hidden)]
     num_graphemes: u16,
     #[doc(hidden)]
-    cached_idx: Option<u16>
+    cached_idx: Option<u16>,
+    #[doc(hidden)]
+    mutable: bool,
 }
 
 impl Buffer {
@@ -95,7 +97,7 @@ impl Buffer {
             idx = next_start;
         }
 
-        Buffer{ num_graphemes, buf, ascii, unicode, cached_idx: None }
+        Buffer{ num_graphemes, buf, ascii, unicode, cached_idx: None, mutable: true }
     }
 
     /// Returns a slice of the underlying buffer.
@@ -191,6 +193,13 @@ impl Buffer {
 
         self.cached_idx = Some(end_chunk);
         &self.buf[start as usize..end as usize]
+    }
+
+    /// Forbid future appending to this `Buffer`.
+    ///
+    /// Cannot be reversed.
+    pub fn set_immutable(&mut self) {
+        self.mutable = false;
     }
 
     /// Returns the number of graphemes in this `Buffer`.
