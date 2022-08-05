@@ -1,6 +1,14 @@
 use std::cmp::Ordering;
 use std::ops::{Bound, RangeBounds};
-use unicode_segmentation::GraphemeCursor;
+use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
+
+/// Enum that describes why [`Buffer::push`] couldn't push.
+pub enum PushError {
+    /// The grapheme would cause the size of the buffer to exceed 2^16 - 1 bytes.
+    NotEnoughSpace,
+    /// [`Buffer::set_immutable`] has been called on the buffer.
+    ImmutableBuffer
+}
 
 struct AsciiRange {
     pub byte_start: u16,
@@ -193,6 +201,40 @@ impl Buffer {
 
         self.cached_idx = Some(end_chunk);
         &self.buf[start as usize..end as usize]
+    }
+
+    /// Attempts to push the passed grapheme to the buffer.
+    ///
+    /// Only attempts to push the first grapheme in `grapheme`. Returns `Ok(())` if the grapheme
+    /// was successfully pushed to the buffer, and `Err(e)` otherwise, where `e` is a [`PushError`]
+    /// describing the reason for failure.
+    pub fn push(&mut self, grapheme: &str) -> Result<(), PushError> {
+        if !self.mutable { return Err(PushError::ImmutableBuffer); }
+        let grapheme = grapheme.graphemes(true).nth(0);
+        if let Some(grapheme) = grapheme {
+            let additional_bytes = grapheme.len();
+            if additional_bytes + self.buf.len() > u16::MAX as usize {
+                return Err(PushError::NotEnoughSpace);
+            }
+            let idx = self.buf.len() as u16;
+            if grapheme.is_ascii() {
+                if Some(self.num_graphemes) == self.ascii.last().map(|r| r.grapheme_start + r.length) {
+                    self.ascii.last_mut().unwrap().length += 1;
+                } else {
+                    self.ascii.push(AsciiRange{ grapheme_start: self.num_graphemes, length: 1, byte_start: idx });
+                }
+            } else {
+                if Some(self.num_graphemes) == self.unicode.last().map(|r| r.grapheme_start + r.graphemes.len() as u16) {
+                    self.unicode.last_mut().unwrap().graphemes.push(idx);
+                } else {
+                    self.unicode.push(UnicodeRange{ grapheme_start: self.num_graphemes, graphemes: vec![idx] });
+                }
+            }
+            self.num_graphemes += 1;
+            self.buf.push_str(grapheme);
+        }
+        // if there was no grapheme, no error, since the requested grapheme, nothing, was added
+        Ok(())
     }
 
     /// Forbid future appending to this `Buffer`.
