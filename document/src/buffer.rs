@@ -98,6 +98,12 @@ impl Buffer {
         Buffer{ num_graphemes, buf, ascii, unicode, cached_idx: None }
     }
 
+    /// Returns a slice of the underlying buffer.
+    ///
+    /// The indices are grapheme indices, not codepoint indices or byte offsets.
+    ///
+    /// # Panics
+    /// No bounds checking is done. `get` will panic if it is given invalid indices.
     pub fn get(&mut self, bounds: impl RangeBounds<u16>) -> &str {
         if self.buf.len() == 0 { return ""; }
         enum Index {
@@ -185,5 +191,15 @@ impl Buffer {
 
         self.cached_idx = Some(end_chunk);
         &self.buf[start as usize..end as usize]
+    }
+
+    /// Returns the number of graphemes in this `Buffer`.
+    pub fn graphemes(&self) -> u16 {
+        self.num_graphemes
+    }
+
+    /// Returns the number of bytes in this `Buffer`.
+    pub fn bytes(&self) -> u16 {
+        self.buf.len() as u16
     }
 }
