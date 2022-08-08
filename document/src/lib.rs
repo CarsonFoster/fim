@@ -5,7 +5,7 @@ pub mod buffer;
 
 #[cfg(test)]
 mod tests {
-    use crate::buffer::Buffer;
+    use crate::buffer::{Buffer, PushError};
 
     fn construct_buffer() -> (String, Buffer) {
         let mut string = String::new();
@@ -124,4 +124,29 @@ mod tests {
         }
     }
     */
+
+    #[test]
+    fn push_fails_immutable() {
+        let mut buf = Buffer::new(String::from("hello there"));
+        buf.set_immutable();
+        let result = buf.push("t");
+        assert_eq!(Err(PushError::ImmutableBuffer), result);
+    }
+
+    #[test]
+    fn push_fails_space() {
+        let mut buf = Buffer::new("a".repeat(u16::MAX as usize));
+        let result = buf.push("t");
+        assert_eq!(Err(PushError::NotEnoughSpace), result);
+
+        let mut buf = Buffer::new("a".repeat(u16::MAX as usize - 1));
+        let result = buf.push("t");
+        assert_eq!(Ok(()), result);
+        let result = buf.push("o");
+        assert_eq!(Err(PushError::NotEnoughSpace), result);
+
+        let mut buf = Buffer::new("a".repeat(u16::MAX as usize - 1));
+        let result = buf.push("\u{00eb}");
+        assert_eq!(Err(PushError::NotEnoughSpace), result);
+    }
 }
