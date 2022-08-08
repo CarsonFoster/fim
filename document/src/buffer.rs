@@ -3,6 +3,7 @@ use std::ops::{Bound, RangeBounds};
 use unicode_segmentation::{GraphemeCursor, UnicodeSegmentation};
 
 /// Enum that describes why [`Buffer::push`] couldn't push.
+#[derive(PartialEq, Eq)]
 pub enum PushError {
     /// The grapheme would cause the size of the buffer to exceed 2^16 - 1 bytes.
     NotEnoughSpace,
