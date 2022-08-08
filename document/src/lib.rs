@@ -7,6 +7,51 @@ pub mod buffer;
 mod tests {
     use crate::buffer::{Buffer, PushError};
 
+    struct UnicodeTestIterator {
+        perm_idx: usize,
+        str_idx: usize
+    }
+
+    impl UnicodeTestIterator {
+        pub const PERMS: [[usize; 4]; 24] = [
+            [0, 1, 2, 3], [0, 1, 3, 2], [0, 2, 1, 3], [0, 2, 3, 1], [0, 3, 1, 2], [0, 3, 2, 1],
+            [1, 0, 2, 3], [1, 0, 3, 2], [1, 2, 0, 3], [1, 2, 3, 0], [1, 3, 0, 2], [1, 3, 2, 0],
+            [2, 0, 1, 3], [2, 0, 3, 1], [2, 1, 0, 3], [2, 1, 3, 0], [2, 3, 0, 1], [2, 3, 1, 0],
+            [3, 0, 1, 2], [3, 0, 2, 1], [3, 1, 0, 2], [3, 1, 2, 0], [3, 2, 0, 1], [3, 2, 1, 0]
+        ];
+        pub const THREE: &'static str = "\u{1100}\u{1161}\u{11a8}"; // 9 bytes
+        pub const TWO: &'static str = "\u{0ba8}\u{0bbf}"; // 6 bytes
+        pub const ONE_LONG: &'static str = "\u{fdfd}"; // 3 bytes
+        pub const ONE: &'static str = "\u{00eb}"; // 2 bytes
+
+        pub fn new() -> Self {
+            UnicodeTestIterator{ perm_idx: 0, str_idx: 0 }
+        }
+    }
+
+    impl Iterator for UnicodeTestIterator {
+
+        type Item = &'static str;
+        fn next(&mut self) -> Option<Self::Item> {
+            let grapheme = match Self::PERMS[self.perm_idx][self.str_idx] {
+                0 => Self::ONE,
+                1 => Self::ONE_LONG,
+                2 => Self::TWO,
+                3 => Self::THREE,
+                _ => unreachable!()
+            };
+            self.str_idx += 1;
+            if self.str_idx == 4 {
+                self.str_idx = 0;
+                self.perm_idx += 1;
+                if self.perm_idx == Self::PERMS.len() {
+                    self.perm_idx = 0;
+                }
+            }
+            Some(grapheme)
+        }
+    }
+
     fn construct_buffer() -> (String, Buffer) {
         let mut string = String::new();
         for _ in 0..500 {
@@ -51,19 +96,11 @@ mod tests {
 
     #[test]
     fn unicode_all_slices() {
-        const PERMS: [[usize; 4]; 24] = [
-            [0, 1, 2, 3], [0, 1, 3, 2], [0, 2, 1, 3], [0, 2, 3, 1], [0, 3, 1, 2], [0, 3, 2, 1],
-            [1, 0, 2, 3], [1, 0, 3, 2], [1, 2, 0, 3], [1, 2, 3, 0], [1, 3, 0, 2], [1, 3, 2, 0],
-            [2, 0, 1, 3], [2, 0, 3, 1], [2, 1, 0, 3], [2, 1, 3, 0], [2, 3, 0, 1], [2, 3, 1, 0],
-            [3, 0, 1, 2], [3, 0, 2, 1], [3, 1, 0, 2], [3, 1, 2, 0], [3, 2, 0, 1], [3, 2, 1, 0]
-        ];
-        const THREE: &str = "\u{1100}\u{1161}\u{11a8}"; // 9 bytes
-        const TWO: &str = "\u{0ba8}\u{0bbf}"; // 6 bytes
-        const ONE_LONG: &str = "\u{fdfd}"; // 3 bytes
-        const ONE: &str = "\u{00eb}"; // 2 bytes
         const ASCII: &str = "tes!ting seq%uence 12&34"; // 24 bytes
-        const HALF_PERM: usize = (u16::MAX as usize - (ASCII.len() * 2)) / (THREE.len() + TWO.len() + ONE_LONG.len() + ONE.len()) / 2;
+        const LENGTH: usize = UnicodeTestIterator::THREE.len() + UnicodeTestIterator::TWO.len() + UnicodeTestIterator::ONE.len() + UnicodeTestIterator::ONE_LONG.len();
+        const HALF_PERM: usize = (u16::MAX as usize - (ASCII.len() * 2)) / LENGTH / 2;
 
+        let mut iter = UnicodeTestIterator::new();
         let mut graphemes = vec![];
         let mut string = String::new();
 
@@ -74,18 +111,10 @@ mod tests {
                 string.push_str(slice);
             }
 
-            for i in 0..HALF_PERM {
-                for j in PERMS[i % PERMS.len()] {
-                    let grapheme = match j {
-                        0 => ONE,
-                        1 => ONE_LONG,
-                        2 => TWO,
-                        3 => THREE,
-                        _ => unreachable!()
-                    };
-                    graphemes.push(grapheme);
-                    string.push_str(grapheme);
-                }
+            for _ in 0..HALF_PERM {
+                let grapheme = iter.next().unwrap();
+                graphemes.push(grapheme);
+                string.push_str(grapheme);
             }
         }
 
