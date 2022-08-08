@@ -59,6 +59,9 @@ impl Buffer {
     /// No copying is done; the `String` is moved.
     pub fn new(buf: String) -> Self {
         assert!(buf.len() <= u16::MAX.into());
+        if buf.is_empty() {
+            return Self { buf, ascii: Vec::new(), unicode: Vec::new(), num_graphemes: 0, cached_idx: None, mutable: true };
+        }
         let length = buf.len() as u16;
         let b = buf.as_str();
         let mut num_graphemes = 0;
