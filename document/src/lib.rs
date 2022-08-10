@@ -178,4 +178,31 @@ mod tests {
         let result = buf.push("\u{00eb}");
         assert_eq!(Err(PushError::NotEnoughSpace), result);
     }
+
+    #[test]
+    fn push_unicode() {
+        let mut buf = Buffer::new(String::new());
+        let mut iter = UnicodeTestIterator::new();
+        let mut graphemes = Vec::new();
+        let mut sum = 0;
+
+        for k in 0..10000 {
+            let num_graphemes = buf.graphemes() as usize;
+            assert_eq!(num_graphemes, graphemes.len());
+            for i in 0..num_graphemes {
+                let mut string = String::new();
+                for j in i..=num_graphemes {
+                    assert_eq!(&string[..], buf.get((i as u16)..(j as u16)));
+                    if j < num_graphemes { string.push_str(graphemes[j]); }
+                }
+                sum += num_graphemes - i;
+            }
+            let grapheme = iter.next().unwrap();
+            graphemes.push(grapheme);
+            buf.push(grapheme).expect("Grapheme push shouldn't fail");
+            if k % 10 == 0 {
+                println!("{k}/10000: {sum} tests");
+            }
+        }
+    }
 }
