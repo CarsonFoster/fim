@@ -179,6 +179,8 @@ mod tests {
         assert_eq!(Err(PushError::NotEnoughSpace), result);
     }
 
+    // takes a few days! passed in current version, so commented out
+    /*
     #[test]
     fn push_unicode() {
         let mut buf = Buffer::new(String::new());
@@ -205,4 +207,5 @@ mod tests {
             }
         }
     }
+    */
 }
