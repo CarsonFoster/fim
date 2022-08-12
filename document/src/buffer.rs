@@ -257,4 +257,35 @@ impl Buffer {
     pub fn bytes(&self) -> u16 {
         self.buf.len() as u16
     }
+
+    /// Convert all occurrences of CRLF to LF.
+    ///
+    /// This is an `O(n)` operation.
+    pub fn convert_crlf(string: &mut String) {
+        const CR: u8 = ('\r' as u32) as u8;
+        const LF: u8 = ('\n' as u32) as u8;
+        let mut ptr = string.as_mut_ptr();
+        let length = string.len(); // number of bytes, since it's a u8 pointer
+        let num_removed = unsafe {
+            let end = ptr.add(length);
+            while ptr < end {
+                if *ptr == CR && ptr.add(1) < end && *ptr.add(1) == LF {
+                    break;
+                }
+                ptr = ptr.add(1);
+            }
+            let mut next = ptr.add(1);
+            while next < end {
+                if *next != CR || next.add(1) >= end || *next.add(1) != LF {
+                    *ptr = *next;
+                    ptr = ptr.add(1);
+                }
+                next = next.add(1);
+            }
+            end.offset_from(ptr)
+        };
+        for _ in 0..num_removed {
+            string.pop();
+        }
+    }
 }
