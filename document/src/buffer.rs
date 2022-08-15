@@ -56,9 +56,11 @@ pub struct Buffer {
 impl Buffer {
     /// Create a new `Buffer` from a `String`.
     ///
-    /// No copying is done; the `String` is moved.
-    pub fn new(buf: String) -> Self {
+    /// No copying is done; the `String` is moved. All CRLF occurrences are replaced by a single
+    /// linefeed.
+    pub fn new(mut buf: String) -> Self {
         assert!(buf.len() <= u16::MAX.into());
+        Self::convert_crlf(&mut buf);
         if buf.is_empty() {
             return Self { buf, ascii: Vec::new(), unicode: Vec::new(), num_graphemes: 0, cached_idx: None, mutable: true };
         }
@@ -223,9 +225,9 @@ impl Buffer {
             let idx = self.buf.len() as u16;
             if grapheme.is_ascii() {
                 if Some(self.num_graphemes) == self.ascii.last().map(|r| r.grapheme_start + r.length) {
-                    self.ascii.last_mut().unwrap().length += 1;
+                    self.ascii.last_mut().unwrap().length += grapheme.len() as u16;
                 } else {
-                    self.ascii.push(AsciiRange{ grapheme_start: self.num_graphemes, length: 1, byte_start: idx });
+                    self.ascii.push(AsciiRange{ grapheme_start: self.num_graphemes, length: grapheme.len() as u16, byte_start: idx });
                 }
             } else {
                 if Some(self.num_graphemes) == self.unicode.last().map(|r| r.grapheme_start + r.graphemes.len() as u16) {
