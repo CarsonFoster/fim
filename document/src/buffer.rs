@@ -264,28 +264,27 @@ impl Buffer {
     pub fn convert_crlf(string: &mut String) {
         const CR: u8 = ('\r' as u32) as u8;
         const LF: u8 = ('\n' as u32) as u8;
-        let mut ptr = string.as_mut_ptr();
-        let length = string.len(); // number of bytes, since it's a u8 pointer
-        let num_removed = unsafe {
-            let end = ptr.add(length);
+        let mut ptr = 0;
+        unsafe {
+            let vec = string.as_mut_vec();
+            let end = vec.len();
             while ptr < end {
-                if *ptr == CR && ptr.add(1) < end && *ptr.add(1) == LF {
+                if vec[ptr] == CR && ptr + 1 < end && vec[ptr + 1] == LF {
                     break;
                 }
-                ptr = ptr.add(1);
+                ptr += 1;
             }
-            let mut next = ptr.add(1);
+            let mut next = ptr + 1;
             while next < end {
-                if *next != CR || next.add(1) >= end || *next.add(1) != LF {
-                    *ptr = *next;
-                    ptr = ptr.add(1);
+                if vec[next] != CR || next + 1 >= end || vec[next + 1] != LF {
+                    vec[ptr] = vec[next];
+                    ptr += 1;
                 }
-                next = next.add(1);
+                next += 1;
             }
-            end.offset_from(ptr)
-        };
-        for _ in 0..num_removed {
-            string.pop();
+            for _ in 0..(end - ptr) {
+                vec.pop();
+            }
         }
     }
 }
