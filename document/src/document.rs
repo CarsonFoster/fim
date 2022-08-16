@@ -1,4 +1,5 @@
 use crate::buffer::Buffer;
+use crate::scapegoat_tree::ScapegoatTree;
 
 // TODO: choose bounds for numerics later
 struct NewlineCount(usize);
@@ -20,17 +21,10 @@ struct Piece {
 
 pub struct Document {
     #[doc(hidden)]
-    newline_tree: Vec<Node>,
+    newline_tree: ScapegoatTree<Node>,
     #[doc(hidden)]
     pieces: Vec<Piece>, // TODO: use other storage for pieces?
     #[doc(hidden)]
     buffers: Vec<Buffer>,
 }
 
-const fn left(parent: usize) -> usize {
-    2*parent
-}
-
-const fn right(parent: usize) -> usize {
-    2*parent + 1
-}

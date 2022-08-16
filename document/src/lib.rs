@@ -2,6 +2,7 @@
 
 pub mod buffer;
 mod document;
+mod scapegoat_tree;
 
 pub use crate::document::Document;
 
