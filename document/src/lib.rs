@@ -1,7 +1,9 @@
 //! A crate to represent open files ('documents').
 
 pub mod buffer;
+mod document;
 
+pub use crate::document::Document;
 
 #[cfg(test)]
 mod tests {
