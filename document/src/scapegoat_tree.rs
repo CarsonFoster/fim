@@ -15,6 +15,21 @@ impl<T> ScapegoatTree<T> {
         ScapegoatTree{ tree: Vec::new(), size: 0, max_size: 0, alpha_reciprocal: (1.0 / alpha) }
     }
 
+    pub fn search_with<F>(&self, mut f: F) -> Option<&T>
+    where
+        F: FnMut(&T) -> Ordering
+    {
+        let mut node = Self::ROOT;
+        while let Some(el) = self.tree.get(node).map(|o| o.as_ref()).flatten() {
+            match f(el) {
+                Ordering::Less => node = left(node),
+                Ordering::Greater => node = right(node),
+                Ordering::Equal => return Some(el)
+            };
+        }
+        None
+    }
+
     pub fn insert(&mut self, new: T)
     where
         T: Ord
