@@ -15,6 +15,20 @@ impl<T> ScapegoatTree<T> {
         ScapegoatTree{ tree: Vec::new(), size: 0, max_size: 0, alpha_reciprocal: (1.0 / alpha) }
     }
 
+    pub fn delete<R: AsRef<T>>(&mut self, item: R)
+    where
+        T: Ord
+    {
+        let item = item.as_ref();
+        /* TODO: delete */
+        self.size -= 1;
+        let alpha = 1.0 / self.alpha_reciprocal;
+        if self.size as f32 < alpha * (self.max_size as f32) {
+            self.rebuild(Self::ROOT, Some(self.size));
+            self.max_size = self.size;
+        }
+    }
+
     pub fn search<R: AsRef<T>>(&self, item: R) -> Option<&T>
     where
         T: Ord
