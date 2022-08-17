@@ -1,4 +1,5 @@
 use core::cmp::{max, Ordering};
+use std::ops::Index;
 
 // [1]: http://people.csail.mit.edu/rivest/pubs/GR93.pdf
 pub struct ScapegoatTree<T> {
@@ -15,18 +16,23 @@ impl<T> ScapegoatTree<T> {
         ScapegoatTree{ tree: Vec::new(), size: 0, max_size: 0, alpha_reciprocal: (1.0 / alpha) }
     }
 
-    pub fn delete<R: AsRef<T>>(&mut self, item: R)
+    pub fn delete<R: AsRef<T>>(&mut self, item: R) -> Option<T>
     where
         T: Ord
     {
         let item = item.as_ref();
-        /* TODO: delete */
-        self.size -= 1;
-        let alpha = 1.0 / self.alpha_reciprocal;
-        if self.size as f32 < alpha * (self.max_size as f32) {
-            self.rebuild(Self::ROOT, Some(self.size));
-            self.max_size = self.size;
+        if let Some(idx) = self.idx_search_with(|tree_el| item.cmp(tree_el)) {
+            let el = self.tree[idx].take();
+            /* TODO: manage remaining nodes */
+            self.size -= 1;
+            let alpha = 1.0 / self.alpha_reciprocal;
+            if (self.size as f32) < alpha * (self.max_size as f32) {
+                self.rebuild(Self::ROOT, Some(self.size));
+                self.max_size = self.size;
+            }
+            return el;
         }
+        None
     }
 
     pub fn search<R: AsRef<T>>(&self, item: R) -> Option<&T>
@@ -41,15 +47,7 @@ impl<T> ScapegoatTree<T> {
     where
         F: FnMut(&T) -> Ordering
     {
-        let mut node = Self::ROOT;
-        while let Some(el) = self.tree.get(node).map(|o| o.as_ref()).flatten() {
-            match f(el) {
-                Ordering::Less => node = left(node),
-                Ordering::Greater => node = right(node),
-                Ordering::Equal => return Some(el)
-            };
-        }
-        None
+        self.idx_search_with(f).map(|idx| self.tree.index(idx).as_ref().expect("idx_search_with only returns indices of valid values"))
     }
 
     pub fn insert(&mut self, new: T)
@@ -87,6 +85,21 @@ impl<T> ScapegoatTree<T> {
                 size_sibling = self.size(sibling(node));
             }
         }
+    }
+
+    fn idx_search_with<F>(&self, mut f: F) -> Option<usize>
+    where
+        F: FnMut(&T) -> Ordering
+    {
+        let mut node = Self::ROOT;
+        while let Some(el) = self.tree.get(node).map(|o| o.as_ref()).flatten() {
+            match f(el) {
+                Ordering::Less => node = left(node),
+                Ordering::Greater => node = right(node),
+                Ordering::Equal => return Some(node)
+            };
+        }
+        None
     }
 
     fn rebuild(&mut self, scapegoat: usize, subtree_size: Option<usize>) {
