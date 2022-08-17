@@ -28,11 +28,8 @@ impl<T> ScapegoatTree<T> {
                 Ordering::Equal => return // TODO: check if this is what we want
             };
             depth += 1;
-        } if node > self.tree.len() {
-            self.tree.reserve(node - self.tree.len()); // may reserve more than necessary to prevent future reallocations
-            self.tree.resize_with(node + 1, || None); // fill new places with None, new len = node + 1
         }
-        self.tree[node] = Some(new);
+        self.put(node, new);
         self.size += 1;
         self.max_size = max(self.size, self.max_size);
 
@@ -56,23 +53,30 @@ impl<T> ScapegoatTree<T> {
     }
 
     fn rebuild(&mut self, scapegoat: usize, subtree_size: Option<usize>) {
-        let (mut sorted_subtree, mut stack) = if let Some(size) = subtree_size {
-            (Vec::with_capacity(size as usize), Vec::with_capacity(size as usize))
-        } else {
-            (Vec::new(), Vec::new())
-        };
-        let mut node_idx = scapegoat;
+        let mut sorted_subtree = self.pull_subtree(scapegoat, subtree_size);
 
-        while !stack.is_empty() || self.is_valid(node_idx) {
-            if self.is_valid(node_idx) {
-                stack.push(node_idx);
-                node_idx = left(node_idx);
-            } else {
-                node_idx = stack.pop().expect("stack should never be empty here");
-                sorted_subtree.push(self.tree[node_idx].take().expect("node_idx should be valid"));
-                node_idx = right(node_idx);
-            }
+    }
+
+    fn pull_subtree(&mut self, idx: usize, subtree_size: Option<usize>) -> Vec<Option<T>> {
+        let mut sorted_subtree = if let Some(size) = subtree_size { Vec::with_capacity(size) } else { Vec::new() };
+        self.inorder(idx, &mut sorted_subtree);
+        sorted_subtree
+    }
+
+    fn inorder(&mut self, idx: usize, subtree: &mut Vec<Option<T>>) {
+        if self.is_valid(idx) {
+            self.inorder(left(idx), subtree);
+            subtree.push(self.tree[idx].take());
+            self.inorder(right(idx), subtree);
         }
+    }
+
+    fn put(&mut self, idx: usize, value: T) {
+        if idx >= self.tree.len() {
+            self.tree.reserve(idx - self.tree.len() + 1); // may reserve more than necessary to prevent future reallocations
+            self.tree.resize_with(idx + 1, || None); // fill new places with None, new len = idx + 1
+        }
+        self.tree[idx] = Some(value);
     }
 
     fn is_valid(&self, idx: usize) -> bool {
@@ -101,6 +105,11 @@ impl<T> ScapegoatTree<T> {
         // h_alpha(n) = ⌊log_(1/alpha) (n)⌋
         f32::log(n as f32, self.alpha_reciprocal).floor() as usize
     }
+}
+
+// both inclusive
+const fn median(left: usize, right: usize) -> usize {
+    (left + right) >> 1
 }
 
 const fn left(parent: usize) -> usize {
