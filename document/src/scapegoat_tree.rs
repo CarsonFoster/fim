@@ -15,6 +15,14 @@ impl<T> ScapegoatTree<T> {
         ScapegoatTree{ tree: Vec::new(), size: 0, max_size: 0, alpha_reciprocal: (1.0 / alpha) }
     }
 
+    pub fn search<R: AsRef<T>>(&self, item: R) -> Option<&T>
+    where
+        T: Ord
+    {
+        let item = item.as_ref();
+        self.search_with(|tree_el| item.cmp(tree_el))
+    }
+
     pub fn search_with<F>(&self, mut f: F) -> Option<&T>
     where
         F: FnMut(&T) -> Ordering
