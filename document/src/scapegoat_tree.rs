@@ -21,9 +21,61 @@ impl<T> ScapegoatTree<T> {
         T: Ord
     {
         let item = item.as_ref();
-        if let Some(idx) = self.idx_search_with(|tree_el| item.cmp(tree_el)) {
-            let el = self.tree[idx].take();
-            /* TODO: manage remaining nodes */
+        self.delete_with(|tree_el| item.cmp(tree_el))
+    }
+
+    pub fn delete_with<F>(&mut self, mut f: F) -> Option<T>
+    where
+        F: FnMut(&T) -> Ordering
+    {
+        if let Some(idx) = self.idx_search_with(f) {
+            let (left_valid, right_valid) = (self.is_valid(left(idx)), self.is_valid(right(idx)));
+            let el = if !left_valid && !right_valid {
+                // has no children, can take directly
+                self.tree[idx].take()
+            } else if left_valid != right_valid {
+                // has one child, swap and then take
+                let child = if left_valid { left(idx) } else { right(idx) };
+                self.tree.swap(idx, child);
+                self.tree[child].take()
+            } else {
+                // has two children, do hibbard deletion
+                // try to do predecessor/successor about half each
+                // not guaranteed, but tree rebalances itself anyway
+                let new_node = if idx % 2 == 0 {
+                    // prececessor
+                    let mut node = left(idx);
+                    let mut right_ = right(node);
+                    while self.is_valid(right_) {
+                        node = right_;
+                        right_ = right(node);
+                    }
+                    let left_ = left(node);
+                    if self.is_valid(left_) {
+                        self.tree.swap(node, left_);
+                        left_
+                    } else {
+                        node
+                    }
+                } else {
+                    // successor
+                    let mut node = right(idx);
+                    let mut left_ = left(node);
+                    while self.is_valid(left_) {
+                        node = left_;
+                        left_ = left(node);
+                    }
+                    let right_ = right(node);
+                    if self.is_valid(right_) {
+                        self.tree.swap(node, right_);
+                        right_
+                    } else {
+                        node
+                    }
+                };
+                self.tree.swap(new_node, idx);
+                self.tree[new_node].take()
+            };
             self.size -= 1;
             let alpha = 1.0 / self.alpha_reciprocal;
             if (self.size as f32) < alpha * (self.max_size as f32) {
