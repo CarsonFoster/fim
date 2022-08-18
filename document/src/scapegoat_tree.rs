@@ -99,7 +99,22 @@ impl<T> ScapegoatTree<T> {
     where
         F: FnMut(&T) -> Ordering
     {
-        self.idx_search_with(f).map(|idx| self.tree.index(idx).as_ref().expect("idx_search_with only returns indices of valid values"))
+        self.idx_search_with(f).map(|idx| self.tree.index(idx).as_ref().expect("idx holds node"))
+    }
+
+    pub fn search_mut<R: AsRef<T>>(&mut self, item: R) -> Option<&mut T>
+    where
+        T: Ord
+    {
+        let item = item.as_ref();
+        self.search_with_mut(|tree_el| item.cmp(tree_el))
+    }
+
+    pub fn search_with_mut<F>(&mut self, mut f: F) -> Option<&mut T>
+    where
+        F: FnMut(&T) -> Ordering
+    {
+        self.idx_search_with(f).map(|idx| self.tree.get_mut(idx).expect("idx is in bounds").as_mut().expect("idx holds node"))
     }
 
     pub fn insert(&mut self, new: T)
