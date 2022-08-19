@@ -117,6 +117,24 @@ impl<T> ScapegoatTree<T> {
         self.idx_search_with(f).map(|idx| self.tree.get_mut(idx).expect("idx is in bounds").as_mut().expect("idx holds node"))
     }
 
+    pub fn get(&self, mut rank: usize) -> Option<&T> {
+        if rank >= self.size {
+            return None;
+        }
+
+        let idx = self.get_recursive(Self::ROOT, &mut rank).expect("valid rank should yield valid index");
+        Some(self.tree.index(idx).as_ref().expect("idx holds node"))
+    }
+
+    pub fn get_mut(&mut self, mut rank: usize) -> Option<&mut T> {
+        if rank >= self.size {
+            return None;
+        }
+
+        let idx = self.get_recursive(Self::ROOT, &mut rank).expect("valid rank should yield valid index");
+        Some(self.tree.get_mut(idx).expect("idx is in bounds").as_mut().expect("idx holds node"))
+    }
+
     pub fn insert_rank(&mut self, mut rank: usize, new: T) {
         if rank > self.size {
             return;
@@ -162,7 +180,24 @@ impl<T> ScapegoatTree<T> {
         }
     }
 
-    fn insert_rank_recursive(&mut self, idx: usize, rank: &mut usize) -> Option<usize> {
+    fn get_recursive(&self, idx: usize, rank: &mut usize) -> Option<usize> {
+        if !self.is_valid(idx) {
+            return None;
+        }
+
+        if let ret @ Some(_) = self.get_recursive(left(idx), rank) {
+            return ret;
+        }
+        if *rank == 0 {
+            return Some(idx);
+        }
+
+        *rank -= 1;
+
+        self.get_recursive(right(idx), rank)
+    }
+
+    fn insert_rank_recursive(&self, idx: usize, rank: &mut usize) -> Option<usize> {
         if !self.is_valid(idx) {
             return None;
         }
