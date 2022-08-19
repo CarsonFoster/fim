@@ -162,21 +162,7 @@ impl<T> ScapegoatTree<T> {
         self.max_size = max(self.size, self.max_size);
 
         if depth >= self.deep_height() {
-            let mut i = 0; // 0 = current node, i + 1 = parent of i
-            let mut size = 1; // size of current node
-            let mut size_sibling = self.size(sibling(node)); // size of current node's sibling (other child of this node's parent)
-            loop {
-                node /= 2; // traverse to parent
-                i += 1; // increment reverse depth / parent distance
-                size = 1 + size + size_sibling;
-                if i > self.h_alpha(size) {
-                    // always satisfied by root, according to [1]
-                    // and using this criteria may result in more balanced trees on average
-                    self.rebuild(node, Some(size));
-                    break;
-                }
-                size_sibling = self.size(sibling(node));
-            }
+            self.scapegoat(node);
         }
     }
 
@@ -236,6 +222,24 @@ impl<T> ScapegoatTree<T> {
             };
         }
         None
+    }
+
+    fn scapegoat(&mut self, node: usize) {
+        let mut i = 0; // 0 = current node, i + 1 = parent of i
+        let mut size = 1; // size of current node
+        let mut size_sibling = self.size(sibling(node)); // size of current node's sibling (other child of this node's parent)
+        loop {
+            node /= 2; // traverse to parent
+            i += 1; // increment reverse depth / parent distance
+            size = 1 + size + size_sibling;
+            if i > self.h_alpha(size) {
+                // always satisfied by root, according to [1]
+                // and using this criteria may result in more balanced trees on average
+                self.rebuild(node, Some(size));
+                break;
+            }
+            size_sibling = self.size(sibling(node));
+        }
     }
 
     fn rebuild(&mut self, scapegoat: usize, subtree_size: Option<usize>) {
