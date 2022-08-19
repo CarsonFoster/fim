@@ -141,6 +141,12 @@ impl<T> ScapegoatTree<T> {
         }
         let idx = self.insert_rank_recursive(Self::ROOT, &mut rank).expect("valid rank should yield valid index");
         self.put(idx, new);
+        self.size += 1;
+        self.max_size = max(self.size, self.max_size);
+
+        if log2(idx) >= self.deep_height() {
+            self.scapegoat(idx);
+        }
     }
 
     pub fn insert(&mut self, new: T)
@@ -224,7 +230,7 @@ impl<T> ScapegoatTree<T> {
         None
     }
 
-    fn scapegoat(&mut self, node: usize) {
+    fn scapegoat(&mut self, mut node: usize) {
         let mut i = 0; // 0 = current node, i + 1 = parent of i
         let mut size = 1; // size of current node
         let mut size_sibling = self.size(sibling(node)); // size of current node's sibling (other child of this node's parent)
@@ -327,4 +333,13 @@ const fn sibling(child: usize) -> usize {
     } else {
         child - 1
     }
+}
+
+const fn log2(mut n: usize) -> usize {
+    let mut count = 0;
+    while n > 0 {
+        n >>= 1;
+        count += 1;
+    }
+    return count;
 }
