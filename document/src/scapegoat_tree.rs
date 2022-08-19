@@ -24,7 +24,7 @@ impl<T> ScapegoatTree<T> {
         self.delete_with(|tree_el| item.cmp(tree_el))
     }
 
-    pub fn delete_with<F>(&mut self, mut f: F) -> Option<T>
+    pub fn delete_with<F>(&mut self, f: F) -> Option<T>
     where
         F: FnMut(&T) -> Ordering
     {
@@ -95,7 +95,7 @@ impl<T> ScapegoatTree<T> {
         self.search_with(|tree_el| item.cmp(tree_el))
     }
 
-    pub fn search_with<F>(&self, mut f: F) -> Option<&T>
+    pub fn search_with<F>(&self, f: F) -> Option<&T>
     where
         F: FnMut(&T) -> Ordering
     {
@@ -110,11 +110,19 @@ impl<T> ScapegoatTree<T> {
         self.search_with_mut(|tree_el| item.cmp(tree_el))
     }
 
-    pub fn search_with_mut<F>(&mut self, mut f: F) -> Option<&mut T>
+    pub fn search_with_mut<F>(&mut self, f: F) -> Option<&mut T>
     where
         F: FnMut(&T) -> Ordering
     {
         self.idx_search_with(f).map(|idx| self.tree.get_mut(idx).expect("idx is in bounds").as_mut().expect("idx holds node"))
+    }
+
+    pub fn insert_rank(&mut self, mut rank: usize, new: T) {
+        if rank > self.size {
+            return;
+        }
+        let idx = self.insert_rank_recursive(Self::ROOT, &mut rank).expect("valid rank should yield valid index");
+        self.put(idx, new);
     }
 
     pub fn insert(&mut self, new: T)
@@ -151,6 +159,32 @@ impl<T> ScapegoatTree<T> {
                 }
                 size_sibling = self.size(sibling(node));
             }
+        }
+    }
+
+    fn insert_rank_recursive(&mut self, idx: usize, rank: &mut usize) -> Option<usize> {
+        if !self.is_valid(idx) {
+            return None;
+        }
+
+        let left_ = left(idx);
+        if let ret @ Some(_) = self.insert_rank_recursive(left_, rank) {
+            return ret;
+        }
+        if *rank == 0 {
+            return Some(left_);
+        }
+
+        *rank -= 1;
+
+        let right_ = right(idx);
+        if let ret @ Some(_) = self.insert_rank_recursive(right_, rank) {
+            return ret;
+        }
+        if *rank == 0 {
+            Some(right_)
+        } else {
+            None
         }
     }
 
