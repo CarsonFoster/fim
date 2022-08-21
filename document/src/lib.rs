@@ -131,6 +131,16 @@ mod tests {
     }
 
     #[test]
+    fn newline_graphemes() {
+        const UNICODE: &'static str = "Stróż pchnął kość w quiz gędźb vel fax myjń.\nVictor jagt zwölf Boxkämpfer quer über den großen Sylter Deich.\nPříliš žluťoučký kůň úpěl ďábelské ódy.\nСъешь же ещё этих мягких французских булок, да выпей чаю.\n以呂波耳本部止千利奴流乎和加餘多連曽津祢那良牟有為能於久耶万計不己衣天阿佐伎喩女美之恵比毛勢須.\n";
+        const ASCII: &'static str = "The day was full of joy, \nbut there were no parking places\r for the elderly, wizened\r sorcerer to park in. \nHe was quite angry, and yet not\r discouraged.\n";
+        let unicode_buf = Buffer::new(String::from(UNICODE));
+        let ascii_buf = Buffer::new(String::from(ASCII));
+        assert_eq!(unicode_buf.newlines(), &[44,108,148,206,255]);
+        assert_eq!(ascii_buf.newlines(), &[25, 107, 153]);
+    }
+
+    #[test]
     fn single_ascii() {
         let (string, mut buf) = construct_buffer();
         for i in 0..string.len() {
