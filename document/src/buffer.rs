@@ -51,6 +51,8 @@ pub struct Buffer {
     cached_idx: Option<u16>,
     #[doc(hidden)]
     mutable: bool,
+    #[doc(hidden)]
+    newlines: Vec<u16>, // grapheme indices
 }
 
 impl Buffer {
@@ -62,7 +64,7 @@ impl Buffer {
         assert!(buf.len() <= u16::MAX.into());
         Self::convert_crlf(&mut buf);
         if buf.is_empty() {
-            return Self { buf, ascii: Vec::new(), unicode: Vec::new(), num_graphemes: 0, cached_idx: None, mutable: true };
+            return Self { buf, ascii: Vec::new(), unicode: Vec::new(), newlines: Vec::new(), num_graphemes: 0, cached_idx: None, mutable: true };
         }
         let length = buf.len() as u16;
         let b = buf.as_str();
@@ -70,6 +72,7 @@ impl Buffer {
 
         let mut ascii = Vec::new();
         let mut unicode: Vec<UnicodeRange> = Vec::new();
+        let mut newlines = Vec::new();
         let mut cursor = GraphemeCursor::new(0, b.len(), true);
         let mut saved_ascii_idx = None;
         let mut idx = 0u16;
@@ -80,6 +83,9 @@ impl Buffer {
             if grapheme.is_ascii() && !grapheme.is_empty() {
                 if let None = saved_ascii_idx {
                     saved_ascii_idx = Some(idx);
+                }
+                if grapheme == "\n" {
+                    newlines.push(num_graphemes + (idx - saved_ascii_idx.unwrap_or(idx)));
                 }
             } else {
                 // either non-ascii, or end
@@ -111,7 +117,12 @@ impl Buffer {
             idx = next_start;
         }
 
-        Buffer{ num_graphemes, buf, ascii, unicode, cached_idx: None, mutable: true }
+        Buffer{ num_graphemes, buf, ascii, unicode, newlines, cached_idx: None, mutable: true }
+    }
+
+    /// Returns the grapheme indices of the newlines in the Buffer.
+    pub fn newlines(&self) -> &[u16] {
+        &self.newlines[..]
     }
 
     /// Returns a slice of the underlying buffer.
