@@ -2,10 +2,10 @@ use crate::buffer::Buffer;
 use crate::scapegoat_tree::ScapegoatTree;
 
 // TODO: choose bounds for numerics later
-struct NewlineCount(usize);
-struct PieceIndex(usize);
-struct BufferIndex(usize);
-struct GraphemeIndex(u16);
+type NewlineCount = usize;
+type PieceIndex = usize;
+type BufferIndex = usize;
+type GraphemeIndex = u16;
 
 struct Node {
     count: NewlineCount,
