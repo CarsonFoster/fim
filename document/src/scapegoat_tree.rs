@@ -262,12 +262,13 @@ impl<T> ScapegoatTree<T> {
     }
 
     fn put_subtree(&mut self, idx: usize, lo: usize, hi: usize, subtree: &mut Vec<Option<T>>) {
+        if lo > hi {
+            return;
+        }
         let m = median(lo, hi);
         self.put(idx, subtree[m].take().expect("subtree should only contain valid values"));
-        if lo != hi {
-            self.put_subtree(left(idx), lo, m - 1, subtree);
-            self.put_subtree(right(idx), m + 1, hi, subtree);
-        }
+        self.put_subtree(left(idx), lo, m - 1, subtree);
+        self.put_subtree(right(idx), m + 1, hi, subtree);
     }
 
     fn pull_subtree(&mut self, idx: usize, subtree_size: Option<usize>) -> Vec<Option<T>> {
