@@ -2,6 +2,12 @@ use core::cmp::{max, Ordering};
 use std::ops::Index;
 
 // [1]: http://people.csail.mit.edu/rivest/pubs/GR93.pdf
+// [2]: https://en.wikipedia.org/wiki/Scapegoat_tree
+// "Unlike most other self-balancing search trees, scapegoat trees are entirely flexible as to their
+// balancing. They support any α such that 0.5 < α < 1. A high α value results in fewer balances,
+// making insertion quicker but lookups and deletions slower, and vice versa for a low α. Therefore
+// in practical applications, an α can be chosen depending on how frequently these actions should
+// be performed." ([2])
 pub struct ScapegoatTree<T> {
     tree: Vec<Option<T>>,
     alpha_reciprocal: f32,
@@ -285,7 +291,7 @@ impl<T> ScapegoatTree<T> {
     }
 
     fn is_valid(&self, idx: usize) -> bool {
-        (idx as usize) < self.tree.len() && self.tree[idx].is_some()
+        idx < self.tree.len() && self.tree[idx].is_some()
     }
 
     fn size(&self, root: usize) -> usize {
@@ -342,4 +348,78 @@ const fn log2(mut n: usize) -> usize {
         count += 1;
     }
     return count;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::ScapegoatTree;
+    use std::cmp::Ordering;
+
+    struct TestStruct {
+        comp: usize,
+        non_comp: usize
+    }
+
+    impl PartialEq for TestStruct {
+        fn eq(&self, other: &TestStruct) -> bool {
+            self.comp == other.comp
+        }
+    }
+
+    impl Eq for TestStruct {}
+
+    impl PartialOrd for TestStruct {
+        fn partial_cmp(&self, other: &TestStruct) -> Option<Ordering> {
+            self.comp.partial_cmp(&other.comp)
+        }
+    }
+
+    impl Ord for TestStruct {
+        fn cmp(&self, other: &TestStruct) -> Ordering {
+            self.comp.cmp(&other.comp)
+        }
+    }
+
+    fn setup() -> ScapegoatTree<TestStruct> {
+        let mut tree = ScapegoatTree::new(0.75);
+        for i in 0..100 {
+            let el = TestStruct{ comp: i, non_comp: 100 - i };
+            tree.insert(el);
+        }
+        tree
+    }
+
+    #[test]
+    pub fn test_get() {
+        let tree = setup();
+        for i in 0..100 {
+            let el = tree.get(i).unwrap();
+            assert!(el.comp == i && el.non_comp == 100 - i);
+        }
+    }
+
+    #[test]
+    pub fn test_get_none() {
+        let tree = setup();
+        assert!(tree.get(100).is_none());
+    }
+
+    #[test]
+    pub fn test_get_mut() {
+        let mut tree = setup();
+        for i in 0..100 {
+            let mut el = tree.get_mut(i).unwrap();
+            el.non_comp = i * 2;
+        }
+        for i in 0..100 {
+            let el = tree.get(i).unwrap();
+            assert!(el.comp == i && el.non_comp == i * 2);
+        }
+    }
+
+    #[test]
+    pub fn test_get_mut_none() {
+        let mut tree = setup();
+        assert!(tree.get_mut(101).is_none());
+    }
 }
