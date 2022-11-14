@@ -267,7 +267,9 @@ impl<T> ScapegoatTree<T> {
         }
         let m = median(lo, hi);
         self.put(idx, subtree[m].take().expect("subtree should only contain valid values"));
-        self.put_subtree(left(idx), lo, m - 1, subtree);
+        if m > 0 {
+            self.put_subtree(left(idx), lo, m - 1, subtree);
+        }
         self.put_subtree(right(idx), m + 1, hi, subtree);
     }
 
