@@ -299,7 +299,7 @@ impl<T> ScapegoatTree<T> {
         let mut size = 0;
         stack.push(root);
         while let Some(node) = stack.pop() {
-            if self.tree[node].is_some() {
+            if self.is_valid(node) {
                 size += 1;
                 stack.push(left(node));
                 stack.push(right(node));
