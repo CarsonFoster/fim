@@ -256,7 +256,9 @@ impl<T> ScapegoatTree<T> {
 
     fn rebuild(&mut self, scapegoat: usize, subtree_size: Option<usize>) {
         let mut sorted_subtree = self.pull_subtree(scapegoat, subtree_size);
-        self.put_subtree(scapegoat, 0, sorted_subtree.len() - 1, &mut sorted_subtree);
+        if !sorted_subtree.is_empty() {
+            self.put_subtree(scapegoat, 0, sorted_subtree.len() - 1, &mut sorted_subtree);
+        }
     }
 
     fn put_subtree(&mut self, idx: usize, lo: usize, hi: usize, subtree: &mut Vec<Option<T>>) {
