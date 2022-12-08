@@ -427,4 +427,22 @@ mod tests {
         let mut tree = setup();
         assert!(tree.get_mut(101).is_none());
     }
+
+    #[test]
+    pub fn test_single_insert_rank() {
+        for i in 0..101 {
+            let mut tree = setup();
+            tree.insert_rank(i, TestStruct{ comp: i, non_comp: 0 });
+            for j in 0..i {
+                let el = tree.get(j).unwrap();
+                assert!(el.comp == j && el.non_comp == 100 - j);
+            }
+            let el = tree.get(i).unwrap();
+            assert!(el.comp == i && el.non_comp == 0);
+            for j in (i + 1)..101 {
+                let el = tree.get(j).unwrap();
+                assert!(el.comp == j - 1 && el.non_comp == 101 - j);
+            }
+        }
+    }
 }
