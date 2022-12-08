@@ -360,6 +360,7 @@ mod tests {
     use super::ScapegoatTree;
     use std::cmp::Ordering;
 
+    #[derive(Clone, Debug)]
     struct TestStruct {
         comp: usize,
         non_comp: usize
@@ -444,5 +445,52 @@ mod tests {
                 assert!(el.comp == j - 1 && el.non_comp == 101 - j);
             }
         }
+    }
+
+    #[test]
+    pub fn test_past_end_insert_rank() {
+        let mut tree = setup(); // has elements of rank 0 - 99 (inclusive)
+        tree.insert_rank(100, TestStruct{ comp: 100, non_comp: 0 });
+        for i in 0..101 {
+            assert_eq!(tree.get(i).unwrap(), &TestStruct{ comp: i, non_comp: 100 - i });
+        }
+    }
+
+    #[test]
+    pub fn test_multiple_ascending_insert_rank() {
+        let mut tree = setup();
+        let new1 = TestStruct{ comp: 1000, non_comp: 1000 };
+        let new2 = TestStruct{ comp: 1000, non_comp: 0 };
+        tree.insert_rank(0, new1.clone());
+        tree.insert_rank(0, new2.clone());
+        tree.insert_rank(50, new1.clone());
+        tree.insert_rank(51, new2.clone());
+        tree.insert_rank(60, new1.clone());
+        tree.insert_rank(100, new2.clone());
+        assert_eq!(tree.get(0).unwrap(), &new2);
+        assert_eq!(tree.get(1).unwrap(), &new1);
+        assert_eq!(tree.get(50).unwrap(), &new1);
+        assert_eq!(tree.get(51).unwrap(), &new2);
+        assert_eq!(tree.get(60).unwrap(), &new1);
+        assert_eq!(tree.get(100).unwrap(), &new2);
+    }
+
+    #[test]
+    pub fn test_multiple_descending_insert_rank() {
+        let mut tree = setup();
+        let new1 = TestStruct{ comp: 1000, non_comp: 1000 };
+        let new2 = TestStruct{ comp: 1000, non_comp: 0 };
+        tree.insert_rank(100, new2.clone());
+        tree.insert_rank(60, new1.clone());
+        tree.insert_rank(51, new2.clone());
+        tree.insert_rank(50, new1.clone());
+        tree.insert_rank(0, new2.clone());
+        tree.insert_rank(0, new1.clone());
+        assert_eq!(tree.get(0).unwrap(), &new1);
+        assert_eq!(tree.get(1).unwrap(), &new2);
+        assert_eq!(tree.get(52).unwrap(), &new1);
+        assert_eq!(tree.get(54).unwrap(), &new2);
+        assert_eq!(tree.get(64).unwrap(), &new1);
+        assert_eq!(tree.get(105).unwrap(), &new2);
     }
 }
