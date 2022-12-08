@@ -386,6 +386,10 @@ mod tests {
         }
     }
 
+    fn equals(left: &TestStruct, right: &TestStruct) -> bool {
+        left.comp == right.comp && left.non_comp == right.non_comp
+    }
+
     fn setup() -> ScapegoatTree<TestStruct> {
         let mut tree = ScapegoatTree::new(0.75);
         for i in 0..100 {
@@ -452,7 +456,7 @@ mod tests {
         let mut tree = setup(); // has elements of rank 0 - 99 (inclusive)
         tree.insert_rank(100, TestStruct{ comp: 100, non_comp: 0 });
         for i in 0..101 {
-            assert_eq!(tree.get(i).unwrap(), &TestStruct{ comp: i, non_comp: 100 - i });
+            assert!(equals(tree.get(i).unwrap(), &TestStruct{ comp: i, non_comp: 100 - i }));
         }
     }
 
@@ -467,12 +471,12 @@ mod tests {
         tree.insert_rank(51, new2.clone());
         tree.insert_rank(60, new1.clone());
         tree.insert_rank(100, new2.clone());
-        assert_eq!(tree.get(0).unwrap(), &new2);
-        assert_eq!(tree.get(1).unwrap(), &new1);
-        assert_eq!(tree.get(50).unwrap(), &new1);
-        assert_eq!(tree.get(51).unwrap(), &new2);
-        assert_eq!(tree.get(60).unwrap(), &new1);
-        assert_eq!(tree.get(100).unwrap(), &new2);
+        assert!(equals(tree.get(0).unwrap(), &new2));
+        assert!(equals(tree.get(1).unwrap(), &new1));
+        assert!(equals(tree.get(50).unwrap(), &new1));
+        assert!(equals(tree.get(51).unwrap(), &new2));
+        assert!(equals(tree.get(60).unwrap(), &new1));
+        assert!(equals(tree.get(100).unwrap(), &new2));
     }
 
     #[test]
@@ -486,11 +490,11 @@ mod tests {
         tree.insert_rank(50, new1.clone());
         tree.insert_rank(0, new2.clone());
         tree.insert_rank(0, new1.clone());
-        assert_eq!(tree.get(0).unwrap(), &new1);
-        assert_eq!(tree.get(1).unwrap(), &new2);
-        assert_eq!(tree.get(52).unwrap(), &new1);
-        assert_eq!(tree.get(54).unwrap(), &new2);
-        assert_eq!(tree.get(64).unwrap(), &new1);
-        assert_eq!(tree.get(105).unwrap(), &new2);
+        assert!(equals(tree.get(0).unwrap(), &new1));
+        assert!(equals(tree.get(1).unwrap(), &new2));
+        assert!(equals(tree.get(52).unwrap(), &new1));
+        assert!(equals(tree.get(54).unwrap(), &new2));
+        assert!(equals(tree.get(64).unwrap(), &new1));
+        assert!(equals(tree.get(105).unwrap(), &new2));
     }
 }
