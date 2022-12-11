@@ -1,3 +1,4 @@
+use core::borrow::Borrow;
 use core::cmp::{max, Ordering};
 use std::ops::Index;
 
@@ -22,11 +23,11 @@ impl<T> ScapegoatTree<T> {
         ScapegoatTree{ tree: Vec::new(), size: 0, max_size: 0, alpha_reciprocal: (1.0 / alpha) }
     }
 
-    pub fn delete<R: AsRef<T>>(&mut self, item: R) -> Option<T>
+    pub fn delete<R: Borrow<T>>(&mut self, item: R) -> Option<T>
     where
         T: Ord
     {
-        let item = item.as_ref();
+        let item = item.borrow();
         self.delete_with(|tree_el| item.cmp(tree_el))
     }
 
@@ -93,11 +94,11 @@ impl<T> ScapegoatTree<T> {
         None
     }
 
-    pub fn search<R: AsRef<T>>(&self, item: R) -> Option<&T>
+    pub fn search<R: Borrow<T>>(&self, item: R) -> Option<&T>
     where
         T: Ord
     {
-        let item = item.as_ref();
+        let item = item.borrow();
         self.search_with(|tree_el| item.cmp(tree_el))
     }
 
@@ -108,11 +109,11 @@ impl<T> ScapegoatTree<T> {
         self.idx_search_with(f).map(|idx| self.tree.index(idx).as_ref().expect("idx holds node"))
     }
 
-    pub fn search_mut<R: AsRef<T>>(&mut self, item: R) -> Option<&mut T>
+    pub fn search_mut<R: Borrow<T>>(&mut self, item: R) -> Option<&mut T>
     where
         T: Ord
     {
-        let item = item.as_ref();
+        let item = item.borrow();
         self.search_with_mut(|tree_el| item.cmp(tree_el))
     }
 
@@ -496,5 +497,20 @@ mod tests {
         assert!(equals(tree.get(54).unwrap(), &new2));
         assert!(equals(tree.get(64).unwrap(), &new1));
         assert!(equals(tree.get(105).unwrap(), &new2));
+    }
+
+    #[test]
+    pub fn test_search_present() {
+        let mut tree = setup();
+        let search = TestStruct{ comp: 23, non_comp: 0 };
+        let expected = TestStruct{ comp: 23, non_comp: 77 };
+        assert!(equals(tree.search(&search).unwrap(), &expected));
+    }
+
+    #[test]
+    pub fn test_search_nonpresent() {
+        let mut tree = setup();
+        let search = TestStruct{ comp: 100, non_comp: 0 };
+        assert!(tree.search(&search).is_none());
     }
 }
