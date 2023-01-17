@@ -501,7 +501,7 @@ mod tests {
 
     #[test]
     pub fn test_search_present() {
-        let mut tree = setup();
+        let tree = setup();
         let search = TestStruct{ comp: 23, non_comp: 0 };
         let expected = TestStruct{ comp: 23, non_comp: 77 };
         assert!(equals(tree.search(&search).unwrap(), &expected));
@@ -509,8 +509,23 @@ mod tests {
 
     #[test]
     pub fn test_search_nonpresent() {
-        let mut tree = setup();
+        let tree = setup();
         let search = TestStruct{ comp: 100, non_comp: 0 };
         assert!(tree.search(&search).is_none());
+    }
+
+    #[test]
+    pub fn test_search_mut_present() {
+        let mut tree = setup();
+        let search = TestStruct{ comp: 23, non_comp: 0 };
+        let expected = TestStruct{ comp: 23, non_comp: 77 };
+        assert!(equals(tree.search_mut(&search).unwrap(), &expected));
+    }
+
+    #[test]
+    pub fn test_search_mut_nonpresent() {
+        let mut tree = setup();
+        let search = TestStruct{ comp: 100, non_comp: 0 };
+        assert!(tree.search_mut(&search).is_none());
     }
 }
