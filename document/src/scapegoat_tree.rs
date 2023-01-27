@@ -528,4 +528,34 @@ mod tests {
         let search = TestStruct{ comp: 100, non_comp: 0 };
         assert!(tree.search_mut(&search).is_none());
     }
+
+    #[test]
+    pub fn test_search_with_present() {
+        let tree = setup();
+        let search = 75;
+        let expected = TestStruct{ comp: 25, non_comp: 75 };
+        assert!(equals(tree.search_with(|o| search.cmp(&o.non_comp).reverse()).unwrap(), &expected));
+    }
+
+    #[test]
+    pub fn test_search_with_nonpresent() {
+        let tree = setup();
+        let search = 123;
+        assert!(tree.search_with(|o| search.cmp(&o.non_comp).reverse()).is_none());
+    }
+
+    #[test]
+    pub fn test_search_with_mut_present() {
+        let mut tree = setup();
+        let search = 75;
+        let expected = TestStruct{ comp: 25, non_comp: 75 };
+        assert!(equals(tree.search_with_mut(|o| search.cmp(&o.non_comp).reverse()).unwrap(), &expected));
+    }
+
+    #[test]
+    pub fn test_search_with_mut_nonpresent() {
+        let mut tree = setup();
+        let search = 123;
+        assert!(tree.search_with_mut(|o| search.cmp(&o.non_comp).reverse()).is_none());
+    }
 }
