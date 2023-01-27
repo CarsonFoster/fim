@@ -502,9 +502,11 @@ mod tests {
     #[test]
     pub fn test_search_present() {
         let tree = setup();
-        let search = TestStruct{ comp: 23, non_comp: 0 };
-        let expected = TestStruct{ comp: 23, non_comp: 77 };
-        assert!(equals(tree.search(&search).unwrap(), &expected));
+        for i in 0..100 {
+            let search = TestStruct{ comp: i, non_comp: 0 };
+            let expected = TestStruct{ comp: i, non_comp: 100 - i };
+            assert!(equals(tree.search(&search).unwrap(), &expected));
+        }
     }
 
     #[test]
@@ -517,9 +519,11 @@ mod tests {
     #[test]
     pub fn test_search_mut_present() {
         let mut tree = setup();
-        let search = TestStruct{ comp: 23, non_comp: 0 };
-        let expected = TestStruct{ comp: 23, non_comp: 77 };
-        assert!(equals(tree.search_mut(&search).unwrap(), &expected));
+        for i in 0..100 {
+            let search = TestStruct{ comp: i, non_comp: 0 };
+            let expected = TestStruct{ comp: i, non_comp: 100 - i };
+            assert!(equals(tree.search_mut(&search).unwrap(), &expected));
+        }
     }
 
     #[test]
@@ -532,9 +536,11 @@ mod tests {
     #[test]
     pub fn test_search_with_present() {
         let tree = setup();
-        let search = 75;
-        let expected = TestStruct{ comp: 25, non_comp: 75 };
-        assert!(equals(tree.search_with(|o| search.cmp(&o.non_comp).reverse()).unwrap(), &expected));
+        for i in 0..100 {
+            let search = 100 - i;
+            let expected = TestStruct{ comp: i, non_comp: search };
+            assert!(equals(tree.search_with(|o| search.cmp(&o.non_comp).reverse()).unwrap(), &expected));
+        }
     }
 
     #[test]
@@ -547,9 +553,11 @@ mod tests {
     #[test]
     pub fn test_search_with_mut_present() {
         let mut tree = setup();
-        let search = 75;
-        let expected = TestStruct{ comp: 25, non_comp: 75 };
-        assert!(equals(tree.search_with_mut(|o| search.cmp(&o.non_comp).reverse()).unwrap(), &expected));
+        for i in 0..100 {
+            let search = 100 - i;
+            let expected = TestStruct{ comp: i, non_comp: search };
+            assert!(equals(tree.search_with_mut(|o| search.cmp(&o.non_comp).reverse()).unwrap(), &expected));
+        }
     }
 
     #[test]
