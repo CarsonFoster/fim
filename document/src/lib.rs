@@ -2,7 +2,8 @@
 
 pub mod buffer;
 mod document;
-mod scapegoat_tree;
 mod ranked_tree;
+mod rb_tree;
+mod scapegoat_tree;
 
 pub use crate::document::Document;

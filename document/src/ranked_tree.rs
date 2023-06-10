@@ -13,7 +13,7 @@ pub trait RankedTree<T> {
     where
         T: Ord;
 
-    fn search_with<F>(&self, f: F) -> Option<T>
+    fn search_with<F>(&self, f: F) -> Option<&T>
     where
         F: FnMut(&T) -> Ordering;
 
